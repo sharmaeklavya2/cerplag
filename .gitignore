@@ -1,0 +1,12 @@
+# cache/gen
+*.pyc
+__pycache__/
+/readme.html
+*.exe
+*.out
+
+# Trash
+*~
+*.sw[po]
+*.db
+Desktop.ini

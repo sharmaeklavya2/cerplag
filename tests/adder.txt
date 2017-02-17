@@ -1,0 +1,7 @@
+<<driver program>>
+start
+    declare a: integer;
+    declare b: integer;
+    c := a + b;
+    print(c);
+end

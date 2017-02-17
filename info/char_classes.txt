@@ -1,0 +1,18 @@
+alpha   "abcdfghijklmnopqrstuvwxyzABCDFGHIJKLMNOPQRSTUVWXYZ_"
+e       "eE"
+dig     "0123456789"
+ws      " \t\n"
+sco     "()[],;/"
+pm      +-
+
+=
+!
+.
+*
+:
+<
+>
+
+restr
+ota
+ot
