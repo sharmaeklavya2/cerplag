@@ -1,14 +1,10 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdbool.h>
+#include"token.h"
 
 #define INPUT_BUFSIZE 10
-#define LEXEME_BUFSIZE 50
 #define ERR_DETAILS_BUFSIZE 50
-
-char lex_buffer[INPUT_BUFSIZE];
-char* lex_ptr = NULL;
-char char_class[256];
 
 char ERRORS1[4][20] = {
     "",
@@ -26,86 +22,103 @@ char ERRORS2[4][200] = {
 
 typedef enum
 {
-    T_NUM = -3,
-    T_BAD_SYMBOL = -2,
-    T_ERR = -1,
-    T_EOF = 0,
-}tok_t;
-
-typedef enum
-{
-    C_REST = 0,
-    C_ALPHA = 1,
-    C_E = 2,
-    C_DIG = 3,
-    C_WS = 4,
-    C_SCO = 5,
-    C_PM = 6,
-    C_EQUALS = 7,
-    C_EXCL = 8,
-    C_DOT = 9,
-    C_STAR = 10,
-    C_COLON = 11,
-    C_LT = 12,
-    C_GT = 13
+    C_REST = 0,     // restricted
+    C_ALPHA = 1,    // alphabet
+    C_E = 2,        // e
+    C_UNSC = 1,     // underscore
+    C_DIG = 3,      // digits
+    C_WS = 4,       // whitespace
+    C_SCO = 5,      // single-character operator
+    C_PM = 6,       // '+' or '-'
+    C_EQUALS = 7,   // '='
+    C_EXCL = 8,     // '!'
+    C_DOT = 9,      // '.'
+    C_STAR = 10,    // '*'
+    C_COLON = 11,   // ':'
+    C_LT = 12,      // '<'
+    C_GT = 13,      // '>'
+    C_EOF = 14      // EOF (end of file)
 }cclass_t;
+
+#define NUM_CCLASS 15
+
+static cclass_t pc_cclass[256];
 
 void precompute_char_class()
 {
     int i;
     for(i=0; i<256; ++i)
-        char_class[i] = C_REST;
+        pc_cclass[i] = C_REST;
 
     for(i='a'; i<='z'; ++i)
-        char_class[i] = C_ALPHA;
+        pc_cclass[i] = C_ALPHA;
     for(i='A'; i<='Z'; ++i)
-        char_class[i] = C_ALPHA;
-    char_class['_'] = C_ALPHA;
+        pc_cclass[i] = C_ALPHA;
+    pc_cclass['_'] = C_UNSC;
 
-    char_class['e'] = C_E;
-    char_class['E'] = C_E;
+    pc_cclass['e'] = C_E;
+    pc_cclass['E'] = C_E;
 
     for(i='0'; i<='9'; ++i)
-        char_class[i] = C_DIG;
+        pc_cclass[i] = C_DIG;
 
-    char_class[' '] = C_WS;
-    char_class['\t'] = C_WS;
-    char_class['\n'] = C_WS;
+    pc_cclass[' '] = C_WS;
+    pc_cclass['\t'] = C_WS;
+    pc_cclass['\n'] = C_WS;
     
-    char_class['('] = C_SCO;
-    char_class[')'] = C_SCO;
-    char_class['['] = C_SCO;
-    char_class[']'] = C_SCO;
-    char_class[','] = C_SCO;
-    char_class[';'] = C_SCO;
-    char_class['/'] = C_SCO;
+    pc_cclass['('] = C_SCO;
+    pc_cclass[')'] = C_SCO;
+    pc_cclass['['] = C_SCO;
+    pc_cclass[']'] = C_SCO;
+    pc_cclass[','] = C_SCO;
+    pc_cclass[';'] = C_SCO;
+    pc_cclass['/'] = C_SCO;
     
-    char_class['+'] = C_PM;
-    char_class['-'] = C_PM;
-    char_class['='] = C_EQUALS;
-    char_class['!'] = C_EXCL;
-    char_class['.'] = C_DOT;
-    char_class['*'] = C_STAR;
-    char_class[':'] = C_COLON;
-    char_class['<'] = C_LT;
-    char_class['>'] = C_GT;
+    pc_cclass['+'] = C_PM;
+    pc_cclass['-'] = C_PM;
+    pc_cclass['='] = C_EQUALS;
+    pc_cclass['!'] = C_EXCL;
+    pc_cclass['.'] = C_DOT;
+    pc_cclass['*'] = C_STAR;
+    pc_cclass[':'] = C_COLON;
+    pc_cclass['<'] = C_LT;
+    pc_cclass['>'] = C_GT;
 }
+
+cclass_t get_cclass(char ch)
+{
+    if(ch == EOF)
+        return C_EOF;
+    else if(ch < 0)
+        return C_REST;
+    else
+        return pc_cclass[(int)ch];
+}
+
+static char input_buffer[INPUT_BUFSIZE];
+static char* input_ptr = NULL;
 
 char get_character(FILE* fp)
 {
-    if(lex_ptr == NULL || *lex_ptr == '\0')
+    if(input_ptr == NULL || *input_ptr == '\0')
     {
-        lex_ptr = fgets(lex_buffer, INPUT_BUFSIZE, fp);
-        if(lex_ptr == NULL)
+        input_ptr = fgets(input_buffer, INPUT_BUFSIZE, fp);
+        if(input_ptr == NULL)
             return EOF;
     }
-    return *(lex_ptr++);
+    return *(input_ptr++);
 }
 
-tok_t get_token(FILE* fp, char* lexeme, int maxlen, int* pline, char* err_details)
+#define NUM_STATES 25
+
+//static char dfa[NUM_STATES][NUM_CCLASS];
+
+int get_token(FILE* fp, int state, Token* ptok, char* err_details)
 {
+    //char ch = get_character(fp);
+    //cclass_t cclass = get_cclass(ch);
     
-    return T_EOF;
+    return 0;
 }
     
 int lexer_main(int argc, char* argv[])
@@ -126,29 +139,28 @@ int lexer_main(int argc, char* argv[])
 
     precompute_char_class();
 
-    tok_t tok;
-    char lexeme[LEXEME_BUFSIZE];
+    Token tok;
     char err_details[ERR_DETAILS_BUFSIZE];
-    int line = 0;
     bool got_error = false;
-    while(true)
+    int state = 0, state2;
+    do
     {
-        tok = get_token(fp, lexeme, LEXEME_BUFSIZE, &line, err_details);
-        if(tok < 0)
+        state2 = get_token(fp, state, &tok, err_details);
+        if(tok.tid < 0)
         {
             got_error = true;
-            break;
+            fprintf(stderr, "%d, %d: %s\n%s\n%s\n\n", tok.line, tok.col, ERRORS1[-tok.tid], ERRORS2[-tok.tid], err_details);
         }
-        else if(tok == 0)
-            break;
-            
+        else
+        {
+            printf("%2d %s\n", tok.tid, tok.lexeme);
+        }
+        state = state2;
     }
+    while(tok.tid != 0);
 
     if(got_error)
-    {
-        fprintf(stderr, "%d: %s\n%s\n%s\n\n", line, ERRORS1[-tok], ERRORS2[-tok], err_details);
         return 1;
-    }
     else
         return 0;
 }
