@@ -1,7 +1,6 @@
-#include<stdio.h>
-#include<string.h>
-#include<stdbool.h>
-#include"token.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include "token.h"
 
 #define INPUT_BUFSIZE 10
 #define ERR_DETAILS_BUFSIZE 50
