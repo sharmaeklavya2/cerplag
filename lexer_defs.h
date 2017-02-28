@@ -27,17 +27,13 @@ typedef enum
 
 #define NUM_ACTIONS A_LAST
 
+#define X_LERR(a, b, c) a,
 typedef enum
 {
-    LERR_NONE,
-    LERR_OTH,       // Other lexer error
-    LERR_BAD_SYM,   // Bad symbol
-    LERR_NUM,       // Saw letter after number
-    LERR_UPAT,      // Invalid pattern
-    LERR_LONG_ID,   // Identifier is too long
-    LERR_LONG_TOK,  // Identifier is too long
+#include "data/lerr.xmac"
     LERR_LAST
 }lerr_t;    // lexer error
+#undef X_LERR
 
 #define NUM_LERRS LERR_LAST
 

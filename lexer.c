@@ -12,25 +12,19 @@
 
 // Global variables ------------------------------------------------------------
 
+#define X_LERR(a, b, c) b,
 const char* ERRORS1[] = {
-    "",
-    "ERR",
-    "BAD_SYM",
-    "NUM",
-    "UPAT",
-    "LONG_ID",
-    "LONG_TOK"
+#include "data/lerr.xmac"
+    ""
 };  // Error codes
+#undef X_LERR
 
+#define X_LERR(a, b, c) c,
 const char* ERRORS2[] = {
-    "",
-    "Unknown lexer error",
-    "This symbol is not allowed",
-    "An identifier can't start with a digit",
-    "Unknown pattern",
-    "Identifier is too long",
-    "Token is too long"
+#include "data/lerr.xmac"
+    ""
 };  // Error info
+#undef X_LERR
 
 char tok_strs[NUM_TOKENS][ENUM_ENTRY_SIZE];
 char cclass_strs[NUM_CCLASSES][ENUM_ENTRY_SIZE];

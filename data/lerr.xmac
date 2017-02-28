@@ -1,0 +1,7 @@
+X_LERR(LERR_NONE, "", "")
+X_LERR(LERR_OTH, "OTH", "Unknown lexer error")
+X_LERR(LERR_BAD_SYM, "BAD_SYM", "This symbol is not allowed")
+X_LERR(LERR_NUM, "NUM", "Saw letter after number")
+X_LERR(LERR_UPAT, "UPAT", "Unknown pattern")
+X_LERR(LERR_LONG_ID, "LONG_ID", "Identifier is too long")
+X_LERR(LERR_LONG_TOK, "LONG_TOK", "Token is too long")
