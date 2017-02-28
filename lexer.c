@@ -1,94 +1,537 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 #include "token.h"
-#include "cclass.h"
+#include "lexer_defs.h"
+#include "assert.h"
+#include "util/enum_file.h"
 
-#define INPUT_BUFSIZE 10
-#define ERR_DETAILS_BUFSIZE 50
+#define INPUT_BUFSIZE 100
+#define ERR_DETAILS_BUFSIZE 100
 
-char ERRORS1[4][20] = {
+// Global variables ------------------------------------------------------------
+
+const char* ERRORS1[] = {
     "",
     "ERR",
-    "BAD_SYMBOL",
-    "NUM"
-};
+    "BAD_SYM",
+    "NUM",
+    "UPAT",
+    "LONG_ID",
+    "LONG_TOK"
+};  // Error codes
 
-char ERRORS2[4][200] = {
+const char* ERRORS2[] = {
     "",
     "Unknown lexer error",
-    "This symbol is not allowed in this language",
-    "An identifier can't start with a digit"
-};
+    "This symbol is not allowed",
+    "An identifier can't start with a digit",
+    "Unknown pattern",
+    "Identifier is too long",
+    "Token is too long"
+};  // Error info
+
+char tok_strs[NUM_TOKENS][ENUM_ENTRY_SIZE];
+char cclass_strs[NUM_CCLASSES][ENUM_ENTRY_SIZE];
+char state_strs[NUM_STATES][ENUM_ENTRY_SIZE];
+char action_strs[NUM_ACTIONS][ENUM_ENTRY_SIZE];
 
 static char input_buffer[INPUT_BUFSIZE];
-static char* input_ptr = NULL;
+static char* input_ptr = NULL;  // pointer in input buffer
+
+static char buff1[LEXEME_BUFSIZE], buff2[LEXEME_BUFSIZE];
+
+static cclass_t pc_cclass[128]; // pre-computed character class
+
+static bool is_final[NUM_STATES];
+
+static state_t state_table[NUM_STATES][NUM_CCLASSES];
+static action_t action_table[NUM_STATES][NUM_CCLASSES];
+
+// Precompute stuff ------------------------------------------------------------
+
+void precompute_cclass(cclass_t* cclass)
+// find character class of each character and store it in cclass 
+{
+    int i;
+    for(i=0; i < (1 << sizeof(char)); ++i)
+        cclass[i] = C_REST;
+
+    for(i='a'; i<='z'; ++i) cclass[i] = C_ALPHA;
+    for(i='A'; i<='Z'; ++i) cclass[i] = C_ALPHA;
+    cclass['e'] = C_E; cclass['E'] = C_E;
+    cclass['_'] = C_UNSC;
+
+    for(i='0'; i<='9'; ++i) cclass[i] = C_DIG;
+
+    cclass[' '] = C_WS;  cclass['\t'] = C_WS; cclass['\r'] = C_WS;
+    cclass['\0'] = C_EOF; cclass['\n'] = C_NL;
+    
+    cclass['('] = C_SCO; cclass[')'] = C_SCO;
+    cclass['['] = C_SCO; cclass[']'] = C_SCO;
+    cclass[','] = C_SCO; cclass[';'] = C_SCO;
+    cclass['/'] = C_SCO;
+    
+    cclass['+'] = C_PM; cclass['-'] = C_PM;
+    cclass['='] = C_EQ; cclass['!'] = C_EXCL;
+    cclass['<'] = C_LT; cclass['>'] = C_GT;
+    cclass['.'] = C_DOT;
+    cclass['*'] = C_STAR;
+    cclass[':'] = C_COLON;
+}
+
+void precompute_final_states(bool* is_final)
+{
+    static state_t final_states[] = {S_ID, S_I1, S_R1, S_R2, S_STAR, S_DOT2, S_COLON,
+        S_LT, S_LT2, S_LT3, S_GT, S_GT2, S_GT3};
+
+    int i, num_final_states = sizeof(final_states) / sizeof(state_t);
+    for(i=0; i < NUM_STATES; ++i)
+        is_final[i] = false;
+    for(i=0; i < num_final_states; ++i)
+        is_final[final_states[i]] = true;
+}
+
+inline static void add_edge(state_t s, cclass_t c, state_t s2, action_t a)
+{
+    state_table[s][c] = s2;
+    action_table[s][c] = a;
+}
+
+void precompute_dfa()
+{
+    state_t s;
+    cclass_t c;
+
+    for(s=0; s < NUM_STATES; ++s)
+        for(c=0; c < NUM_CCLASSES; ++c)
+        {
+            state_table[s][c] = S_START;
+            if(is_final[s])
+                action_table[s][c] = A_TOKS;
+            else
+                action_table[s][c] = A_ERR;
+        }
+
+    // whitespace and restricted chars
+
+    add_edge(S_START, C_WS, S_START, A_IGN);
+    add_edge(S_START, C_NL, S_START, A_NL);
+    add_edge(S_START, C_REST, S_START, A_TOKF);
+
+    // identifiers
+
+    add_edge(S_START, C_ALPHA, S_ID, A_ADD);
+    add_edge(S_START, C_E, S_ID, A_ADD);
+    add_edge(S_ID, C_ALPHA, S_ID, A_ADD);
+    add_edge(S_ID, C_E, S_ID, A_ADD);
+    add_edge(S_ID, C_DIG, S_ID, A_ADD);
+    add_edge(S_ID, C_UNSC, S_ID, A_ADD);
+
+    // numbers
+
+    add_edge(S_START, C_DIG, S_I1, A_ADD);
+
+    add_edge(S_I1, C_DIG, S_I1, A_ADD);
+    add_edge(S_I1, C_DOT, S_I2, A_ADD);
+    add_edge(S_I1, C_E, S_E, A_ADD);
+
+    add_edge(S_I2, C_DOT, S_DOT2, A_TOKN);
+    add_edge(S_I2, C_DIG, S_R1, A_ADD);
+    add_edge(S_I2, C_E, S_E, A_ADD);
+
+    add_edge(S_R1, C_DIG, S_R1, A_ADD);
+    add_edge(S_R1, C_E, S_E, A_ADD);
+
+    add_edge(S_E, C_PM, S_E2, A_ADD);
+    add_edge(S_E, C_DIG, S_R2, A_ADD);
+    add_edge(S_E2, C_DIG, S_R2, A_ADD);
+
+    add_edge(S_R2, C_DIG, S_R2, A_ADD);
+
+    // multiplication and comments
+
+    add_edge(S_START, C_STAR, S_STAR, A_ADD);
+    add_edge(S_STAR, C_STAR, S_STAR2, A_CLR);
+    for(c=0; c < NUM_CCLASSES; ++c)
+        add_edge(S_STAR2, c, S_STAR2, A_IGN);
+    add_edge(S_STAR2, C_NL, S_STAR2, A_NL);
+    add_edge(S_STAR2, C_STAR, S_STAR3, A_IGN);
+    for(c=0; c < NUM_CCLASSES; ++c)
+        add_edge(S_STAR3, c, S_STAR3, A_IGN);
+    add_edge(S_STAR3, C_NL, S_STAR3, A_NL);
+    add_edge(S_STAR3, C_STAR, S_START, A_IGN);
+
+    // operators
+
+    add_edge(S_START, C_SCO, S_START, A_TOKF);
+    add_edge(S_START, C_PM, S_START, A_TOKF);
+
+    add_edge(S_START, C_EQ, S_EQ, A_ADD);
+    add_edge(S_EQ, C_EQ, S_START, A_TOKF);
+
+    add_edge(S_START, C_EXCL, S_EXCL, A_ADD);
+    add_edge(S_EXCL, C_EQ, S_START, A_TOKF);
+
+    add_edge(S_START, C_DOT, S_DOT, A_ADD);
+    add_edge(S_DOT, C_DOT, S_DOT2, A_ADD);
+
+    add_edge(S_START, C_COLON, S_COLON, A_ADD);
+    add_edge(S_COLON, C_EQ, S_START, A_TOKF);
+
+    add_edge(S_START, C_LT, S_LT, A_ADD);
+    add_edge(S_LT, C_EQ, S_START, A_TOKF);
+    add_edge(S_LT, C_LT, S_LT2, A_ADD);
+    add_edge(S_LT2, C_LT, S_LT3, A_ADD);
+
+    add_edge(S_START, C_GT, S_GT, A_ADD);
+    add_edge(S_GT, C_EQ, S_START, A_TOKF);
+    add_edge(S_GT, C_GT, S_GT2, A_ADD);
+    add_edge(S_GT2, C_GT, S_GT3, A_ADD);
+}
+
+void precompute_lexer(bool debug)
+{
+    precompute_cclass(pc_cclass);
+    precompute_final_states(is_final);
+    precompute_dfa();
+    if(debug)
+        read_enum_file("data/state.enum", state_strs);
+}
+
+// Utility functions -----------------------------------------------------------
+
+cclass_t get_cclass(char ch)
+{
+    if(ch == '\0')
+        return C_EOF;
+    else if(ch < 0 || ch > 127)
+        return C_REST;
+    else
+        return pc_cclass[(int)ch];
+}
 
 char get_character(FILE* fp)
 {
     if(input_ptr == NULL || *input_ptr == '\0')
     {
-        input_ptr = fgets(input_buffer, INPUT_BUFSIZE, fp);
-        if(input_ptr == NULL)
+        int read = fread(input_buffer, sizeof(char), INPUT_BUFSIZE-1, fp);
+        input_buffer[read] = '\0';
+        input_ptr = input_buffer;
+        if(read == 0)
             return '\0';
     }
     return *(input_ptr++);
 }
 
-#define NUM_STATES 25
-
-//static char dfa[NUM_STATES][NUM_CCLASS];
-
-int get_token(FILE* fp, int state, Token* ptok, char* err_details)
+tok_t predict_token_from_char(char ch)
 {
-    //char ch = get_character(fp);
-    //cclass_t cclass = get_cclass(ch);
-    
-    return 0;
+    switch(ch)
+    {
+    case '+': return T_PLUS;
+    case '-': return T_MINUS;
+    case '(': return T_BO;
+    case ')': return T_BC;
+    case '[': return T_SQBO;
+    case ']': return T_SQBC;
+    case ',': return T_COMMA;
+    case ';': return T_SEMICOL;
+    case '/': return T_DIV;
+
+    case '=': return T_EQ;
+    case '!': return T_NE;
+    case ':': return T_ASSIGNOP;
+    case '<': return T_LE;
+    case '>': return T_GE;
+    default: return T_ERR;
+    }
 }
-    
-int lexer_main(int argc, char* argv[])
+        
+tok_t predict_token_from_state(state_t s)
 {
-    char usage[] = "usage: %s filename\n";
-    if(argc != 2)
+    switch(s)
     {
-        fprintf(stderr, usage, argv[0]);
-        return 1;
+    case S_ID: return T_ID;
+    case S_I1: return T_INTEGER;
+    case S_R1:
+    case S_R2: return T_REAL;
+
+    case S_STAR: return T_MUL;
+    case S_DOT2: return T_RANGEOP;
+    case S_COLON: return T_COLON;
+
+    case S_LT: return T_LT;
+    case S_LT2: return T_DEF;
+    case S_LT3: return T_DRIVERDEF;
+    case S_GT: return T_GT;
+    case S_GT2: return T_ENDDEF;
+    case S_GT3: return T_DRIVERENDDEF;
+
+    default: return T_ERR;
     }
+}
 
-    FILE* fp = fopen(argv[1], "r");
-    if(fp == NULL)
+// DFA implementation ----------------------------------------------------------
+
+void swap_buffers(Dfa* pdfa, Token* ptok)
+{
+    char* p = pdfa->lexeme;
+    pdfa->lexeme = ptok->lexeme;
+    ptok->lexeme = p;
+    int s = pdfa->size;
+    pdfa->size = ptok->size;
+    ptok->size = s;
+}
+
+lerr_t execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
+{
+    lerr_t retval = LERR_NONE;
+    switch(a)
     {
-        perror("lexer");
-        return 2;
-    }
-
-    precompute_cclass();
-
-    Token tok;
-    char err_details[ERR_DETAILS_BUFSIZE];
-    bool got_error = false;
-    int state = 0, state2;
-    do
-    {
-        state2 = get_token(fp, state, &tok, err_details);
-        if(tok.tid < 0)
+    case A_ADD:
+        pdfa->lexeme[pdfa->size] = ch;
+        (pdfa->size)++;
+        if(pdfa->size >= LEXEME_BUFSIZE)
         {
-            got_error = true;
-            fprintf(stderr, "%d, %d: %s\n%s\n%s\n\n", tok.line, tok.col, ERRORS1[-tok.tid], ERRORS2[-tok.tid], err_details);
+            (pdfa->size)--;
+            pdfa->trunc = true;
+        }
+        pdfa->lexeme[pdfa->size] = '\0';
+        break;
+    case A_IGN:
+        break;
+    case A_NL:
+        pdfa->line++;
+        pdfa->col = 0;
+        break;
+    case A_CLR:
+        pdfa->lexeme[0] = '\0';
+        pdfa->size = 0;
+        break;
+    case A_ERR:
+        if(get_cclass(ch) == C_REST)
+            retval = LERR_BAD_SYM;
+        else if(pdfa->s == S_I1)
+            retval = LERR_NUM;
+        else
+            retval = LERR_UPAT;
+        // break statement intentionally left out
+    case A_TOKS:
+    case A_TOKF:
+    case A_TOKN:
+        if(a == A_TOKF)
+        {
+            pdfa->lexeme[(pdfa->size)++] = ch;
+            pdfa->lexeme[pdfa->size] = '\0';
+        }
+        else if(a == A_TOKN)
+            pdfa->lexeme[--(pdfa->size)] = '\0';
+        else
+        {
+            input_ptr--;
+            pdfa->col--;
+        }
+        swap_buffers(pdfa, ptok);
+
+        ptok->line = pdfa->line;
+        ptok->col = pdfa->col - ptok->size + 1;
+
+        if(pdfa->trunc)
+        {
+            ptok->tid = T_ERR;
+            retval = LERR_LONG_TOK;
+            pdfa->trunc = false;
+        }
+        else if(a == A_TOKS)
+        {
+            ptok->tid = predict_token_from_state(pdfa->s);
+            if(ptok->tid == T_ERR)
+                retval = LERR_OTH;
+        }
+        else if(a == A_TOKF)
+        {
+            ptok->tid = predict_token_from_char(ptok->lexeme[0]);
+            if(get_cclass(ch) == C_REST)
+                retval = LERR_BAD_SYM;
+        }
+        else if(a == A_TOKN)
+            ptok->tid = T_INTEGER;
+        else
+            ptok->tid = T_ERR;
+
+        if(a == A_TOKN)
+        {
+            pdfa->lexeme[0] = '.'; pdfa->lexeme[1] = '.'; pdfa->lexeme[2] = '\0';
+            pdfa->size = 2;
         }
         else
         {
-            printf("%2d %s\n", tok.tid, tok.lexeme);
+            pdfa->lexeme[0] = '\0';
+            pdfa->size = 0;
         }
-        state = state2;
+        break;
+    case A_LAST:
+        assert(false);
+        break;
     }
-    while(tok.tid != 0);
+    return retval;
+}
+
+void init_dfa(Dfa* pdfa)
+{
+    pdfa->s = S_START;
+    pdfa->line = 1;
+    pdfa->col = 1;
+    pdfa->lexeme = buff1;
+    pdfa->trunc = false;
+    buff1[0] = '\0';
+    pdfa->size = 0;
+}
+
+void init_token(Token* ptok)
+{
+    ptok->line = 0;
+    ptok->col = 0;
+    ptok->lexeme = buff2;
+    buff2[0] = '\0';
+    ptok->size = 0;
+    ptok->tid = T_ERR;
+}
+
+tok_t keyword_check(const char* s)
+// returns correct token based on keyword
+{
+    if(strcmp(s, "parameters") == 0)
+        return T_PARAMETERS;
+    else if(strcmp(s, "get_value") == 0)
+        return T_GET_VALUE;
+    else
+        return T_ID;
+}
+
+bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, lerr_t *plerr, bool debug)
+// return true if token is ready
+{
+    cclass_t cclass = get_cclass(ch);
+    state_t s2 = state_table[pdfa->s][cclass];
+    action_t a = action_table[pdfa->s][cclass];
+    *plerr = execute_action(a, ch, pdfa, ptok);
+    if(debug)
+        fprintf(stderr, "\t%s %c %s %s\n", state_strs[pdfa->s], ch, state_strs[s2], action_strs[a]);
+    pdfa->s = s2;
+    (pdfa->col)++;
+    if((ptok->tid) == T_ID)
+        ptok->tid = keyword_check(ptok->lexeme);
+    if((ptok->tid) == T_ID && (ptok->size) > 8)
+    {
+        ptok->tid = T_ERR;
+        *plerr = LERR_LONG_ID;
+    }
+    return (a == A_TOKS || a == A_TOKF || a == A_TOKN || a == A_ERR);
+}
+
+lerr_t get_token(FILE* fp, Dfa* pdfa, Token* ptok, bool debug)
+{
+    lerr_t lerr;
+    while(true)
+    {
+        char ch = get_character(fp);
+        if(ch == '\0')
+        {
+            ptok->line = pdfa->line;
+            ptok->col = pdfa->col;
+            ptok->lexeme[0] = '\0';
+            ptok->size = 0;
+            ptok->tid = T_EOF;
+            return LERR_NONE;
+        }
+        else if(tick_dfa(ch, pdfa, ptok, &lerr, debug))
+            return lerr;
+    }
+}
+
+// Driver program --------------------------------------------------------------
+
+int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
+{
+    read_enum_file("data/tok.enum", tok_strs);
+    read_enum_file("data/cclass.enum", cclass_strs);
+    read_enum_file("data/state.enum", state_strs);
+    read_enum_file("data/action.enum", action_strs);
+
+    if(verbosity >= 4)
+    {
+        fprintf(stderr, "tokens:\n");
+        for(int i=0; i<NUM_TOKENS; ++i)
+            fprintf(stderr, "%s\n", tok_strs[i]);
+        fprintf(stderr, "\ncclasses:\n");
+        for(int i=0; i<NUM_CCLASSES; ++i)
+            fprintf(stderr, "%s\n", cclass_strs[i]);
+        fprintf(stderr, "\nstates:\n");
+        for(int i=0; i<NUM_STATES; ++i)
+            fprintf(stderr, "%s\n", state_strs[i]);
+        fprintf(stderr, "\nactions:\n");
+        for(int i=0; i<NUM_ACTIONS; ++i)
+            fprintf(stderr, "%s\n", action_strs[i]);
+    }
+
+    precompute_lexer(false);
+
+    if(verbosity >= 3)
+    {
+        int i, j;
+        fprintf(stderr, "states: %d, cclasses: %d\n", NUM_STATES, NUM_CCLASSES);
+        fprintf(stderr, "\nstate_table:\n");
+
+        fprintf(stderr, "%7s", "");
+        for(j=0; j<NUM_CCLASSES; ++j)
+            fprintf(stderr, " %7s", cclass_strs[j]);
+        fputc('\n', stderr);
+        for(i=0; i<NUM_STATES; ++i)
+        {
+            fprintf(stderr, "%7s", state_strs[i]);
+            for(j=0; j<NUM_CCLASSES; ++j)
+                fprintf(stderr, " %7s", state_strs[state_table[i][j]]);
+            fputc('\n', stderr);
+        }
+
+        fprintf(stderr, "\naction_table:\n");
+        fprintf(stderr, "%7s", "");
+        for(j=0; j<NUM_CCLASSES; ++j)
+            fprintf(stderr, " %7s", cclass_strs[j]);
+        fputc('\n', stderr);
+        for(i=0; i<NUM_STATES; ++i)
+        {
+            fprintf(stderr, "%7s", state_strs[i]);
+            for(j=0; j<NUM_CCLASSES; ++j)
+                fprintf(stderr, " %7s", action_strs[action_table[i][j]]);
+            fputc('\n', stderr);
+        }
+    }
+
+    Token tok;
+    Dfa dfa;
+    init_dfa(&dfa);
+    init_token(&tok);
+    bool got_error = false;
+    bool debug = (verbosity >= 1);
+    do
+    {
+        lerr_t lerr = get_token(ifp, &dfa, &tok, debug);
+        fprintf(ofp, "%2d %2d %2d %s %s\n", tok.line, tok.col, tok.tid,
+            tok_strs[tok.tid], tok.lexeme);
+        if(lerr != LERR_NONE)
+        {
+            got_error = true;
+            fprintf(stderr, "lex_error_%d: %2d %2d \'%s\' %s: %s\n", lerr, tok.line, tok.col,
+                tok.lexeme, ERRORS1[lerr], ERRORS2[lerr]);
+        }
+    }
+    while(tok.tid != T_EOF);
 
     if(got_error)
         return 1;
     else
         return 0;
 }
-
-int main(int argc, char* argv[])
-{return lexer_main(argc, argv);}

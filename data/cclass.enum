@@ -1,0 +1,17 @@
+C_REST,     // restricted
+C_ALPHA,    // alphabetic except 'e' and 'E'
+C_E,        // 'e' and 'E'
+C_UNSC,     // '_'
+C_DIG,      // digit
+C_WS,       // whitespace
+C_NL,       // '\n'
+C_SCO,      // single character opeartor
+C_PM,       // '+' and '-'
+C_EQ,       // '='
+C_EXCL,     // '!'
+C_DOT,      // '.'
+C_STAR,     // '*'
+C_COLON,    // ':'
+C_LT,       // '<'
+C_GT,       // '>'
+C_EOF,

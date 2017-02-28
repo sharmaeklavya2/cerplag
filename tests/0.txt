@@ -1,7 +1,9 @@
-<<driver program>>
+<<<driver program>>>
 start
     declare a: integer;
     declare b: integer;
+    get_value(a);
+    get_value(b);
     c := a + b;
     print(c);
 end
