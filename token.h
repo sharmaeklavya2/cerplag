@@ -13,12 +13,17 @@ typedef enum
 
 #define NUM_TOKENS T_LAST
 
+typedef union
+{int i; double f;}
+i_or_f_t;
+
 typedef struct
 {
     int line, col;
     char* lexeme;
     int size;
     tok_t tid;
+    i_or_f_t num;
 }Token;
 
 #endif  // H_TOKEN

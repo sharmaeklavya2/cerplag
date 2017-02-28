@@ -273,9 +273,9 @@ tok_t predict_token_from_state(state_t s)
     switch(s)
     {
     case S_ID: return T_ID;
-    case S_I1: return T_INTEGER;
+    case S_I1: return T_NUM;
     case S_R1:
-    case S_R2: return T_REAL;
+    case S_R2: return T_RNUM;
 
     case S_STAR: return T_MUL;
     case S_DOT2: return T_RANGEOP;
@@ -376,7 +376,7 @@ lerr_t execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
                 retval = LERR_BAD_SYM;
         }
         else if(a == A_TOKN)
-            ptok->tid = T_INTEGER;
+            ptok->tid = T_NUM;
         else
             ptok->tid = T_ERR;
 
@@ -417,6 +417,7 @@ void init_token(Token* ptok)
     buff2[0] = '\0';
     ptok->size = 0;
     ptok->tid = T_ERR;
+    ptok->num.f = 0.0;
 }
 
 tok_t keyword_check(const char* s)
@@ -427,6 +428,28 @@ tok_t keyword_check(const char* s)
         return T_ID;
     else
         return p->value;
+}
+
+lerr_t post_process(Token* ptok)
+{
+    lerr_t retval = LERR_NONE;
+    if((ptok->tid) == T_ID)
+    {
+        ptok->tid = keyword_check(ptok->lexeme);
+        if((ptok->tid) == T_ID && (ptok->size) > 8)
+        {
+            ptok->tid = T_ERR;
+            retval = LERR_LONG_ID;
+        }
+        ptok->num.f = 0.0;
+    }
+    else if(ptok->tid == T_NUM)
+        ptok->num.i = atoi(ptok->lexeme);
+    else if(ptok->tid == T_RNUM)
+        ptok->num.f = atof(ptok->lexeme);
+    else
+        ptok->num.f = 0.0;
+    return retval;
 }
 
 bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, lerr_t *plerr, bool debug)
@@ -440,13 +463,6 @@ bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, lerr_t *plerr, bool debug)
         fprintf(stderr, "\t%s %c %s %s\n", STATE_STRS[pdfa->s], ch, STATE_STRS[s2], ACTION_STRS[a]);
     pdfa->s = s2;
     (pdfa->col)++;
-    if((ptok->tid) == T_ID)
-        ptok->tid = keyword_check(ptok->lexeme);
-    if((ptok->tid) == T_ID && (ptok->size) > 8)
-    {
-        ptok->tid = T_ERR;
-        *plerr = LERR_LONG_ID;
-    }
     return (a == A_TOKS || a == A_TOKF || a == A_TOKN || a == A_ERR);
 }
 
@@ -466,7 +482,7 @@ lerr_t get_token(FILE* fp, Dfa* pdfa, Token* ptok, bool debug)
             return LERR_NONE;
         }
         else if(tick_dfa(ch, pdfa, ptok, &lerr, debug))
-            return lerr;
+            return post_process(ptok);
     }
 }
 
@@ -533,8 +549,14 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
     do
     {
         lerr_t lerr = get_token(ifp, &dfa, &tok, debug);
-        fprintf(ofp, "%2d %2d %2d %s %s\n", tok.line, tok.col, tok.tid,
+        fprintf(ofp, "%2d %2d %2d %s %s", tok.line, tok.col, tok.tid,
             TOK_STRS[tok.tid], tok.lexeme);
+        if(tok.tid == T_NUM)
+            fprintf(ofp, " %d\n", tok.num.i);
+        else if(tok.tid == T_RNUM)
+            fprintf(ofp, " %lf\n", tok.num.f);
+        else
+            fprintf(ofp, "\n");
         if(lerr != LERR_NONE)
         {
             got_error = true;

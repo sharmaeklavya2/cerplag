@@ -1,6 +1,8 @@
 X(T_ERR, "")
 X(T_EOF, "")
 X(T_ID, "")
+X(T_NUM, "")
+X(T_RNUM, "")
 
 #include "keywords.xmac"
 
