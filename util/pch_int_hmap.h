@@ -1,7 +1,7 @@
 #ifndef H_PCH_INT_HMAP
 #define H_PCH_INT_HMAP
 
-typedef char* pch;
+typedef const char* pch;
 
 #define KTYPE pch
 #define VTYPE int

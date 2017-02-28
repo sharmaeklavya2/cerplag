@@ -10,11 +10,30 @@ ITYPED(hmap_node)* ITYPED(hmap_get_node)(KTYPE k, VTYPE v, ITYPED(hmap_node)* ne
     return n;
 }
 
+void ITYPED(hmap_destroy_chain)(ITYPED(hmap_node)* p)
+{
+    ITYPED(hmap_node)* p2 = NULL;
+    while(p != NULL)
+    {
+        p2 = p->next;
+        p->next = NULL;
+        free(p);
+        p = p2;
+    }
+}
+
 void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int size)
 {
     phmap->plist = calloc(size, sizeof(ITYPED(hmap_node)*));
     phmap->size = size;
     phmap->count = 0;
+}
+
+void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap)
+{
+    int i;
+    for(i=0; i < (phmap->size); ++i)
+        ITYPED(hmap_destroy_chain)(phmap->plist[i]);
 }
 
 ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k)
