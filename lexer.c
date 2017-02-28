@@ -12,24 +12,32 @@
 
 // Global variables ------------------------------------------------------------
 
-#define X_LERR(a, b, c) b,
+#define X(a, b, c) b,
 const char* ERRORS1[] = {
 #include "data/lerr.xmac"
-    ""
 };  // Error codes
-#undef X_LERR
+#undef X
 
-#define X_LERR(a, b, c) c,
+#define X(a, b, c) c,
 const char* ERRORS2[] = {
 #include "data/lerr.xmac"
-    ""
 };  // Error info
-#undef X_LERR
+#undef X
 
-char tok_strs[NUM_TOKENS][ENUM_ENTRY_SIZE];
-char cclass_strs[NUM_CCLASSES][ENUM_ENTRY_SIZE];
-char state_strs[NUM_STATES][ENUM_ENTRY_SIZE];
-char action_strs[NUM_ACTIONS][ENUM_ENTRY_SIZE];
+#define X(a) #a,
+char* TOK_STRS[] = {
+#include "data/tok.xmac"
+};
+char* CCLASS_STRS[] = {
+#include "data/cclass.xmac"
+};
+char* ACTION_STRS[] = {
+#include "data/action.xmac"
+};
+char* STATE_STRS[] = {
+#include "data/state.xmac"
+};
+#undef X
 
 static char input_buffer[INPUT_BUFSIZE];
 static char* input_ptr = NULL;  // pointer in input buffer
@@ -185,13 +193,11 @@ void precompute_dfa()
     add_edge(S_GT2, C_GT, S_GT3, A_ADD);
 }
 
-void precompute_lexer(bool debug)
+void precompute_lexer()
 {
     precompute_cclass(pc_cclass);
     precompute_final_states(is_final);
     precompute_dfa();
-    if(debug)
-        read_enum_file("data/state.enum", state_strs);
 }
 
 // Utility functions -----------------------------------------------------------
@@ -412,7 +418,7 @@ bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, lerr_t *plerr, bool debug)
     action_t a = action_table[pdfa->s][cclass];
     *plerr = execute_action(a, ch, pdfa, ptok);
     if(debug)
-        fprintf(stderr, "\t%s %c %s %s\n", state_strs[pdfa->s], ch, state_strs[s2], action_strs[a]);
+        fprintf(stderr, "\t%s %c %s %s\n", STATE_STRS[pdfa->s], ch, STATE_STRS[s2], ACTION_STRS[a]);
     pdfa->s = s2;
     (pdfa->col)++;
     if((ptok->tid) == T_ID)
@@ -449,28 +455,23 @@ lerr_t get_token(FILE* fp, Dfa* pdfa, Token* ptok, bool debug)
 
 int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
 {
-    read_enum_file("data/tok.enum", tok_strs);
-    read_enum_file("data/cclass.enum", cclass_strs);
-    read_enum_file("data/state.enum", state_strs);
-    read_enum_file("data/action.enum", action_strs);
-
     if(verbosity >= 4)
     {
         fprintf(stderr, "tokens:\n");
         for(int i=0; i<NUM_TOKENS; ++i)
-            fprintf(stderr, "%s\n", tok_strs[i]);
+            fprintf(stderr, "%s\n", TOK_STRS[i]);
         fprintf(stderr, "\ncclasses:\n");
         for(int i=0; i<NUM_CCLASSES; ++i)
-            fprintf(stderr, "%s\n", cclass_strs[i]);
+            fprintf(stderr, "%s\n", CCLASS_STRS[i]);
         fprintf(stderr, "\nstates:\n");
         for(int i=0; i<NUM_STATES; ++i)
-            fprintf(stderr, "%s\n", state_strs[i]);
+            fprintf(stderr, "%s\n", STATE_STRS[i]);
         fprintf(stderr, "\nactions:\n");
         for(int i=0; i<NUM_ACTIONS; ++i)
-            fprintf(stderr, "%s\n", action_strs[i]);
+            fprintf(stderr, "%s\n", ACTION_STRS[i]);
     }
 
-    precompute_lexer(false);
+    precompute_lexer();
 
     if(verbosity >= 3)
     {
@@ -480,26 +481,26 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
 
         fprintf(stderr, "%7s", "");
         for(j=0; j<NUM_CCLASSES; ++j)
-            fprintf(stderr, " %7s", cclass_strs[j]);
+            fprintf(stderr, " %7s", CCLASS_STRS[j]);
         fputc('\n', stderr);
         for(i=0; i<NUM_STATES; ++i)
         {
-            fprintf(stderr, "%7s", state_strs[i]);
+            fprintf(stderr, "%7s", STATE_STRS[i]);
             for(j=0; j<NUM_CCLASSES; ++j)
-                fprintf(stderr, " %7s", state_strs[state_table[i][j]]);
+                fprintf(stderr, " %7s", STATE_STRS[state_table[i][j]]);
             fputc('\n', stderr);
         }
 
         fprintf(stderr, "\naction_table:\n");
         fprintf(stderr, "%7s", "");
         for(j=0; j<NUM_CCLASSES; ++j)
-            fprintf(stderr, " %7s", cclass_strs[j]);
+            fprintf(stderr, " %7s", CCLASS_STRS[j]);
         fputc('\n', stderr);
         for(i=0; i<NUM_STATES; ++i)
         {
-            fprintf(stderr, "%7s", state_strs[i]);
+            fprintf(stderr, "%7s", STATE_STRS[i]);
             for(j=0; j<NUM_CCLASSES; ++j)
-                fprintf(stderr, " %7s", action_strs[action_table[i][j]]);
+                fprintf(stderr, " %7s", ACTION_STRS[action_table[i][j]]);
             fputc('\n', stderr);
         }
     }
@@ -514,7 +515,7 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
     {
         lerr_t lerr = get_token(ifp, &dfa, &tok, debug);
         fprintf(ofp, "%2d %2d %2d %s %s\n", tok.line, tok.col, tok.tid,
-            tok_strs[tok.tid], tok.lexeme);
+            TOK_STRS[tok.tid], tok.lexeme);
         if(lerr != LERR_NONE)
         {
             got_error = true;

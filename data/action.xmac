@@ -1,0 +1,8 @@
+X(A_ADD)  // add a character to lexeme buffer
+X(A_IGN)  // ignore a character
+X(A_NL)   // increment newline count
+X(A_CLR)  // clear the lexeme buffer
+X(A_TOKS) // tokenize based on state and decrement input pointer
+X(A_TOKF) // tokenize based on lexeme's first character; don't decrement input pointer
+X(A_TOKN) // tokenize a number after seeing 2 dots after it
+X(A_ERR)  // make an error token

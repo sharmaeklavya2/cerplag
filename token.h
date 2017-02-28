@@ -3,11 +3,13 @@
 
 #define LEXEME_BUFSIZE 30
 
+#define X(a) a,
 typedef enum
 {
-#include "data/tok.enum"
+#include "data/tok.xmac"
     T_LAST
 }tok_t;
+#undef X
 
 #define NUM_TOKENS T_LAST
 

@@ -1,0 +1,17 @@
+X(C_REST)   // restricted
+X(C_ALPHA)  // alphabetic except 'e' and 'E'
+X(C_E)      // 'e' and 'E'
+X(C_UNSC)   // '_'
+X(C_DIG)    // digit
+X(C_WS)     // whitespace
+X(C_NL)     // '\n'
+X(C_SCO)    // single character opeartor
+X(C_PM)     // '+' and '-'
+X(C_EQ)     // '='
+X(C_EXCL)   // '!'
+X(C_DOT)    // '.'
+X(C_STAR)   // '*'
+X(C_COLON)  // ':'
+X(C_LT)     // '<'
+X(C_GT)     // '>'
+X(C_EOF)

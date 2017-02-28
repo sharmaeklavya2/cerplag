@@ -1,8 +1,0 @@
-A_ADD,  // add a character to lexeme buffer
-A_IGN,  // ignore a character
-A_NL,   // increment newline count
-A_CLR,  // clear the lexeme buffer
-A_TOKS, // tokenize based on state and decrement input pointer
-A_TOKF, // tokenize based on lexeme's first character; don't decrement input pointer
-A_TOKN, // tokenize a number after seeing 2 dots after it
-A_ERR,  // make an error token
