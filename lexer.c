@@ -24,10 +24,13 @@ const char* ERRORS2[] = {
 };  // Error info
 #undef X
 
-#define X(a) #a,
+#define X(a, b) #a,
 char* TOK_STRS[] = {
 #include "data/tok.xmac"
 };
+#undef X
+
+#define X(a) #a,
 char* CCLASS_STRS[] = {
 #include "data/cclass.xmac"
 };

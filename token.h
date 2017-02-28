@@ -3,7 +3,7 @@
 
 #define LEXEME_BUFSIZE 30
 
-#define X(a) a,
+#define X(a, b) a,
 typedef enum
 {
 #include "data/tok.xmac"
