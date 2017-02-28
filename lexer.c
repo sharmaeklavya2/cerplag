@@ -25,7 +25,7 @@ const char* ERRORS2[] = {
 };  // Error info
 #undef X
 
-#define X(a, b) #a,
+#define X(a, b) "T_"#a,
 char* TOK_STRS[] = {
 #include "data/tok.xmac"
 };
@@ -202,7 +202,7 @@ void precompute_dfa()
 void precompute_keyword_hmap()
 {
     pch_int_hmap_init(&keyword_hmap, 100);
-#define X(t, k) pch_int_hmap_update(&keyword_hmap, k, t);
+#define X(t, k) pch_int_hmap_update(&keyword_hmap, k, T_##t);
 #include "data/keywords.xmac"
 #undef X
 }
