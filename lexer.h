@@ -9,7 +9,7 @@
 void init_dfa(Dfa*);
 void init_token(Token*);
 
-void precompute_lexer();
+void init_lexer();
 lerr_t get_token(FILE*, Dfa*, Token*, bool debug);
 int lexer_main(FILE* in, FILE* out, int verbosity);
 

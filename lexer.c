@@ -6,6 +6,7 @@
 #include "lexer_defs.h"
 #include "assert.h"
 #include "util/enum_file.h"
+#include "util/pch_int_hmap.h"
 
 #define INPUT_BUFSIZE 100
 #define ERR_DETAILS_BUFSIZE 100
@@ -53,6 +54,8 @@ static bool is_final[NUM_STATES];
 
 static state_t state_table[NUM_STATES][NUM_CCLASSES];
 static action_t action_table[NUM_STATES][NUM_CCLASSES];
+
+static pch_int_hmap keyword_hmap;
 
 // Precompute stuff ------------------------------------------------------------
 
@@ -196,11 +199,25 @@ void precompute_dfa()
     add_edge(S_GT2, C_GT, S_GT3, A_ADD);
 }
 
-void precompute_lexer()
+void precompute_keyword_hmap()
+{
+    pch_int_hmap_init(&keyword_hmap, 100);
+#define X(t, k) pch_int_hmap_update(&keyword_hmap, k, t);
+#include "data/keywords.xmac"
+#undef X
+}
+
+void init_lexer()
 {
     precompute_cclass(pc_cclass);
     precompute_final_states(is_final);
     precompute_dfa();
+    precompute_keyword_hmap();
+}
+
+void outit_lexer()
+{
+    pch_int_hmap_destroy(&keyword_hmap);
 }
 
 // Utility functions -----------------------------------------------------------
@@ -405,12 +422,11 @@ void init_token(Token* ptok)
 tok_t keyword_check(const char* s)
 // returns correct token based on keyword
 {
-    if(strcmp(s, "parameters") == 0)
-        return T_PARAMETERS;
-    else if(strcmp(s, "get_value") == 0)
-        return T_GET_VALUE;
-    else
+    pch_int_hmap_node* p = pch_int_hmap_query(&keyword_hmap, s);
+    if(p == NULL)
         return T_ID;
+    else
+        return p->value;
 }
 
 bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, lerr_t *plerr, bool debug)
@@ -474,7 +490,7 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
             fprintf(stderr, "%s\n", ACTION_STRS[i]);
     }
 
-    precompute_lexer();
+    init_lexer();
 
     if(verbosity >= 3)
     {
@@ -527,6 +543,8 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
         }
     }
     while(tok.tid != T_EOF);
+
+    outit_lexer();
 
     if(got_error)
         return 1;

@@ -1,4 +1,4 @@
-sources = lexer.c driver.c util/enum_file.c
+sources = lexer.c driver.c util/enum_file.c util/pch_int_hmap.c util/pch.c
 debug_flags = -g -Wall -Wpedantic -Wno-sign-compare
 release_flags = -O2
 
