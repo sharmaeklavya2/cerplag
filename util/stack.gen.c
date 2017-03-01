@@ -22,6 +22,27 @@ void TYPED(stack_push)(TYPED(Stack)* ps, TYPE value)
     (ps->size)++;
 }
 
+// Prints stack top to bottom
+void TYPED(stack_print)(TYPED(Stack)* ps, FILE* fp)
+{
+    fprintf(fp, "[");
+    TYPED(StackNode)* p = ps->top;
+    if(p != NULL)
+    {
+        TYPED(print)(p->value, fp);
+        p = p->next;
+        while(p != NULL)
+        {
+            fprintf(fp, ", ");
+            TYPED(print)(p->value, fp);
+            p = p->next;
+        }
+    }
+    fprintf(fp, "]\n");
+}
+
+#pragma GCC diagnostic ignored "-Wreturn-type"
+
 TYPE TYPED(stack_top)(TYPED(Stack)* ps)
 {
     if(ps->size == 0)
@@ -43,23 +64,4 @@ TYPE TYPED(stack_pop)(TYPED(Stack)* ps)
         (ps->size)--;
         return v;
     }
-}
-
-// Prints stack top to bottom
-void TYPED(stack_print)(TYPED(Stack)* ps, FILE* fp)
-{
-    fprintf(fp, "[");
-    TYPED(StackNode)* p = ps->top;
-    if(p != NULL)
-    {
-        TYPED(print)(p->value, fp);
-        p = p->next;
-        while(p != NULL)
-        {
-            fprintf(fp, ", ");
-            TYPED(print)(p->value, fp);
-            p = p->next;
-        }
-    }
-    fprintf(fp, "]\n");
 }
