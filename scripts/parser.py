@@ -153,7 +153,7 @@ def main(*args):
             for line in fobj:
                 if line.strip():
                     X, *alpha = line.split()[:-1]
-                    rule_to_line[tuple(alpha)] = count
+                    rule_to_line[tuple([X] + alpha)] = count
                     if X in grammar:
                         grammar[X].append(alpha)
                     else:
@@ -177,7 +177,7 @@ def main(*args):
         def sortkey(x):
             return (pt.non_term_rank.get(x[0][0], 10**9), x[0][1])
         for (X, a), alphas in sorted(pt.parse_table.items(), key=sortkey):
-            print(X, a, rule_to_line[tuple(alphas[0])])
+            print(X, a, rule_to_line[tuple([X] + alphas[0])])
 
     ambg_rules = {k: v for k, v in pt.parse_table.items() if len(v) > 1}
     if ambg_rules:
