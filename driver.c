@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "lexer.h"
+#include "parser.h"
 
 #define USAGE_SIZE 512
 
@@ -93,10 +94,7 @@ int main(int argc, char* argv[])
     if(type == 'l')
         retval = lexer_main(ifp, ofp, verbosity);
     else
-    {
-        fprintf(stderr, "Not implemented\n");
-        retval = 1;
-    }
+        retval = parser_main(ifp, ofp, verbosity);
 
     if(ifp != stdin)
         fclose(ifp);
