@@ -1,6 +1,8 @@
 #ifndef H_PARSER_DEFS
 #define H_PARSER_DEFS
 
+#include "token.h"
+
 /*
 typedef enum
 {
@@ -42,5 +44,8 @@ typedef struct
     gt_node* head;
     gt_node* tail;
 }Rule;
+
+
+typedef Token Symbol;
 
 #endif  // H_PARSER_DEFS

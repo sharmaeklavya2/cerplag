@@ -22,7 +22,7 @@ typedef struct
     int line, col;
     char* lexeme;
     int size;
-    tok_t tid;
+    int tid;
     i_or_f_t num;
 }Token;
 

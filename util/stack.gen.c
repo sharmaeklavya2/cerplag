@@ -18,6 +18,15 @@ void TYPED(stack_init)(TYPED(Stack) *ps)
 
 void TYPED(stack_push)(TYPED(Stack)* ps, TYPE value)
 {
+    /*
+    fprintf(stderr, "Pushing: ");
+    TYPED(print)(value,stderr);
+    fprintf(stderr, "\n");
+    */
+    if(ps->size > 100){
+        fprintf(stderr,"Stack size exceeded limit!\n");
+        exit(1);
+    }
     ps->top = TYPED(get_stack_node)(value, ps->top);
     (ps->size)++;
 }
@@ -62,6 +71,11 @@ TYPE TYPED(stack_pop)(TYPED(Stack)* ps)
         TYPE v = tmp->value;
         free(tmp);
         (ps->size)--;
+        /*
+        fprintf(stderr, "Popping: ");
+        TYPED(print)(v, stderr);
+        fprintf(stderr, "\n");
+        */
         return v;
     }
 }
