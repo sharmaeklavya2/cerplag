@@ -6,7 +6,7 @@
 
 #define USAGE_SIZE 512
 
-static char usage_template[] = "usage: %s (-l | -p) (infile | --) [-v] [-o outfile]\n";
+static char usage_template[] = "usage: %s (-l | -p) (infile | --) [-v] [-o outfile] OR %s infile outfile\n";
 static char usage[USAGE_SIZE];
 
 int cry_error()
@@ -17,19 +17,22 @@ int cry_error()
 
 int main(int argc, char* argv[])
 {
-    snprintf(usage, USAGE_SIZE, usage_template, argv[0]);
+    snprintf(usage, USAGE_SIZE, usage_template, argv[0], argv[0]);
 
     // parse command-line arguments
     int i;
     char* ifname = NULL;
     char* ofname = "-1";
+    char *arg1 = NULL, *arg2 = NULL;
     char type = '0';
+    bool saw_flags = false;
     int verbosity = 0;
     for(i=1; i<argc; ++i)
     {
         char* argvi = argv[i];
         if(argvi[0] == '-')
         {
+            saw_flags = true;
             char ch = argvi[1];
             switch(ch)
             {
@@ -53,11 +56,32 @@ int main(int argc, char* argv[])
                 return cry_error();
             }
         }
+        else if(!saw_flags)
+        {
+            if(arg1 == NULL)
+                arg1 = argvi;
+            else if(arg2 == NULL)
+                arg2 = argvi;
+        }
         else
             return cry_error();
     }
-    if(type == '0' || ifname == NULL)
-        return cry_error();
+    if(saw_flags)
+    {
+        if(type == '0' || ifname == NULL)
+            return cry_error();
+    }
+    else
+    {
+        type = 'p';
+        if(arg1 == NULL)
+            return cry_error();
+        ifname = arg1;
+        if(arg2 == NULL)
+            ofname = "-1";
+        else
+            ofname = arg2;
+    }
 
     // open files
     FILE* ifp = NULL;
