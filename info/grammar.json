@@ -36,7 +36,7 @@
         "assignStmt": [["var", "ASSIGNOP", "expr", "SEMICOL"]],
         "fCallStmt": [["retCapture", "USE", "MODULE", "ID", "WITH", "PARAMETERS", "idList", "SEMICOL"]],
         "retCapture": [["SQBO", "idList", "SQBC", "ASSIGNOP"], []],
-        "idList": [["id", "idList2"]],
+        "idList": [["ID", "idList2"]],
         "idList2": [["COMMA", "ID", "idList2"], []],
         "declareStmt": [["DECLARE", "idList", "COLON", "type", "SEMICOL"]],
         "condStmt": [["SWITCH", "BO", "ID", "BC", "START", "caseStmt", "caseStmts", "defaultCase", "END"]],
@@ -44,7 +44,7 @@
         "caseStmt": [["CASE", "constant", "COLON", "stmts", "BREAK", "SEMICOL"]],
         "defaultCase": [["DEFAULT", "COLON", "stmts", "BREAK", "SEMICOL"], []],
         "forStmt": [["FOR", "BO", "ID", "IN", "cRange", "BC", "START", "stmts", "END"]],
-        "whileStmt": [["WHILE", "BO", "boolExpr", "BC", "START", "stmts", "END"]],
+        "whileStmt": [["WHILE", "BO", "expr", "BC", "START", "stmts", "END"]],
 
         "expr": [["andExpr", "expr2"]],
         "expr2": [["OR", "andExpr", "expr2"], []],
