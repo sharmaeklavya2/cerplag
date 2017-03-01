@@ -28,8 +28,13 @@ type ARRAY SQBO cRange SQBC OF basicType .
 var ID whichID .
 whichID SQBO index SQBC .
 whichID .
-aliteral var NUM RNUM .
-constant NUM RNUM TRUE FALSE .
+aliteral var .
+aliteral NUM .
+aliteral RNUM .
+constant NUM .
+constant RNUM .
+constant TRUE .
+constant FALSE .
 index NUM .
 index ID .
 cRange NUM RANGEOP NUM .

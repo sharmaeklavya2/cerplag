@@ -24,8 +24,8 @@
 
         "var": [["ID", "whichID"]],
         "whichID": [["SQBO", "index", "SQBC"], []],
-        "aliteral": [["var", "NUM", "RNUM"]],
-        "constant": [["NUM", "RNUM", "TRUE", "FALSE"]],
+        "aliteral": [["var"], ["NUM"], ["RNUM"]],
+        "constant": [["NUM"], ["RNUM"], ["TRUE"], ["FALSE"]],
         "index": [["NUM"], ["ID"]],
         "cRange": [["NUM", "RANGEOP", "NUM"]],
 
