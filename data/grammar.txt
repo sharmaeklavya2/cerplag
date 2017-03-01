@@ -35,6 +35,8 @@ constant NUM .
 constant RNUM .
 constant TRUE .
 constant FALSE .
+literal var .
+literal constant .
 index NUM .
 index ID .
 cRange NUM RANGEOP NUM .
@@ -81,7 +83,7 @@ multExpr2 mdOp unExpr multExpr2 .
 multExpr2 .
 unExpr pmOp basicExpr .
 unExpr basicExpr .
-basicExpr var .
+basicExpr literal .
 basicExpr BO expr BC .
 pmOp PLUS .
 pmOp MINUS .

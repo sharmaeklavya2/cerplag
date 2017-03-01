@@ -26,6 +26,7 @@
         "whichID": [["SQBO", "index", "SQBC"], []],
         "aliteral": [["var"], ["NUM"], ["RNUM"]],
         "constant": [["NUM"], ["RNUM"], ["TRUE"], ["FALSE"]],
+        "literal": [["var"], ["constant"]],
         "index": [["NUM"], ["ID"]],
         "cRange": [["NUM", "RANGEOP", "NUM"]],
 
@@ -57,7 +58,7 @@
         "multExpr": [["unExpr", "multExpr2"]],
         "multExpr2": [["mdOp", "unExpr", "multExpr2"], []],
         "unExpr": [["pmOp", "basicExpr"], ["basicExpr"]],
-        "basicExpr": [["var"], ["BO", "expr", "BC"]],
+        "basicExpr": [["literal"], ["BO", "expr", "BC"]],
 
         "pmOp": [["PLUS"], ["MINUS"]],
         "relOp": [["LT"], ["LE"], ["GT"], ["GE"], ["EQ"], ["NE"]],
