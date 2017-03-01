@@ -1,0 +1,90 @@
+program
+program moduleDeclarations otherModules driverModule otherModules .
+moduleDeclarations moduleDeclaration moduleDeclarations .
+moduleDeclarations .
+moduleDeclaration DECLARE MODULE ID SEMICOL .
+otherModules module otherModules .
+otherModules .
+driverModule DRIVERDEF DRIVER PROGRAM DRIVERENDDEF moduleBody .
+module DEF MODULE ID ENDDEF TAKES INPUT SQBO iParamList SQBC SEMICOL oParamStmt moduleBody .
+moduleBody START stmts END .
+stmts stmt stmts .
+stmts .
+oParamStmt RETURNS SQBO oParamList SQBC SEMICOL .
+oParamStmt .
+oParamList oParam oParamList2 .
+oParamList2 COMMA oParam oParamList2 .
+oParamList2 .
+oParam ID COLON basicType .
+iParamList iParam iParamList2 .
+iParamList2 COMMA iParam iParamList2 .
+iParamList2 .
+iParam ID COLON type .
+basicType INTEGER .
+basicType REAL .
+basicType BOOLEAN .
+type basicType .
+type ARRAY SQBO cRange SQBC OF basicType .
+var ID whichID .
+whichID SQBO index SQBC .
+whichID .
+aliteral var NUM RNUM .
+constant NUM RNUM TRUE FALSE .
+index NUM .
+index ID .
+cRange NUM RANGEOP NUM .
+stmt inputStmt .
+stmt outputStmt .
+stmt assignStmt .
+stmt fCallStmt .
+stmt declareStmt .
+stmt condStmt .
+stmt forStmt .
+stmt whileStmt .
+inputStmt GET_VALUE BO ID BC SEMICOL .
+outputStmt PRINT BO aliteral BC SEMICOL .
+assignStmt var ASSIGNOP expr SEMICOL .
+fCallStmt retCapture USE MODULE ID WITH PARAMETERS idList SEMICOL .
+retCapture SQBO idList SQBC ASSIGNOP .
+retCapture .
+idList ID idList2 .
+idList2 COMMA ID idList2 .
+idList2 .
+declareStmt DECLARE idList COLON type SEMICOL .
+condStmt SWITCH BO ID BC START caseStmt caseStmts defaultCase END .
+caseStmts caseStmt caseStmts .
+caseStmts .
+caseStmt CASE constant COLON stmts BREAK SEMICOL .
+defaultCase DEFAULT COLON stmts BREAK SEMICOL .
+defaultCase .
+forStmt FOR BO ID IN cRange BC START stmts END .
+whileStmt WHILE BO expr BC START stmts END .
+expr andExpr expr2 .
+expr2 OR andExpr expr2 .
+expr2 .
+andExpr relExpr andExpr2 .
+andExpr2 AND relExpr andExpr2 .
+andExpr2 .
+relExpr addExpr relExpr2 .
+relExpr2 relOp addExpr relExpr2 .
+relExpr2 .
+addExpr multExpr addExpr2 .
+addExpr2 pmOp multExpr addExpr2 .
+addExpr2 .
+multExpr unExpr multExpr2 .
+multExpr2 mdOp unExpr multExpr2 .
+multExpr2 .
+unExpr pmOp basicExpr .
+unExpr basicExpr .
+basicExpr var .
+basicExpr BO expr BC .
+pmOp PLUS .
+pmOp MINUS .
+relOp LT .
+relOp LE .
+relOp GT .
+relOp GE .
+relOp EQ .
+relOp NE .
+mdOp MUL .
+mdOp DIV .

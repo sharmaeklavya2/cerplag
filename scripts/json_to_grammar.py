@@ -15,17 +15,7 @@ for x, alphas in json_obj.items():
 
 terminals.difference_update(json_obj.keys())
 
-def get_symbol(s):
-	if s in terminals:
-		return s
-	else:
-		return '<{}>'.format(s)
-
-def get_term(x):
-	if len(x) == 0:
-		return "e"
-	else:
-		return ' '.join([get_symbol(s) for s in x])
-
-for x, alphas in json_obj.items():
-	print('<{}> ->'.format(x), " | ".join([get_term(alpha) for alpha in alphas]))
+print(start_symbol)
+for X, alphas in json_obj.items():
+    for alpha in alphas:
+        print(X, *alpha, '.')
