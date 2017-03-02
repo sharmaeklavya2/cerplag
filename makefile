@@ -3,7 +3,7 @@ debug_flags = -g -Wall -Wpedantic -Wno-sign-compare
 release_flags = -O2
 
 sub:
-	gcc $(debug_flags) $(sources) driver_sub.c
+	gcc $(debug_flags) $(sources) driver_sub.c -o stage1exe
 debug:
 	gcc $(debug_flags) $(sources) driver.c
 release:
