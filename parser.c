@@ -8,6 +8,7 @@
 #include "token.h"
 #include "util/int_stack.h"
 #include "util/tree.h"
+#include "util/bitset.h"
 
 #define NUM_NONTERMS NUM_GS - NUM_TOKENS
 
@@ -31,6 +32,14 @@ char* GS_STRS[] = {
 int rule_begin[NUM_NONTERMS], rule_end[NUM_GS];
 // rule_begin[i] is the rule number of the first rule for the non-terminal i.
 // rule_end[i] is 1 + the rule number of the last rule for the non-terminal i.
+
+bitset_t first[NUM_NONTERMS], follow[NUM_NONTERMS];
+
+bool follow_changed = false;
+int num_rules;
+
+const bitset_t unset_bitset = -1;
+const bitset_t empty_bitset = 0ull;
 
 // Utility ---------------------------------------------------------------------
 
@@ -120,12 +129,14 @@ gt_node* get_gt_node(gsymb_t sid)
     gt_node* n = malloc(sizeof(gt_node));
     n->value = sid;
     n->next = NULL;
+    n->first = unset_bitset;
     return n;
 }
 
-void read_grammar(FILE* fp)
+int read_grammar(FILE* fp)
+// returns the number of rules read
 {
-    int i;
+    int i, j;
     for(i=0; i<NUM_NONTERMS; ++i)
     {
         rule_begin[i] = 10000;
@@ -133,7 +144,7 @@ void read_grammar(FILE* fp)
     }
     for(i=0; i<NUM_RULES; ++i)
     {
-        rules[i].lhs = GS_ERR;
+        rules[i].lhs = NUM_GS;
         rules[i].head = NULL;
         rules[i].tail = NULL;
     }
@@ -172,31 +183,52 @@ void read_grammar(FILE* fp)
             rules[i].tail = n;
         }
     }
-    for(i=0; i<NUM_NONTERMS; ++i)
+    for(j=0; j<NUM_NONTERMS; ++j)
     {
-        if(rule_begin[i] > NUM_GS)
-            fprintf(stderr, "rule_begin[%s, %d] = %d\n", GS_STRS[i + NUM_TOKENS], i, rule_begin[i]);
-        if(rule_end[i] <= 0)
-            fprintf(stderr, "rule_end[%s, %d] = %d\n", GS_STRS[i + NUM_TOKENS], i, rule_end[i]);
+        if(rule_begin[j] > NUM_GS)
+            fprintf(stderr, "rule_begin[%s, %d] = %d\n", GS_STRS[j + NUM_TOKENS], j, rule_begin[j]);
+        if(rule_end[j] <= 0)
+            fprintf(stderr, "rule_end[%s, %d] = %d\n", GS_STRS[j + NUM_TOKENS], j, rule_end[j]);
     }
+    return i;
 }
 
 void read_parse_table(const char*);
+bool make_parse_table();
+void update_follow(gsymb_t start_symb);
 
 gsymb_t init_parser()
 {
     init_lexer();
+
     init_gsymb_ht();
     char str[100];
     FILE* gfp = fopen("data/grammar.txt", "r");
     fscanf(gfp, "%s", str);
     gsymb_t start_symb = get_gsymb_id(str);
     //fprintf(stderr, "start_symbol = %s\n", GS_STRS[start_symb]);
-    read_grammar(gfp);
+    num_rules = read_grammar(gfp);
     fclose(gfp);
 
-    char pt_fname[] = "data/parse_table.txt";
-    read_parse_table(pt_fname);
+    int i;
+    for(i=0; i < NUM_NONTERMS; ++i)
+    {
+        first[i] = unset_bitset;
+        follow[i] = empty_bitset;
+    }
+
+    update_follow(start_symb);
+
+    for(int i=0; i<NUM_NONTERMS; i++)
+        for(int j=0; j<NUM_TOKENS; j++)
+            pt[i][j] = -1;
+
+    bool is_ll1 = make_parse_table();
+    //char pt_fname[] = "data/parse_table.txt";
+    //read_parse_table(pt_fname);
+
+    if(!is_ll1)
+        fprintf(stderr, "The grammar is not LL1\n");
 
     return start_symb;
 }
@@ -229,10 +261,171 @@ void destroy_parser()
 
 // Get parse table -------------------------------------------------------------
 
-void read_parse_table(const char* file_name){
+bitset_t get_first_str(gt_node*);
+
+bitset_t get_first_symb(gsymb_t sid)
+// get first set of a symbol
+{
+    if(sid < 0 || sid >= NUM_GS)
+    {
+        fprintf(stderr, "get_first_nt: Invalid sid %d\n", sid);
+        return empty_bitset;
+    }
+    else if(sid < (int)NUM_TOKENS)
+        return bitset_singleton(sid);
+    else
+    {
+        int ntid = get_nt_id(sid);
+        if(first[ntid] == unset_bitset)
+        {
+            int i;
+            first[ntid] = empty_bitset;
+            for(i=rule_begin[ntid]; i < rule_end[ntid]; ++i)
+                first[ntid] |= get_first_str(rules[i].head);
+        }
+        return first[ntid];
+    }
+}
+
+bitset_t get_first_str(gt_node* node)
+// get first set of a linked list string starting at node
+{
+    if(node == NULL)
+        return bitset_singleton(T_EOF);
+
+    if(node->first == unset_bitset)
+    {
+        int sid = node->value;
+        bitset_t s = get_first_symb(sid);
+        if(bitset_has(s, T_EOF))
+            s = bitset_remove(s, T_EOF) | get_first_str(node->next);
+        node->first = s;
+    }
+    return node->first;
+}
+
+void update_follow_helper(int rule_no)
+// update follow using rule number i
+{
+    gt_node* n = rules[rule_no].head;
+    for(; n != NULL; n = n->next)
+    {
+        gsymb_t sid = n->value;
+        if(sid >= (int)NUM_TOKENS)
+        {
+            int ntid = get_nt_id(sid);
+            bitset_t s = get_first_str(n->next);
+            bitset_t new_follow = bitset_remove(s, T_EOF) | follow[ntid];
+            if(follow[ntid] != new_follow)
+            {
+                follow_changed = true;
+                follow[ntid] = new_follow;
+            }
+            if(bitset_has(s, T_EOF))
+            {
+                bitset_t s3 = follow[get_nt_id(rules[rule_no].lhs)];
+                new_follow = s3 | follow[ntid];
+                if(new_follow != follow[ntid])
+                {
+                    follow_changed = true;
+                    follow[ntid] = new_follow;
+                }
+            }
+        }
+    }
+}
+
+void update_follow(gsymb_t start_symb)
+{
+    follow[get_nt_id(start_symb)] = bitset_singleton(T_EOF);
+    follow_changed = true;
+    while(follow_changed)
+    {
+        follow_changed = false;
+        int i;
+        for(i=0; i<num_rules; ++i)
+            update_follow_helper(i);
+    }
+}
+
+void print_bitset(bitset_t s, FILE* fp)
+{
+    if(s == unset_bitset)
+        fprintf(fp, "{unset}\n");
+    else
+    {
+        int i;
+        fprintf(fp, "{");
+        //fprintf(fp, "%llu {", s);
+        bool first = true;
+        for(i=0; i < NUM_TOKENS; ++i)
+            if(bitset_has(s, i))
+            {
+                if(!first)
+                    fprintf(fp, ", ");
+                else
+                    first = false;
+                //fprintf(fp, "%s(%d)", GS_STRS[i], i);
+                fprintf(fp, "%s", GS_STRS[i]);
+            }
+        fprintf(fp, "}\n");
+    }
+}
+
+void print_firsts(FILE* fp)
+{
+    int i;
+    for(i=0; i < NUM_NONTERMS; ++i)
+    {
+        fprintf(fp, "%s: ", GS_STRS[NUM_TOKENS + i]);
+        print_bitset(get_first_symb(NUM_TOKENS + i), fp);
+    }
+}
+
+void print_follows(FILE* fp)
+{
+    int i;
+    for(i=0; i < NUM_NONTERMS; ++i)
+    {
+        fprintf(fp, "%s: ", GS_STRS[NUM_TOKENS + i]);
+        print_bitset(follow[i], fp);
+    }
+}
+
+void print_parse_table()
+{
     for(int i=0; i<NUM_NONTERMS; i++)
         for(int j=0; j<NUM_TOKENS; j++)
-            pt[i][j] = -1;
+            if(pt[i][j] != -1)
+                printf("pt[%s][%s] = %d\n", GS_STRS[i+NUM_TOKENS], GS_STRS[j], pt[i][j]);
+}
+
+bool make_parse_table()
+{
+    int i;
+    tok_t j;
+    bool is_ll1 = true;
+    for(i=0; i < num_rules; ++i)
+    {
+        int ntid = get_nt_id(rules[i].lhs);
+        bitset_t fa = get_first_str(rules[i].head);
+        bitset_t terms;
+        if(bitset_has(fa, T_EOF))
+            terms = follow[ntid] | bitset_remove(fa, T_EOF);
+        else
+            terms = fa;
+        for(j=0; j < NUM_TOKENS; ++j)
+            if(bitset_has(terms, j))
+            {
+                if(pt[ntid][j] != -1)
+                    is_ll1 = false;
+                pt[ntid][j] = i;
+            }
+    }
+    return is_ll1;
+}
+
+void read_parse_table(const char* file_name){
     FILE * fp = fopen(file_name, "r");
     if(fp == NULL){
         fprintf(stderr, "File %s not found\n", file_name);
@@ -372,18 +565,18 @@ int parser_main(FILE* ifp, FILE* ofp, int verbosity)
 {
     gsymb_t start_symb = init_parser();
 
-    /*
-    for(int i=0; i<NUM_NONTERMS; i++){
-        for(int j=0; j<NUM_TOKENS; j++)
-            printf("%d ", pt[i][j]);
-    printf("\n");
+    if(verbosity > 0)
+    {
+        print_firsts(stdout);
+        printf("\n");
+        print_follows(stdout);
+        print_parse_table();
     }
-    */
 
     TreeNode* root = build_parse_tree(ifp, start_symb);
     print_tree(root, ofp);
-
     destroy_tree(root);
+
     destroy_parser();
     return 0;
 }

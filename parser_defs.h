@@ -2,6 +2,7 @@
 #define H_PARSER_DEFS
 
 #include "token.h"
+#include "util/bitset.h"
 
 /*
 typedef enum
@@ -34,6 +35,7 @@ struct gt_node_
 {
     struct gt_node_* next;
     gsymb_t value;
+    bitset_t first;
 };
 
 typedef struct gt_node_ gt_node;
