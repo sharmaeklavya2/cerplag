@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     // call appropriate function
     int retval = 0;
     if(type == 'l')
-        retval = lexer_main(ifp, ofp, verbosity);
+        retval = lexer_main(ifp, ofp, verbosity, print_token);
     else
         retval = parser_main(ifp, ofp, verbosity, print_tree);
 

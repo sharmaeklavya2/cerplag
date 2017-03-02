@@ -1,6 +1,8 @@
 #ifndef H_TOKEN
 #define H_TOKEN
 
+#include <stdio.h>
+
 #define LEXEME_BUFSIZE 30
 
 #define X(a, b) T_##a,
@@ -25,5 +27,7 @@ typedef struct
     int tid;
     i_or_f_t num;
 }Token;
+
+typedef void token_printer(const Token*, FILE*);
 
 #endif  // H_TOKEN

@@ -510,9 +510,25 @@ void get_token(FILE* fp, Dfa* pdfa, Token* ptok, bool debug)
     }
 }
 
+void print_token(const Token* ptok, FILE* fp)
+{
+    fprintf(fp, "%2d %2d %s %s", ptok->line, ptok->col, TOK_STRS[ptok->tid], ptok->lexeme);
+    if(ptok->tid == T_NUM)
+        fprintf(fp, " %d\n", ptok->num.i);
+    else if(ptok->tid == T_RNUM)
+        fprintf(fp, " %lf\n", ptok->num.f);
+    else
+        fprintf(fp, "\n");
+}
+
+void print_token_sub(const Token* tok, FILE* fp)
+{
+	fprintf(fp, "%-15s %-10s %3d\n", TOK_STRS[tok->tid], tok->lexeme, tok->line);
+}
+
 // Driver program --------------------------------------------------------------
 
-int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
+int lexer_main(FILE* ifp, FILE* ofp, int verbosity, token_printer tp)
 {
     if(verbosity >= 4)
     {
@@ -572,14 +588,7 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
     do
     {
         get_token(ifp, &dfa, &tok, debug);
-        fprintf(ofp, "%2d %2d %2d %s %s", tok.line, tok.col, tok.tid,
-            TOK_STRS[tok.tid], tok.lexeme);
-        if(tok.tid == T_NUM)
-            fprintf(ofp, " %d\n", tok.num.i);
-        else if(tok.tid == T_RNUM)
-            fprintf(ofp, " %lf\n", tok.num.f);
-        else
-            fprintf(ofp, "\n");
+        tp(&tok, ofp);
     }
     while(tok.tid != T_EOF);
 
