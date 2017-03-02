@@ -2,7 +2,7 @@
 *.pyc
 __pycache__/
 /readme.html
-*.exe
+*exe
 *.out
 
 # Trash
