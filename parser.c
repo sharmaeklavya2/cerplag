@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include "parser_defs.h"
+#include "parserDefs.h"
 #include "pch_int_hmap.h"
 #include "lexer.h"
 #include "token.h"

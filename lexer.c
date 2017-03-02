@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "token.h"
-#include "lexer_defs.h"
+#include "lexerDefs.h"
 #include "assert.h"
 #include "pch_int_hmap.h"
 

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "token.h"
-#include "lexer_defs.h"
+#include "lexerDefs.h"
 
 void init_dfa(Dfa*);
 void init_token(Token*);
