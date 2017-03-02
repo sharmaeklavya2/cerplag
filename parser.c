@@ -278,7 +278,7 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
             copy_symbol(current_tn->value, &cur_tkn);
             current_tn = get_successor(current_tn);
         }else{
-            fprintf(stderr, "parse_error_1: %2d %2d \'%s\' (%s)\nGot %s (\'%s\') instead of %s.\n\n",
+            fprintf(stderr, "parse_error_1: line %2d, col %2d: \'%s\' (%s)\nGot %s (\'%s\') instead of %s.\n\n",
                 cur_tkn.line, cur_tkn.col, cur_tkn.lexeme, GS_STRS[cur_tkn.tid],
                 GS_STRS[cur_tkn.tid], cur_tkn.lexeme, GS_STRS[cur_st_top]);
             //int_stack_print(&st, stderr);
@@ -301,7 +301,7 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
             if(current_tn->first_child != NULL) current_tn = current_tn->first_child;
             else current_tn = get_successor(current_tn);
         }else{
-            fprintf(stderr, "parse_error_2: %2d %2d \'%s\' (%s)\n%s (\'%s\') isn't expected here.\n\n",
+            fprintf(stderr, "parse_error_2: line %2d, col %2d: \'%s\' (%s)\n%s (\'%s\') isn't expected here.\n\n",
                 cur_tkn.line, cur_tkn.col, cur_tkn.lexeme, GS_STRS[cur_tkn.tid],
                 GS_STRS[cur_tkn.tid], cur_tkn.lexeme);
             //int_stack_print(&st, stderr);

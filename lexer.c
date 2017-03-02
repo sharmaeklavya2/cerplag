@@ -559,7 +559,7 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
         if(lerr != LERR_NONE)
         {
             got_error = true;
-            fprintf(stderr, "lex_error_%d: %2d %2d \'%s\' %s: %s\n", lerr, tok.line, tok.col,
+            fprintf(stderr, "lex_error_%d: line %2d, col %2d: \'%s\' (%s)\n%s\n\n", lerr, tok.line, tok.col,
                 tok.lexeme, ERRORS1[lerr], ERRORS2[lerr]);
         }
     }
