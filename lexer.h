@@ -11,7 +11,7 @@ void init_token(Token*);
 
 void init_lexer();
 void destroy_lexer();
-lerr_t get_token(FILE*, Dfa*, Token*, bool debug);
+void get_token(FILE*, Dfa*, Token*, bool debug);
 int lexer_main(FILE* in, FILE* out, int verbosity);
 
 #endif  // H_LEXER

@@ -56,6 +56,8 @@ static action_t action_table[NUM_STATES][NUM_CCLASSES];
 
 static pch_int_hmap keyword_hmap;
 
+int error_count = 0;
+
 // Precompute stuff ------------------------------------------------------------
 
 void precompute_cclass(cclass_t* cclass)
@@ -123,14 +125,18 @@ void precompute_dfa()
 
     // whitespace and restricted chars
 
+    for(c=0; c < NUM_CCLASSES; ++c)
+        add_edge(S_START, c, S_START, A_TOKF);
     add_edge(S_START, C_WS, S_START, A_IGN);
     add_edge(S_START, C_NL, S_START, A_NL);
-    add_edge(S_START, C_REST, S_START, A_TOKF);
 
     // identifiers
 
     add_edge(S_START, C_ALPHA, S_ID, A_ADD);
     add_edge(S_START, C_E, S_ID, A_ADD);
+    add_edge(S_START, C_UNSC, S_ID, A_ADD);
+    // undescrore isn't allowed as the first character in an identifier
+    // but we'll handle it later
     add_edge(S_ID, C_ALPHA, S_ID, A_ADD);
     add_edge(S_ID, C_E, S_ID, A_ADD);
     add_edge(S_ID, C_DIG, S_ID, A_ADD);
@@ -208,6 +214,7 @@ void precompute_keyword_hmap()
 
 void init_lexer()
 {
+    error_count = 0;
     precompute_cclass(pc_cclass);
     precompute_final_states(is_final);
     precompute_dfa();
@@ -233,15 +240,22 @@ cclass_t get_cclass(char ch)
 
 char get_character(FILE* fp)
 {
+    char ch;
+    //static char fmt_str[] = "input: \'%c\' (%d)\n";
     if(input_ptr == NULL || *input_ptr == '\0')
     {
         int read = fread(input_buffer, sizeof(char), INPUT_BUFSIZE-1, fp);
         input_buffer[read] = '\0';
         input_ptr = input_buffer;
         if(read == 0)
+        {
+            //fprintf(stderr, fmt_str, '\0', 0);
             return '\0';
+        }
     }
-    return *(input_ptr++);
+    ch = *(input_ptr++);
+    //fprintf(stderr, fmt_str, ch, (int)ch);
+    return ch;
 }
 
 tok_t predict_token_from_char(char ch)
@@ -291,6 +305,16 @@ tok_t predict_token_from_state(state_t s)
     }
 }
 
+void print_lex_error(lerr_t lerr, const Token* ptok)
+{
+    if(lerr != LERR_NONE)
+    {
+        error_count++;
+        fprintf(stderr, "lex_error_%d: line %2d, col %2d: \'%s\' \n%s: %s\n\n", lerr,
+            ptok->line, ptok->col, ptok->lexeme, ERRORS1[lerr], ERRORS2[lerr]);
+    }
+}
+
 // DFA implementation ----------------------------------------------------------
 
 void swap_buffers(Dfa* pdfa, Token* ptok)
@@ -303,9 +327,9 @@ void swap_buffers(Dfa* pdfa, Token* ptok)
     ptok->size = s;
 }
 
-lerr_t execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
+void execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
 {
-    lerr_t retval = LERR_NONE;
+    lerr_t lerr = LERR_NONE;
     switch(a)
     {
     case A_ADD:
@@ -330,11 +354,11 @@ lerr_t execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
         break;
     case A_ERR:
         if(get_cclass(ch) == C_REST)
-            retval = LERR_BAD_SYM;
+            lerr = LERR_BAD_SYM;
         else if(pdfa->s == S_I1)
-            retval = LERR_NUM;
+            lerr = LERR_NUM;
         else
-            retval = LERR_UPAT;
+            lerr = LERR_UPAT;
         // break statement intentionally left out
     case A_TOKS:
     case A_TOKF:
@@ -359,20 +383,22 @@ lerr_t execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
         if(pdfa->trunc)
         {
             ptok->tid = T_ERR;
-            retval = LERR_LONG_TOK;
+            lerr = LERR_LONG_TOK;
             pdfa->trunc = false;
         }
         else if(a == A_TOKS)
         {
             ptok->tid = predict_token_from_state(pdfa->s);
             if(ptok->tid == T_ERR)
-                retval = LERR_OTH;
+                lerr = LERR_OTH;
         }
         else if(a == A_TOKF)
         {
             ptok->tid = predict_token_from_char(ptok->lexeme[0]);
             if(get_cclass(ch) == C_REST)
-                retval = LERR_BAD_SYM;
+                lerr = LERR_BAD_SYM;
+            else if(ptok->tid == T_ERR)
+                lerr = LERR_UPAT;
         }
         else if(a == A_TOKN)
             ptok->tid = T_NUM;
@@ -394,7 +420,7 @@ lerr_t execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
         assert(false);
         break;
     }
-    return retval;
+    print_lex_error(lerr, ptok);
 }
 
 void init_dfa(Dfa* pdfa)
@@ -429,17 +455,15 @@ tok_t keyword_check(const char* s)
         return p->value;
 }
 
-lerr_t post_process(Token* ptok)
+void post_process(Token* ptok)
 {
-    lerr_t retval = LERR_NONE;
     if((ptok->tid) == T_ID)
     {
         ptok->tid = keyword_check(ptok->lexeme);
         if((ptok->tid) == T_ID && (ptok->size) > 8)
-        {
-            ptok->tid = T_ERR;
-            retval = LERR_LONG_ID;
-        }
+            print_lex_error(LERR_LONG_ID, ptok);
+        if((ptok->tid) == T_ID && ptok->lexeme[0] == '_')
+            print_lex_error(LERR_ID_UNSC, ptok);
         ptok->num.f = 0.0;
     }
     else if(ptok->tid == T_NUM)
@@ -448,16 +472,15 @@ lerr_t post_process(Token* ptok)
         ptok->num.f = atof(ptok->lexeme);
     else
         ptok->num.f = 0.0;
-    return retval;
 }
 
-bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, lerr_t *plerr, bool debug)
+bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, bool debug)
 // return true if token is ready
 {
     cclass_t cclass = get_cclass(ch);
     state_t s2 = state_table[pdfa->s][cclass];
     action_t a = action_table[pdfa->s][cclass];
-    *plerr = execute_action(a, ch, pdfa, ptok);
+    execute_action(a, ch, pdfa, ptok);
     if(debug)
         fprintf(stderr, "\t%s %c %s %s\n", STATE_STRS[pdfa->s], ch, STATE_STRS[s2], ACTION_STRS[a]);
     pdfa->s = s2;
@@ -465,9 +488,8 @@ bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, lerr_t *plerr, bool debug)
     return (a == A_TOKS || a == A_TOKF || a == A_TOKN || a == A_ERR);
 }
 
-lerr_t get_token(FILE* fp, Dfa* pdfa, Token* ptok, bool debug)
+void get_token(FILE* fp, Dfa* pdfa, Token* ptok, bool debug)
 {
-    lerr_t lerr;
     while(true)
     {
         char ch = get_character(fp);
@@ -478,10 +500,13 @@ lerr_t get_token(FILE* fp, Dfa* pdfa, Token* ptok, bool debug)
             ptok->lexeme[0] = '\0';
             ptok->size = 0;
             ptok->tid = T_EOF;
-            return LERR_NONE;
+            break;
         }
-        else if(tick_dfa(ch, pdfa, ptok, &lerr, debug))
-            return post_process(ptok);
+        else if(tick_dfa(ch, pdfa, ptok, debug))
+        {
+            post_process(ptok);
+            break;
+        }
     }
 }
 
@@ -543,11 +568,10 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
     Dfa dfa;
     init_dfa(&dfa);
     init_token(&tok);
-    bool got_error = false;
     bool debug = (verbosity >= 1);
     do
     {
-        lerr_t lerr = get_token(ifp, &dfa, &tok, debug);
+        get_token(ifp, &dfa, &tok, debug);
         fprintf(ofp, "%2d %2d %2d %s %s", tok.line, tok.col, tok.tid,
             TOK_STRS[tok.tid], tok.lexeme);
         if(tok.tid == T_NUM)
@@ -556,18 +580,12 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
             fprintf(ofp, " %lf\n", tok.num.f);
         else
             fprintf(ofp, "\n");
-        if(lerr != LERR_NONE)
-        {
-            got_error = true;
-            fprintf(stderr, "lex_error_%d: line %2d, col %2d: \'%s\' (%s)\n%s\n\n", lerr, tok.line, tok.col,
-                tok.lexeme, ERRORS1[lerr], ERRORS2[lerr]);
-        }
     }
     while(tok.tid != T_EOF);
 
     destroy_lexer();
 
-    if(got_error)
+    if(error_count > 0)
         return 1;
     else
         return 0;
