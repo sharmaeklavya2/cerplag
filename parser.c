@@ -241,24 +241,24 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
     do{
     gsymb_t cur_st_top = int_stack_top(&st);
     if(is_t(cur_st_top) || cur_st_top == GS_EOF){
+        int_stack_pop(&st);
         if(cur_st_top == cur_tkn.tid){
-            int_stack_pop(&st);
             copy_symbol(current_tn->value, &cur_tkn);
             current_tn = get_successor(current_tn);
-            get_token(ifp, &dfa, &cur_tkn, false);
-            //fprintf(stderr, "%s\n", GS_STRS[cur_tkn.tid]);
-            //int_stack_print(&st, stderr);
         }else{
-            fprintf(stderr, "No valid derivation of string exists! 1\n");
-            fprintf(stderr, "Current stack top: %s\n", GS_STRS[cur_st_top]);
-            fprintf(stderr, "Current Token: %s\n", GS_STRS[cur_tkn.tid]);
+            fprintf(stderr, "parse_error_1: %2d %2d \'%s\' (%s)\nGot %s (\'%s\') instead of %s.\n\n",
+                cur_tkn.line, cur_tkn.col, cur_tkn.lexeme, GS_STRS[cur_tkn.tid],
+                GS_STRS[cur_tkn.tid], cur_tkn.lexeme, GS_STRS[cur_st_top]);
             //int_stack_print(&st, stderr);
         }
+        get_token(ifp, &dfa, &cur_tkn, false);
+        //fprintf(stderr, "%s\n", GS_STRS[cur_tkn.tid]);
+        //int_stack_print(&st, stderr);
     }else{
         int rule_num = pt[get_nt_id(int_stack_top(&st))][cur_tkn.tid];
         //fprintf(stderr, "pt[%s, %d][%s, %d] = %d\n", GS_STRS[int_stack_top(&st)], get_nt_id(int_stack_top(&st)), GS_STRS[cur_tkn.tid], cur_tkn.tid, rule_num);
+        int_stack_pop(&st);
         if(rule_num != -1){
-            int_stack_pop(&st);
             push_ll(&st, rules[rule_num].head);
             gt_node * tmp = rules[rule_num].head;
             while(tmp != NULL){
@@ -269,8 +269,9 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
             if(current_tn->first_child != NULL) current_tn = current_tn->first_child;
             else current_tn = get_successor(current_tn);
         }else{
-            fprintf(stderr, "No valid derivation of string exists! 2\n");
-            fprintf(stderr, "Current Token: %s\n", GS_STRS[cur_tkn.tid]);
+            fprintf(stderr, "parse_error_2: %2d %2d \'%s\' (%s)\n%s (\'%s\') isn't expected here.\n\n",
+                cur_tkn.line, cur_tkn.col, cur_tkn.lexeme, GS_STRS[cur_tkn.tid],
+                GS_STRS[cur_tkn.tid], cur_tkn.lexeme);
             //int_stack_print(&st, stderr);
         }
     }
