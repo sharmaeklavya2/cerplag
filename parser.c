@@ -185,7 +185,7 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
 	if(is_t(cur_st_top) || cur_st_top == GS_EOF){
 	    if(cur_st_top == cur_tkn.tid){
 			int_stack_pop(&st);
-            copy_symbol(current_tn->symbol, &cur_tkn);
+            copy_symbol(current_tn->value, &cur_tkn);
 			current_tn = get_successor(current_tn);
 			get_token(ifp, &dfa, &cur_tkn, false);
 			//fprintf(stderr,"%s\n",GS_STRS[cur_tkn.tid]);
@@ -244,9 +244,9 @@ void print_node(TreeNode* root, FILE* fp)
     if(root == NULL)
         fprintf(fp, "print_node: NULL\n");
     else
-        fprintf(fp, "print_node: %p %s\n", root, GS_STRS[root->symbol->tid]);
+        fprintf(fp, "print_node: %p %s\n", root, GS_STRS[root->value->tid]);
     */
-    Symbol* s = root->symbol;
+    Symbol* s = root->value;
     char empty[] = "----";
     if((int)(s->tid) < NUM_TOKENS)
         fprintf(fp, "%20s %2d %20s ", s->lexeme, s->line, GS_STRS[s->tid]);
@@ -263,7 +263,7 @@ void print_node(TreeNode* root, FILE* fp)
     if(root->parent == NULL)
         fprintf(fp, "%20s ", empty);
     else
-        fprintf(fp, "%20s ", GS_STRS[root->parent->symbol->tid]);
+        fprintf(fp, "%20s ", GS_STRS[root->parent->value->tid]);
 
     if(root->first_child == NULL)
         fprintf(fp, "yes ");
