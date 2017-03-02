@@ -9,9 +9,15 @@
 #include "util/int_stack.h"
 #include "util/tree.h"
 
-#define NUM_NONTERMS NUM_GS - NUM_TOKENS  
+#define NUM_NONTERMS NUM_GS - NUM_TOKENS
+
+// Global variables ------------------------------------------------------------
 
 static pch_int_hmap gsymb_ht;
+
+Rule rules[NUM_RULES];  // list of rules in the grammar
+
+int pt[NUM_NONTERMS][NUM_TOKENS];   // parse table
 
 char* GS_STRS[] = {
 #define X(a, b) #a,
@@ -22,6 +28,8 @@ char* GS_STRS[] = {
 #undef X
 };
 
+// Initialize ------------------------------------------------------------------
+
 void init_gsymb_ht()
 {
     pch_int_hmap_init(&gsymb_ht, 150);
@@ -31,16 +39,6 @@ void init_gsymb_ht()
 #define X(a) pch_int_hmap_update(&gsymb_ht, #a, GS_##a);
 #include "data/nonterms.xmac"
 #undef X
-}
-
-Rule rules[NUM_RULES];
-
-gt_node* get_gt_node(gsymb_t sid)
-{
-    gt_node* n = malloc(sizeof(gt_node));
-    n->value = sid;
-    n->next = NULL;
-    return n;
 }
 
 gsymb_t get_gsymb_id(const char* str)
@@ -54,13 +52,14 @@ gsymb_t get_gsymb_id(const char* str)
     return hmap_n->value;
 }
 
-void init_symbol(Symbol * symb){
-    symb->line = 0;
-    symb->col = 0;
-    symb->lexeme = NULL;
-    symb->size = 0;
-    symb->tid = T_ERR;
-    symb->num.f = 0.0;
+int get_nt_id(gsymb_t s){ return s - NUM_TOKENS; }
+
+gt_node* get_gt_node(gsymb_t sid)
+{
+    gt_node* n = malloc(sizeof(gt_node));
+    n->value = sid;
+    n->next = NULL;
+    return n;
 }
 
 void read_grammar(FILE* fp)
@@ -80,8 +79,8 @@ void read_grammar(FILE* fp)
         if(lhs)
         {
             rules[i].lhs = sid;
-			rules[i].head = NULL;
-			rules[i].tail = NULL;
+            rules[i].head = NULL;
+            rules[i].tail = NULL;
             lhs = false;
         }
         else
@@ -96,35 +95,42 @@ void read_grammar(FILE* fp)
     }
 }
 
-int get_nt_id(gsymb_t s){ return s - NUM_TOKENS; } 
+gsymb_t init_parser()
+{
+    init_lexer();
+    init_gsymb_ht();
+    char str[100];
+    FILE* gfp = fopen("data/grammar.txt", "r");
+    fscanf(gfp, "%s", str);
+    gsymb_t start_symb = get_gsymb_id(str);
+    //fprintf(stderr, "start_symbol = %s\n", GS_STRS[start_symb]);
+    read_grammar(gfp);
+    return start_symb;
+}
 
-int pt[NUM_NONTERMS][NUM_TOKENS];
+// Get parse table -------------------------------------------------------------
 
-void read_parse_table(const char file_name []){
+void read_parse_table(const char* file_name){
     for(int i=0; i<NUM_NONTERMS; i++)
-	for(int j=0; j<NUM_TOKENS; j++)
-	    pt[i][j] = -1;
+        for(int j=0; j<NUM_TOKENS; j++)
+            pt[i][j] = -1;
     FILE * fp = fopen(file_name, "r");
     if(fp == NULL){
-		fprintf(stderr,"File %s not found\n",file_name);
-		return;
+        fprintf(stderr, "File %s not found\n", file_name);
+        return;
     }
+
     char nt_str[100];
     char t_str[100];
     int rule_no;
     while(fscanf(fp, "%s %s %d", nt_str, t_str, &rule_no) != EOF){
-		int nt_id = get_nt_id(get_gsymb_id(nt_str));
-		int t_id = get_gsymb_id(t_str);
-		pt[nt_id][t_id] = rule_no;
+        int nt_id = get_nt_id(get_gsymb_id(nt_str));
+        int t_id = get_gsymb_id(t_str);
+        pt[nt_id][t_id] = rule_no;
     }
 }
 
-//read_parse_table
-//global parse_table
-//void read_parse_table(FILE * fp)
-
-//build_parse_tree
-//tree_t build_parse_tree(Rule * rules, parse_table);
+// Utility ---------------------------------------------------------------------
 
 bool is_t(gsymb_t x)
 { return (int)x < NUM_TOKENS; }
@@ -133,22 +139,17 @@ bool is_nt(gsymb_t x)
 
 void push_ll(int_Stack* pst, gt_node * head){
     if(head == NULL) return;
-    push_ll(pst,head->next);
+    push_ll(pst, head->next);
     int_stack_push(pst, head->value);
 }
 
-Symbol * make_symbol(gsymb_t sid){
-    Symbol * ret = (Symbol*)malloc(sizeof(Symbol));
-    init_symbol(ret);
-    ret->tid = sid;
-    return ret;
-}
-
-TreeNode * get_successor(TreeNode * curr){
-    while(curr != NULL && curr->next_sibling == NULL) 
-	curr = curr->parent;
-    if(curr != NULL) return curr->next_sibling;
-    return NULL;
+void init_symbol(Symbol * symb){
+    symb->line = 0;
+    symb->col = 0;
+    symb->lexeme = NULL;
+    symb->size = 0;
+    symb->tid = T_ERR;
+    symb->num.f = 0.0;
 }
 
 void copy_symbol(Symbol* symb, const Token* tok)
@@ -162,8 +163,24 @@ void copy_symbol(Symbol* symb, const Token* tok)
     strcpy(symb->lexeme, tok->lexeme);
 }
 
+Symbol * make_symbol(gsymb_t sid){
+    Symbol * ret = (Symbol*)malloc(sizeof(Symbol));
+    init_symbol(ret);
+    ret->tid = sid;
+    return ret;
+}
+
+TreeNode * get_successor(TreeNode * curr){
+    while(curr != NULL && curr->next_sibling == NULL)
+    curr = curr->parent;
+    if(curr != NULL) return curr->next_sibling;
+    return NULL;
+}
+
+// Build parse tree ------------------------------------------------------------
+
 TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
-     
+
     int_Stack st;
     int_stack_init(&st);
     int_stack_push(&st, GS_EOF);
@@ -177,66 +194,55 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
     Symbol* symb = make_symbol(start_sym);
     TreeNode * current_tn = get_new_tree_node(symb);
     TreeNode * root = current_tn;
-    
+
     get_token(ifp, &dfa, &cur_tkn, false);
-    //fprintf(stderr,"%s\n",GS_STRS[cur_tkn.tid]);
+    //fprintf(stderr, "%s\n", GS_STRS[cur_tkn.tid]);
     do{
-	gsymb_t cur_st_top = int_stack_top(&st);
-	if(is_t(cur_st_top) || cur_st_top == GS_EOF){
-	    if(cur_st_top == cur_tkn.tid){
-			int_stack_pop(&st);
+    gsymb_t cur_st_top = int_stack_top(&st);
+    if(is_t(cur_st_top) || cur_st_top == GS_EOF){
+        if(cur_st_top == cur_tkn.tid){
+            int_stack_pop(&st);
             copy_symbol(current_tn->value, &cur_tkn);
-			current_tn = get_successor(current_tn);
-			get_token(ifp, &dfa, &cur_tkn, false);
-			//fprintf(stderr,"%s\n",GS_STRS[cur_tkn.tid]);
-            //int_stack_print(&st,stderr);
-	    }else{
-			fprintf(stderr,"No valid derivation of string exists! 1\n");
-			fprintf(stderr,"Current stack top: %s\n",GS_STRS[cur_st_top]);
-			fprintf(stderr,"Current Token: %s\n",GS_STRS[cur_tkn.tid]);
-            //int_stack_print(&st,stderr);
-	    }
-	}else{
-	    int rule_num = pt[get_nt_id(int_stack_top(&st))][cur_tkn.tid];
-	    //fprintf(stderr, "pt[%s,%d][%s,%d] = %d\n", GS_STRS[int_stack_top(&st)], get_nt_id(int_stack_top(&st)), GS_STRS[cur_tkn.tid], cur_tkn.tid, rule_num);
-	    if(rule_num != -1){
-			int_stack_pop(&st);
-			push_ll(&st, rules[rule_num].head);
-			gt_node * tmp = rules[rule_num].head;
-			while(tmp != NULL){
-				Symbol * ps = make_symbol(tmp->value);
-				insert_node(current_tn,ps);
-				tmp = tmp->next;
-			}
-			if(current_tn->first_child != NULL) current_tn = current_tn->first_child;
-			else current_tn = get_successor(current_tn);
-		}else{
-			fprintf(stderr,"No valid derivation of string exists! 2\n");
-			fprintf(stderr,"Current Token: %s\n",GS_STRS[cur_tkn.tid]);
-            //int_stack_print(&st,stderr);
-	    }
-	}
+            current_tn = get_successor(current_tn);
+            get_token(ifp, &dfa, &cur_tkn, false);
+            //fprintf(stderr, "%s\n", GS_STRS[cur_tkn.tid]);
+            //int_stack_print(&st, stderr);
+        }else{
+            fprintf(stderr, "No valid derivation of string exists! 1\n");
+            fprintf(stderr, "Current stack top: %s\n", GS_STRS[cur_st_top]);
+            fprintf(stderr, "Current Token: %s\n", GS_STRS[cur_tkn.tid]);
+            //int_stack_print(&st, stderr);
+        }
+    }else{
+        int rule_num = pt[get_nt_id(int_stack_top(&st))][cur_tkn.tid];
+        //fprintf(stderr, "pt[%s, %d][%s, %d] = %d\n", GS_STRS[int_stack_top(&st)], get_nt_id(int_stack_top(&st)), GS_STRS[cur_tkn.tid], cur_tkn.tid, rule_num);
+        if(rule_num != -1){
+            int_stack_pop(&st);
+            push_ll(&st, rules[rule_num].head);
+            gt_node * tmp = rules[rule_num].head;
+            while(tmp != NULL){
+                Symbol * ps = make_symbol(tmp->value);
+                insert_node(current_tn, ps);
+                tmp = tmp->next;
+            }
+            if(current_tn->first_child != NULL) current_tn = current_tn->first_child;
+            else current_tn = get_successor(current_tn);
+        }else{
+            fprintf(stderr, "No valid derivation of string exists! 2\n");
+            fprintf(stderr, "Current Token: %s\n", GS_STRS[cur_tkn.tid]);
+            //int_stack_print(&st, stderr);
+        }
+    }
     }while(st.size > 1);
     if(int_stack_top(&st) != GS_EOF){
-		fprintf(stderr, "No valid derivation of string exists! 3\n");
-		fprintf(stderr, "Current Token: %s\n",GS_STRS[cur_tkn.tid]);
-        //int_stack_print(&st,stderr);
+        fprintf(stderr, "No valid derivation of string exists! 3\n");
+        fprintf(stderr, "Current Token: %s\n", GS_STRS[cur_tkn.tid]);
+        //int_stack_print(&st, stderr);
     }
     return root;
 }
 
-gsymb_t init_parser()
-{
-    init_lexer();
-    init_gsymb_ht();
-    char str[100];
-    FILE* gfp = fopen("data/grammar.txt", "r");
-    fscanf(gfp, "%s", str);
-    gsymb_t start_symb = get_gsymb_id(str);
-    //fprintf(stderr, "start_symbol = %s\n", GS_STRS[start_symb]);
-    read_grammar(gfp);
-    return start_symb;
-}
+// Output ----------------------------------------------------------------------
 
 void print_node(TreeNode* root, FILE* fp)
 {
@@ -290,17 +296,17 @@ void print_tree(TreeNode* root, FILE* fp)
 int parser_main(FILE* ifp, FILE* ofp, int verbosity)
 {
     gsymb_t start_symb = init_parser();
-	char pt_fname[] = "data/parse_table.txt";
+    char pt_fname[] = "data/parse_table.txt";
     read_parse_table(pt_fname);
-    
+
     /*
     for(int i=0; i<NUM_NONTERMS; i++){
-	for(int j=0; j<NUM_TOKENS; j++)
-	    printf("%d ", pt[i][j]);
-	printf("\n");
+        for(int j=0; j<NUM_TOKENS; j++)
+            printf("%d ", pt[i][j]);
+    printf("\n");
     }
     */
-    
+
     TreeNode* root = build_parse_tree(ifp, start_symb);
     print_tree(root, ofp);
 
