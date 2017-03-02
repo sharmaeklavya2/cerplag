@@ -28,6 +28,10 @@ char* GS_STRS[] = {
 #undef X
 };
 
+int rule_begin[NUM_NONTERMS], rule_end[NUM_GS];
+// rule_begin[i] is the rule number of the first rule for the non-terminal i.
+// rule_end[i] is 1 + the rule number of the last rule for the non-terminal i.
+
 // Utility ---------------------------------------------------------------------
 
 bool is_t(gsymb_t x)
@@ -122,6 +126,11 @@ gt_node* get_gt_node(gsymb_t sid)
 void read_grammar(FILE* fp)
 {
     int i;
+    for(i=0; i<NUM_NONTERMS; ++i)
+    {
+        rule_begin[i] = 10000;
+        rule_end[i] = 0;
+    }
     for(i=0; i<NUM_RULES; ++i)
     {
         rules[i].lhs = GS_ERR;
@@ -146,6 +155,12 @@ void read_grammar(FILE* fp)
             rules[i].head = NULL;
             rules[i].tail = NULL;
             lhs = false;
+
+            int ntsid = get_nt_id(sid);
+            if(i < rule_begin[ntsid])
+                rule_begin[ntsid] = i;
+            if(i+1 > rule_end[ntsid])
+                rule_end[ntsid] = i+1;
         }
         else
         {
@@ -156,6 +171,13 @@ void read_grammar(FILE* fp)
                 rules[i].tail->next = n;
             rules[i].tail = n;
         }
+    }
+    for(i=0; i<NUM_NONTERMS; ++i)
+    {
+        if(rule_begin[i] > NUM_GS)
+            fprintf(stderr, "rule_begin[%s, %d] = %d\n", GS_STRS[i + NUM_TOKENS], i, rule_begin[i]);
+        if(rule_end[i] <= 0)
+            fprintf(stderr, "rule_end[%s, %d] = %d\n", GS_STRS[i + NUM_TOKENS], i, rule_end[i]);
     }
 }
 
