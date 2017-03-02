@@ -61,7 +61,7 @@ int error_count = 0;
 // Precompute stuff ------------------------------------------------------------
 
 void precompute_cclass(cclass_t* cclass)
-// find character class of each character and store it in cclass 
+// find character class of each character and store it in cclass
 {
     int i;
     for(i=0; i < (1 << sizeof(char)); ++i)
@@ -76,12 +76,12 @@ void precompute_cclass(cclass_t* cclass)
 
     cclass[' '] = C_WS;  cclass['\t'] = C_WS; cclass['\r'] = C_WS;
     cclass['\0'] = C_EOF; cclass['\n'] = C_NL;
-    
+
     cclass['('] = C_SCO; cclass[')'] = C_SCO;
     cclass['['] = C_SCO; cclass[']'] = C_SCO;
     cclass[','] = C_SCO; cclass[';'] = C_SCO;
     cclass['/'] = C_SCO;
-    
+
     cclass['+'] = C_PM; cclass['-'] = C_PM;
     cclass['='] = C_EQ; cclass['!'] = C_EXCL;
     cclass['<'] = C_LT; cclass['>'] = C_GT;
@@ -280,7 +280,7 @@ tok_t predict_token_from_char(char ch)
     default: return T_ERR;
     }
 }
-        
+
 tok_t predict_token_from_state(state_t s)
 {
     switch(s)
