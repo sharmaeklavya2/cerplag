@@ -82,7 +82,7 @@ void copy_symbol(Symbol* symb, const Token* tok)
     symb->tid = tok->tid;
     symb->num.f = tok->num.f;
     symb->size = tok->size;
-    symb->lexeme = malloc(sizeof(char) * (tok->size));
+    symb->lexeme = malloc(sizeof(char) * (tok->size + 1));
     strcpy(symb->lexeme, tok->lexeme);
 }
 
