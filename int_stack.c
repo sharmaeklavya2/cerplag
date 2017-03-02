@@ -4,7 +4,7 @@
 #define TYPE int
 #define TYPED(x) int_##x
 
-//#include "../parser.h"
+//#include "parser.h"
 
 void int_print(int x, FILE* fp)
 {fprintf(fp, "%d", x);}

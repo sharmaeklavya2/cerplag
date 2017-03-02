@@ -9,7 +9,7 @@
 #define X(a, b) T_##a,
 typedef enum
 {
-#include "data/tok.xmac"
+#include "tok.xmac"
     T_LAST
 }tok_t;
 #undef X

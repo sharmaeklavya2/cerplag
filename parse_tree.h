@@ -7,7 +7,7 @@ typedef Symbol* parse;
 #define TYPE parse
 #define TYPED(x) parse_##x
 
-#include "util/tree.gen.h"
+#include "tree.gen.h"
 
 #undef TYPE
 #undef TYPED

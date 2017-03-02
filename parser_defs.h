@@ -2,14 +2,14 @@
 #define H_PARSER_DEFS
 
 #include "token.h"
-#include "util/bitset.h"
-#include "util/pch_int_hmap.h"
+#include "bitset.h"
+#include "pch_int_hmap.h"
 
 /*
 typedef enum
 {
 #define X(a) NT_##a,
-#include "data/nonterms.xmac"
+#include "nonterms.xmac"
 #undef X
     NT_LAST
 }non_term_t;
@@ -22,10 +22,10 @@ typedef enum
 typedef enum
 {
 #define X(a, b) GS_##a,
-#include "data/tok.xmac"
+#include "tok.xmac"
 #undef X
 #define X(a) GS_##a,
-#include "data/nonterms.xmac"
+#include "nonterms.xmac"
 #undef X
     GS_LAST
 }gsymb_t;

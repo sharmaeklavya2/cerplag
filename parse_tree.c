@@ -9,7 +9,7 @@ void parse_destroy(parse x) {free(x);}
 #define TYPE parse
 #define TYPED(x) parse_##x
 
-#include "util/tree.gen.c"
+#include "tree.gen.c"
 
 #undef TYPE
 #undef TYPED
