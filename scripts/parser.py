@@ -21,8 +21,8 @@ def get_sortkey(k, non_term_rank):
         return (len(k), non_term_rank.get(k[0], 10**9))
     else:
         return non_term_rank.get(k, 10**9)
-        
-    
+
+
 def print_dict(dp, non_term_rank, file=sys.stdout):
     for k, v in sorted(dp.items(), key=(lambda x: get_sortkey(x[0], non_term_rank))):
         if is_nsi(k):

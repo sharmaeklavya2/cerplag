@@ -34,7 +34,7 @@ int main()
         int v = int_stack_pop(&s);
         printf("%d\n", v);
         int_stack_print(&s, stdout);
-    } 
+    }
     return 0;
 }
 */
