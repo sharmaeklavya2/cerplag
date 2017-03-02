@@ -35,7 +35,17 @@ bool is_t(gsymb_t x)
 bool is_nt(gsymb_t x)
 { return (int)x >= NUM_TOKENS && (int)x < NUM_GS; }
 
-int get_nt_id(gsymb_t s){ return s - NUM_TOKENS; }
+int get_nt_id(gsymb_t s){
+    if(s < 0)
+        fprintf(stderr, "get_nt_id: got -ve input %d.\n", s);
+    else if(s < (int)NUM_TOKENS)
+        fprintf(stderr, "get_nt_id: got terminal input %d.\n", s);
+    else if(s >= (int)NUM_GS)
+        fprintf(stderr, "get_nt_id: got too big input %d.\n", s);
+    else
+        return s - NUM_TOKENS;
+    return -1;
+}
 
 void push_ll(int_Stack* pst, gt_node * head){
     if(head == NULL) return;
