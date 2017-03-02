@@ -28,6 +28,55 @@ char* GS_STRS[] = {
 #undef X
 };
 
+// Utility ---------------------------------------------------------------------
+
+bool is_t(gsymb_t x)
+{ return (int)x < NUM_TOKENS; }
+bool is_nt(gsymb_t x)
+{ return (int)x >= NUM_TOKENS && (int)x < NUM_GS; }
+
+int get_nt_id(gsymb_t s){ return s - NUM_TOKENS; }
+
+void push_ll(int_Stack* pst, gt_node * head){
+    if(head == NULL) return;
+    push_ll(pst, head->next);
+    int_stack_push(pst, head->value);
+}
+
+void init_symbol(Symbol * symb){
+    symb->line = 0;
+    symb->col = 0;
+    symb->lexeme = NULL;
+    symb->size = 0;
+    symb->tid = T_ERR;
+    symb->num.f = 0.0;
+}
+
+void copy_symbol(Symbol* symb, const Token* tok)
+{
+    symb->line = tok->line;
+    symb->col = tok->col;
+    symb->tid = tok->tid;
+    symb->num.f = tok->num.f;
+    symb->size = tok->size;
+    symb->lexeme = malloc(sizeof(char) * (tok->size));
+    strcpy(symb->lexeme, tok->lexeme);
+}
+
+Symbol * make_symbol(gsymb_t sid){
+    Symbol * ret = (Symbol*)malloc(sizeof(Symbol));
+    init_symbol(ret);
+    ret->tid = sid;
+    return ret;
+}
+
+TreeNode * get_successor(TreeNode * curr){
+    while(curr != NULL && curr->next_sibling == NULL)
+    curr = curr->parent;
+    if(curr != NULL) return curr->next_sibling;
+    return NULL;
+}
+
 // Initialize ------------------------------------------------------------------
 
 void init_gsymb_ht()
@@ -51,8 +100,6 @@ gsymb_t get_gsymb_id(const char* str)
     }
     return hmap_n->value;
 }
-
-int get_nt_id(gsymb_t s){ return s - NUM_TOKENS; }
 
 gt_node* get_gt_node(gsymb_t sid)
 {
@@ -169,53 +216,6 @@ void read_parse_table(const char* file_name){
         pt[nt_id][t_id] = rule_no;
     }
     fclose(fp);
-}
-
-// Utility ---------------------------------------------------------------------
-
-bool is_t(gsymb_t x)
-{ return (int)x < NUM_TOKENS; }
-bool is_nt(gsymb_t x)
-{ return (int)x >= NUM_TOKENS && (int)x < NUM_GS; }
-
-void push_ll(int_Stack* pst, gt_node * head){
-    if(head == NULL) return;
-    push_ll(pst, head->next);
-    int_stack_push(pst, head->value);
-}
-
-void init_symbol(Symbol * symb){
-    symb->line = 0;
-    symb->col = 0;
-    symb->lexeme = NULL;
-    symb->size = 0;
-    symb->tid = T_ERR;
-    symb->num.f = 0.0;
-}
-
-void copy_symbol(Symbol* symb, const Token* tok)
-{
-    symb->line = tok->line;
-    symb->col = tok->col;
-    symb->tid = tok->tid;
-    symb->num.f = tok->num.f;
-    symb->size = tok->size;
-    symb->lexeme = malloc(sizeof(char) * (tok->size));
-    strcpy(symb->lexeme, tok->lexeme);
-}
-
-Symbol * make_symbol(gsymb_t sid){
-    Symbol * ret = (Symbol*)malloc(sizeof(Symbol));
-    init_symbol(ret);
-    ret->tid = sid;
-    return ret;
-}
-
-TreeNode * get_successor(TreeNode * curr){
-    while(curr != NULL && curr->next_sibling == NULL)
-    curr = curr->parent;
-    if(curr != NULL) return curr->next_sibling;
-    return NULL;
 }
 
 // Build parse tree ------------------------------------------------------------
