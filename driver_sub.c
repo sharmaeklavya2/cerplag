@@ -58,7 +58,8 @@ int main(int argc, char* argv[])
 
     switch(choice){
         case 1:
-            break;
+			print_source_without_comments(ifp, ofp);
+			return 0;
         case 2:
             return lexer_main(ifp, ofp, 0, print_token_sub);
         case 3:
