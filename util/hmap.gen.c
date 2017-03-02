@@ -34,6 +34,7 @@ void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap)
     int i;
     for(i=0; i < (phmap->size); ++i)
         ITYPED(hmap_destroy_chain)(phmap->plist[i]);
+    free(phmap->plist);
 }
 
 ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k)

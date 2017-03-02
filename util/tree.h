@@ -19,4 +19,6 @@ TreeNode * get_new_tree_node(tree_type);
 
 TreeNode * insert_node(TreeNode*, tree_type);
 
+void destroy_tree(TreeNode* root);
+
 #endif

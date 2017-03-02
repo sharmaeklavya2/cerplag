@@ -64,7 +64,14 @@ gt_node* get_gt_node(gsymb_t sid)
 
 void read_grammar(FILE* fp)
 {
-    int i=0;
+    int i;
+    for(i=0; i<NUM_RULES; ++i)
+    {
+        rules[i].lhs = GS_ERR;
+        rules[i].head = NULL;
+        rules[i].tail = NULL;
+    }
+    i=0;
     bool lhs = true;
     char str[100];
     while(fscanf(fp, "%s", str) != EOF)
@@ -95,6 +102,8 @@ void read_grammar(FILE* fp)
     }
 }
 
+void read_parse_table(const char*);
+
 gsymb_t init_parser()
 {
     init_lexer();
@@ -105,7 +114,38 @@ gsymb_t init_parser()
     gsymb_t start_symb = get_gsymb_id(str);
     //fprintf(stderr, "start_symbol = %s\n", GS_STRS[start_symb]);
     read_grammar(gfp);
+    fclose(gfp);
+
+    char pt_fname[] = "data/parse_table.txt";
+    read_parse_table(pt_fname);
+
     return start_symb;
+}
+
+// Destroy ---------------------------------------------------------------------
+
+void destroy_rules()
+{
+    int i;
+    for(i=0; i < NUM_RULES; ++i)
+    {
+        rules[i].tail = NULL;
+        gt_node *p = rules[i].head, *todel = NULL;
+        rules[i].head = NULL;
+        while(p != NULL)
+        {
+            todel = p;
+            p = p->next;
+            todel->next = NULL;
+            free(todel);
+        }
+    }
+}
+void destroy_parser()
+{
+    destroy_lexer();
+    pch_int_hmap_destroy(&gsymb_ht);
+    destroy_rules();
 }
 
 // Get parse table -------------------------------------------------------------
@@ -128,6 +168,7 @@ void read_parse_table(const char* file_name){
         int t_id = get_gsymb_id(t_str);
         pt[nt_id][t_id] = rule_no;
     }
+    fclose(fp);
 }
 
 // Utility ---------------------------------------------------------------------
@@ -239,6 +280,7 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
         fprintf(stderr, "Current Token: %s\n", GS_STRS[cur_tkn.tid]);
         //int_stack_print(&st, stderr);
     }
+    int_stack_destroy(&st);
     return root;
 }
 
@@ -296,8 +338,6 @@ void print_tree(TreeNode* root, FILE* fp)
 int parser_main(FILE* ifp, FILE* ofp, int verbosity)
 {
     gsymb_t start_symb = init_parser();
-    char pt_fname[] = "data/parse_table.txt";
-    read_parse_table(pt_fname);
 
     /*
     for(int i=0; i<NUM_NONTERMS; i++){
@@ -310,5 +350,7 @@ int parser_main(FILE* ifp, FILE* ofp, int verbosity)
     TreeNode* root = build_parse_tree(ifp, start_symb);
     print_tree(root, ofp);
 
+    destroy_tree(root);
+    destroy_parser();
     return 0;
 }

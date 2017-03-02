@@ -214,7 +214,7 @@ void init_lexer()
     precompute_keyword_hmap();
 }
 
-void outit_lexer()
+void destroy_lexer()
 {
     pch_int_hmap_destroy(&keyword_hmap);
 }
@@ -565,7 +565,7 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity)
     }
     while(tok.tid != T_EOF);
 
-    outit_lexer();
+    destroy_lexer();
 
     if(got_error)
         return 1;

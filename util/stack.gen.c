@@ -16,6 +16,21 @@ void TYPED(stack_init)(TYPED(Stack) *ps)
     ps->size = 0;
 }
 
+void TYPED(stack_destroy)(TYPED(Stack) *ps)
+{
+    TYPED(StackNode) *p = ps->top, *todel = NULL;
+    while(p != NULL)
+    {
+        todel = p;
+        p = p->next;
+        todel->next = NULL;
+        TYPED(destroy)(todel->value);
+        free(todel);
+    }
+    ps->top = NULL;
+    ps->size = 0;
+}
+
 void TYPED(stack_push)(TYPED(Stack)* ps, TYPE value)
 {
     /*

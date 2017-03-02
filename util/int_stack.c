@@ -10,6 +10,8 @@ void int_print(int x, FILE* fp)
 {fprintf(fp, "%d", x);}
 //{fprintf(fp, "%s", GS_STRS[x]);}
 
+void int_destroy(int x){}
+
 #include "stack.gen.c"
 
 #undef TYPE

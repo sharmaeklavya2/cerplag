@@ -2,6 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void destroy_value(tree_type value)
+{
+    free(value->lexeme);
+    free(value);
+}
+
 TreeNode * get_new_tree_node(tree_type value)
 {
     TreeNode * new_node = (TreeNode *)malloc(sizeof(TreeNode));
@@ -29,4 +35,17 @@ TreeNode * insert_node(TreeNode * parent, tree_type value){
     }
     parent->last_child = new_node;
     return new_node;
+}
+
+void destroy_tree(TreeNode* root)
+{
+    if(root != NULL)
+    {
+        TreeNode* sibling = root->next_sibling;
+        TreeNode* child = root->first_child;
+        destroy_value(root->value);
+        free(root);
+        destroy_tree(child);
+        destroy_tree(sibling);
+    }
 }

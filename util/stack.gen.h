@@ -14,6 +14,8 @@ TYPED(StackNode)* TYPED(get_stack_node)(TYPE value, TYPED(StackNode)* next);
 
 void TYPED(stack_init)(TYPED(Stack) *ps);
 
+void TYPED(stack_destroy)(TYPED(Stack) *ps);
+
 void TYPED(stack_push)(TYPED(Stack)* ps, TYPE value);
 
 TYPE TYPED(stack_top)(TYPED(Stack)* ps);
