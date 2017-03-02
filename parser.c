@@ -512,7 +512,7 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
 
 // Output ----------------------------------------------------------------------
 
-void print_node(TreeNode* root, FILE* fp)
+void print_node_sub(const TreeNode* root, FILE* fp)
 {
     /*
     if(root == NULL)
@@ -547,21 +547,50 @@ void print_node(TreeNode* root, FILE* fp)
     fprintf(fp, "%20s\n", GS_STRS[s->tid]);
 }
 
-void print_tree(TreeNode* root, FILE* fp)
+void print_tree_sub(const TreeNode* root, FILE* fp)
 {
     if(root != NULL)
     {
         TreeNode* n = root->first_child;
         if(n != NULL)
-            print_tree(n, fp);
-        print_node(root, fp);
+            print_tree_sub(n, fp);
+        print_node_sub(root, fp);
         if(n != NULL)
             for(n = n->next_sibling; n != NULL; n = n->next_sibling)
-                print_tree(n, fp);
+                print_tree_sub(n, fp);
     }
 }
 
-int parser_main(FILE* ifp, FILE* ofp, int verbosity)
+void print_node(const TreeNode* root, FILE* fp)
+{
+    if(root != NULL)
+    {
+        if(root->value->lexeme != NULL)
+            fprintf(fp, "%s  %s\n", GS_STRS[root->value->tid], root->value->lexeme);
+        else
+            fprintf(fp, "%s  (null)\n", GS_STRS[root->value->tid]);
+    }
+}
+
+void print_tree_helper(const TreeNode* root, FILE* fp, int indent)
+{
+    if(root != NULL)
+    {
+        for(int i=0; i<indent; ++i)
+            fprintf(fp, "  ");
+        print_node(root, fp);
+        TreeNode* p = root->first_child;
+        for(; p != NULL; p = p->next_sibling)
+            print_tree_helper(p, fp, indent + 1);
+    }
+}
+
+void print_tree(const TreeNode* root, FILE* fp)
+{print_tree_helper(root, fp, 0);}
+
+void dont_print_tree(const TreeNode* root, FILE* fp){}
+
+int parser_main(FILE* ifp, FILE* ofp, int verbosity, tree_printer tp)
 {
     gsymb_t start_symb = init_parser();
 
@@ -574,7 +603,7 @@ int parser_main(FILE* ifp, FILE* ofp, int verbosity)
     }
 
     TreeNode* root = build_parse_tree(ifp, start_symb);
-    print_tree(root, ofp);
+    tp(root, ofp);
     destroy_tree(root);
 
     destroy_parser();
