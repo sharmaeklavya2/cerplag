@@ -5,7 +5,6 @@
 #include "token.h"
 #include "lexer_defs.h"
 #include "assert.h"
-#include "util/enum_file.h"
 #include "util/pch_int_hmap.h"
 
 #define INPUT_BUFSIZE 100
