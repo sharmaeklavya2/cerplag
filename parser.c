@@ -446,6 +446,18 @@ void read_parse_table(const char* file_name){
 
 // Build parse tree ------------------------------------------------------------
 
+TreeNode* handle_parse_error_1(const Token* ptok, int_Stack* pst, TreeNode* tn)
+// handle case where top of stack is a terminal and it doesn't match lookahead
+{
+    gsymb_t cur_st_top = int_stack_top(pst);
+    fprintf(stderr, "parse_error_1: line %2d, col %2d: \'%s\' (%s)\nGot %s (\'%s\') instead of %s.\n\n",
+        ptok->line, ptok->col, ptok->lexeme, GS_STRS[ptok->tid],
+        GS_STRS[ptok->tid], ptok->lexeme, GS_STRS[cur_st_top]);
+
+    int_stack_pop(pst);
+    return get_successor(tn);
+}
+
 TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
 
     int_Stack st;
@@ -467,14 +479,12 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
     do{
     gsymb_t cur_st_top = int_stack_top(&st);
     if(is_t(cur_st_top) || cur_st_top == GS_EOF){
-        int_stack_pop(&st);
         if(cur_st_top == cur_tkn.tid){
+            int_stack_pop(&st);
             copy_symbol(current_tn->value, &cur_tkn);
             current_tn = get_successor(current_tn);
         }else{
-            fprintf(stderr, "parse_error_1: line %2d, col %2d: \'%s\' (%s)\nGot %s (\'%s\') instead of %s.\n\n",
-                cur_tkn.line, cur_tkn.col, cur_tkn.lexeme, GS_STRS[cur_tkn.tid],
-                GS_STRS[cur_tkn.tid], cur_tkn.lexeme, GS_STRS[cur_st_top]);
+            current_tn = handle_parse_error_1(&cur_tkn, &st, current_tn);
             //int_stack_print(&st, stderr);
         }
         get_token(ifp, &dfa, &cur_tkn, false);
