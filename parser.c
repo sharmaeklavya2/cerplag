@@ -93,10 +93,11 @@ Symbol * make_symbol(gsymb_t sid){
     return ret;
 }
 
-TreeNode * get_successor(TreeNode * curr){
+TreeNode * get_successor(const TreeNode * curr){
     while(curr != NULL && curr->next_sibling == NULL)
-    curr = curr->parent;
-    if(curr != NULL) return curr->next_sibling;
+        curr = curr->parent;
+    if(curr != NULL)
+        return curr->next_sibling;
     return NULL;
 }
 
