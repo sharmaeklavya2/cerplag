@@ -101,6 +101,12 @@ TreeNode * get_successor(const TreeNode * curr){
     return NULL;
 }
 
+TreeNode* get_first_child_or_successor(const TreeNode* curr)
+{
+    if(curr->first_child != NULL) return curr->first_child;
+    else return get_successor(curr);
+}
+
 // Initialize ------------------------------------------------------------------
 
 void init_gsymb_ht()
@@ -458,6 +464,16 @@ TreeNode* handle_parse_error_1(const Token* ptok, int_Stack* pst, TreeNode* tn)
     return get_successor(tn);
 }
 
+TreeNode* handle_parse_error_2(const Token* ptok, int_Stack* pst, TreeNode* tn)
+// handle case where there is no entry in parse table
+{
+    fprintf(stderr, "parse_error_2: line %2d, col %2d: \'%s\' (%s)\n%s (\'%s\') isn't expected here.\n\n",
+        ptok->line, ptok->col, ptok->lexeme, GS_STRS[ptok->tid],
+        GS_STRS[ptok->tid], ptok->lexeme);
+    int_stack_pop(pst);
+    return get_first_child_or_successor(tn);
+}
+
 TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
 
     int_Stack st;
@@ -493,8 +509,8 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
     }else{
         int rule_num = pt[get_nt_id(int_stack_top(&st))][cur_tkn.tid];
         //fprintf(stderr, "pt[%s, %d][%s, %d] = %d\n", GS_STRS[int_stack_top(&st)], get_nt_id(int_stack_top(&st)), GS_STRS[cur_tkn.tid], cur_tkn.tid, rule_num);
-        int_stack_pop(&st);
         if(rule_num != -1){
+            int_stack_pop(&st);
             push_ll(&st, rules[rule_num].head);
             gt_node * tmp = rules[rule_num].head;
             while(tmp != NULL){
@@ -502,12 +518,9 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
                 insert_node(current_tn, ps);
                 tmp = tmp->next;
             }
-            if(current_tn->first_child != NULL) current_tn = current_tn->first_child;
-            else current_tn = get_successor(current_tn);
+            current_tn = get_first_child_or_successor(current_tn);
         }else{
-            fprintf(stderr, "parse_error_2: line %2d, col %2d: \'%s\' (%s)\n%s (\'%s\') isn't expected here.\n\n",
-                cur_tkn.line, cur_tkn.col, cur_tkn.lexeme, GS_STRS[cur_tkn.tid],
-                GS_STRS[cur_tkn.tid], cur_tkn.lexeme);
+            current_tn = handle_parse_error_2(&cur_tkn, &st, current_tn);
             //int_stack_print(&st, stderr);
         }
     }
