@@ -60,8 +60,6 @@ static action_t action_table[NUM_STATES][NUM_CCLASSES];
 
 static pch_int_hmap keyword_hmap;
 
-int error_count = 0;
-
 // Precompute stuff ------------------------------------------------------------
 
 void precompute_cclass(cclass_t* cclass)
@@ -218,7 +216,6 @@ void precompute_keyword_hmap()
 
 void init_lexer()
 {
-    error_count = 0;
     precompute_cclass(pc_cclass);
     precompute_final_states(is_final);
     precompute_dfa();
@@ -324,11 +321,11 @@ tok_t predict_token_from_state(state_t s)
     }
 }
 
-void print_lex_error(lerr_t lerr, const Token* ptok)
+void print_lex_error(lerr_t lerr, Dfa* pdfa, const Token* ptok)
 {
     if(lerr != LERR_NONE)
     {
-        error_count++;
+        (pdfa->error_count)++;
         fprintf(stderr, "lex_error_%d: line %2d, col %2d: \'%s\' \n%s: %s\n\n", lerr,
             ptok->line, ptok->col, ptok->lexeme, ERRORS1[lerr], ERRORS2[lerr]);
     }
@@ -439,7 +436,7 @@ void execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
         assert(false);
         break;
     }
-    print_lex_error(lerr, ptok);
+    print_lex_error(lerr, pdfa, ptok);
 }
 
 void init_dfa(Dfa* pdfa)
@@ -451,6 +448,8 @@ void init_dfa(Dfa* pdfa)
     pdfa->trunc = false;
     buff1[0] = '\0';
     pdfa->size = 0;
+    pdfa->error_count = 0;
+
 }
 
 void init_token(Token* ptok)
@@ -474,15 +473,15 @@ tok_t keyword_check(const char* s)
         return p->value;
 }
 
-void post_process(Token* ptok)
+void post_process(Dfa* pdfa, Token* ptok)
 {
     if((ptok->tid) == T_ID)
     {
         ptok->tid = keyword_check(ptok->lexeme);
         if((ptok->tid) == T_ID && (ptok->size) > 8)
-            print_lex_error(LERR_LONG_ID, ptok);
+            print_lex_error(LERR_LONG_ID, pdfa, ptok);
         if((ptok->tid) == T_ID && ptok->lexeme[0] == '_')
-            print_lex_error(LERR_ID_UNSC, ptok);
+            print_lex_error(LERR_ID_UNSC, pdfa, ptok);
         ptok->num.f = 0.0;
     }
     else if(ptok->tid == T_NUM)
@@ -523,7 +522,7 @@ void get_token(FILE* fp, Dfa* pdfa, Token* ptok, bool debug)
         }
         else if(tick_dfa(ch, pdfa, ptok, debug))
         {
-            post_process(ptok);
+            post_process(pdfa, ptok);
             break;
         }
     }
@@ -613,7 +612,7 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity, token_printer tp)
 
     destroy_lexer();
 
-    if(error_count > 0)
+    if(dfa.error_count > 0)
         return 1;
     else
         return 0;

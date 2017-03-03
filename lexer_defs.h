@@ -58,6 +58,7 @@ typedef struct
     char* lexeme;
     int size;
     bool trunc;
+    int error_count;
 }Dfa;
 
 #endif  // H_LEXER_DEFS
