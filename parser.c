@@ -533,8 +533,9 @@ void print_node_sub(const TreeNode* root, FILE* fp)
     */
     Symbol* s = root->value;
     char empty[] = "----";
+    char* lexeme = (s->lexeme == NULL ? empty : s->lexeme);
     if((int)(s->tid) < NUM_TOKENS)
-        fprintf(fp, "%20s %2d %20s ", s->lexeme, s->line, GS_STRS[s->tid]);
+        fprintf(fp, "%20s %2d %20s ", lexeme, s->line, GS_STRS[s->tid]);
     else
         fprintf(fp, "%20s %2s %20s ", empty, "--", empty);
 
