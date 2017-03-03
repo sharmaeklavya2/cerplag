@@ -1,3 +1,6 @@
+/* Batch no. 13
+2014A7PS130P: Eklavya Sharma
+2014A7PS023P: Daivik Nema */
 #include <stdio.h>
 
 typedef struct TYPED(stack_node){
