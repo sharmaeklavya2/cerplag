@@ -182,7 +182,7 @@ def main(*args):
     ambg_rules = {k: v for k, v in pt.parse_table.items() if len(v) > 1}
     if ambg_rules:
         print("\nambiguous rules:", file=sys.stderr)
-        print_dict(ambg_rules, file=sys.stderr)
+        print_dict(ambg_rules, pt.non_term_rank, file=sys.stderr)
     else:
         print("\nLanguage is LL(1)", file=sys.stderr)
 
