@@ -83,6 +83,7 @@ FCallNode:
 - name
 * iParamList
 * oParamList
+* next
 
 SwitchNode:
 - var

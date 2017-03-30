@@ -48,21 +48,21 @@ index NUM : 0.tree = new NumNode(val=1.val);
 index ID : 0.tree = new VarNode(varname=1.lexeme);
 cRange NUM RANGEOP NUM : 0.beg = 1.val, 0.end = 3.val;
 
-stmt inputStmt : 0.tree = 1.tree;
-stmt outputStmt : 0.tree = 1.tree;
-stmt assignStmt : 0.tree = 1.tree;
-stmt fCallStmt : 0.tree = 1.tree;
-stmt declareStmt : 0.tree = 1.tree;
-stmt condStmt : 0.tree = 1.tree;
-stmt forStmt : 0.tree = 1.tree;
-stmt whileStmt : 0.tree = 1.tree;
+stmt inputStmt : 0.tree = 1.tree; 1.next = 0.next
+stmt outputStmt : 0.tree = 1.tree; 1.next = 0.next
+stmt assignStmt : 0.tree = 1.tree; 1.next = 0.next
+stmt fCallStmt : 0.tree = 1.tree; 1.next = 0.next
+stmt declareStmt : 0.tree = 1.tree; 1.next = 0.next
+stmt condStmt : 0.tree = 1.tree; 1.next = 0.next
+stmt forStmt : 0.tree = 1.tree; 1.next = 0.next
+stmt whileStmt : 0.tree = 1.tree; 1.next = 0.next
 
 inputStmt GET_VALUE BO ID BC SEMICOL : 0.tree = new InputNode(var=3.lexeme, next=0.next);
 outputStmt PRINT BO aliteral BC SEMICOL : 0.tree = new OutputNode(var=3.tree, next=0.next);
 assignStmt var ASSIGNOP expr SEMICOL :
     0.tree = new AssnNode(target=0.tree, expr=3.tree, next=0.next);
 fCallStmt retCapture USE MODULE ID WITH PARAMETERS idList SEMICOL :
-    0.tree = new FCallNode(name=4.lexeme, iParamList=7.tree, oParamList=1.tree);
+    0.tree = new FCallNode(name=4.lexeme, iParamList=7.tree, oParamList=1.tree, next=0.next);
 retCapture SQBO idList SQBC ASSIGNOP : 0.tree = 2.tree;
 retCapture : 0.tree = NULL;
 idList ID idList2 : 0.tree = new IDListNode(var=1.lexeme, next=2.tree);
