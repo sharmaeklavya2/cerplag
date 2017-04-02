@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "pch.h"
 
 ITYPED(hmap_node)* ITYPED(hmap_get_node)(KTYPE k, VTYPE v, ITYPED(hmap_node)* next)
@@ -44,6 +45,16 @@ ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k)
     while(n != NULL && !(KTYPED(equals)(n->key, k)))
         n = n->next;
     return n;
+}
+
+VTYPE ITYPED(hmap_get)(ITYPED(hmap)* phmap, KTYPE k)
+{
+    ITYPED(hmap_node)* n = ITYPED(hmap_query)(phmap, k);
+    if(n == NULL) {
+        fprintf(stderr, "KeyError\n");
+        abort();
+    }
+    return n->value;
 }
 
 void ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
