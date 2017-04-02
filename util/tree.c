@@ -4,7 +4,11 @@
 
 void destroy_value(tree_type value)
 {
-    free(value->lexeme);
+    if(value->dyn_lexeme) {
+        free(value->lexeme);
+        value->lexeme = NULL;
+        value->dyn_lexeme = false;
+    }
     free(value);
 }
 

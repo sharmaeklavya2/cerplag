@@ -459,6 +459,7 @@ void init_token(Token* ptok)
     ptok->lexeme = buff2;
     buff2[0] = '\0';
     ptok->size = 0;
+    ptok->dyn_lexeme = false;
     ptok->tid = T_ERR;
     ptok->num.f = 0.0;
 }

@@ -72,6 +72,7 @@ void init_symbol(Symbol * symb){
     symb->col = 0;
     symb->lexeme = NULL;
     symb->size = 0;
+    symb->dyn_lexeme = false;
     symb->tid = T_ERR;
     symb->num.f = 0.0;
 }
@@ -84,6 +85,7 @@ void copy_symbol(Symbol* symb, const Token* tok)
     symb->num.f = tok->num.f;
     symb->size = tok->size;
     symb->lexeme = malloc(sizeof(char) * (tok->size + 1));
+    symb->dyn_lexeme = true;
     strcpy(symb->lexeme, tok->lexeme);
 }
 
