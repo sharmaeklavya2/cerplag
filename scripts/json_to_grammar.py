@@ -10,8 +10,8 @@ start_symbol, json_obj = decoder.decode(open(sys.argv[1]).read())
 
 terminals = set()
 for x, alphas in json_obj.items():
-	for alpha in alphas:
-		terminals.update(alpha)
+    for alpha in alphas:
+        terminals.update(alpha)
 
 terminals.difference_update(json_obj.keys())
 

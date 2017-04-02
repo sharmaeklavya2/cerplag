@@ -264,13 +264,13 @@ void put_character(FILE * fp, char ch)
     if(output_ptr == OUTPUT_BUFSIZE-1)
     {
         fwrite(output_buffer, sizeof(char), OUTPUT_BUFSIZE, fp);
-		output_ptr = -1;
-		//output_buffer[OUTPUT_BUFFER] = '\0';
-		memset(output_buffer, '\0', OUTPUT_BUFSIZE);
+        output_ptr = -1;
+        //output_buffer[OUTPUT_BUFFER] = '\0';
+        memset(output_buffer, '\0', OUTPUT_BUFSIZE);
     }
-	output_ptr ++;
-	output_buffer[output_ptr] = ch;
-	if(ch == '\0')
+    output_ptr ++;
+    output_buffer[output_ptr] = ch;
+    if(ch == '\0')
         fwrite(output_buffer, sizeof(char), output_ptr+1, fp);
 }
 
@@ -541,7 +541,7 @@ void print_token(const Token* ptok, FILE* fp)
 
 void print_token_sub(const Token* tok, FILE* fp)
 {
-	fprintf(fp, "%-15s %-10s %3d\n", TOK_STRS[tok->tid], tok->lexeme, tok->line);
+    fprintf(fp, "%-15s %-10s %3d\n", TOK_STRS[tok->tid], tok->lexeme, tok->line);
 }
 
 // Driver program --------------------------------------------------------------
@@ -619,22 +619,22 @@ int lexer_main(FILE* ifp, FILE* ofp, int verbosity, token_printer tp)
 }
 
 void print_source_without_comments(FILE * ifp, FILE * ofp){
-	int state = 0;
-	char ch = get_character(ifp);
-	int bch;
-	int transition_mat[][4] = {{0,1},{0,2},{2,3},{2,0}};
-	int action_mat[][4] = {{1,0},{2,0},{0,0},{0,0}};
-	while(ch != '\0'){
-		if(ch == '*') bch = 1;
-		else bch = 0;
-		if(action_mat[state][bch] == 0);
-		else if(action_mat[state][bch] == 1) put_character(ofp, ch);
-		else if(action_mat[state][bch] == 2){
-			put_character(ofp, '*');
-			put_character(ofp, ch);
-		}
-		state = transition_mat[state][bch];
-		ch = get_character(ifp);
-	}
-	put_character(ofp,ch);
+    int state = 0;
+    char ch = get_character(ifp);
+    int bch;
+    int transition_mat[][4] = {{0,1},{0,2},{2,3},{2,0}};
+    int action_mat[][4] = {{1,0},{2,0},{0,0},{0,0}};
+    while(ch != '\0'){
+        if(ch == '*') bch = 1;
+        else bch = 0;
+        if(action_mat[state][bch] == 0);
+        else if(action_mat[state][bch] == 1) put_character(ofp, ch);
+        else if(action_mat[state][bch] == 2){
+            put_character(ofp, '*');
+            put_character(ofp, ch);
+        }
+        state = transition_mat[state][bch];
+        ch = get_character(ifp);
+    }
+    put_character(ofp,ch);
 }
