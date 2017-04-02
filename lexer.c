@@ -58,7 +58,7 @@ static bool is_final[NUM_STATES];
 static state_t state_table[NUM_STATES][NUM_CCLASSES];
 static action_t action_table[NUM_STATES][NUM_CCLASSES];
 
-static pch_int_hmap keyword_hmap;
+static pch_int_hmap token_hmap;
 
 // Precompute stuff ------------------------------------------------------------
 
@@ -206,11 +206,11 @@ void precompute_dfa()
     add_edge(S_GT2, C_GT, S_GT3, A_ADD);
 }
 
-void precompute_keyword_hmap()
+void precompute_token_hmap()
 {
-    pch_int_hmap_init(&keyword_hmap, 100);
-#define X(t, k) pch_int_hmap_update(&keyword_hmap, k, T_##t);
-#include "data/keywords.xmac"
+    pch_int_hmap_init(&token_hmap, 100);
+#define X(t, k) pch_int_hmap_update(&token_hmap, k, T_##t);
+#include "data/tok.xmac"
 #undef X
 }
 
@@ -219,12 +219,12 @@ void init_lexer()
     precompute_cclass(pc_cclass);
     precompute_final_states(is_final);
     precompute_dfa();
-    precompute_keyword_hmap();
+    precompute_token_hmap();
 }
 
 void destroy_lexer()
 {
-    pch_int_hmap_destroy(&keyword_hmap);
+    pch_int_hmap_destroy(&token_hmap);
 }
 
 // Utility functions -----------------------------------------------------------
@@ -463,10 +463,10 @@ void init_token(Token* ptok)
     ptok->num.f = 0.0;
 }
 
-tok_t keyword_check(const char* s)
+tok_t token_check(const char* s)
 // returns correct token based on keyword
 {
-    pch_int_hmap_node* p = pch_int_hmap_query(&keyword_hmap, s);
+    pch_int_hmap_node* p = pch_int_hmap_query(&token_hmap, s);
     if(p == NULL)
         return T_ID;
     else
@@ -477,7 +477,7 @@ void post_process(Dfa* pdfa, Token* ptok)
 {
     if((ptok->tid) == T_ID)
     {
-        ptok->tid = keyword_check(ptok->lexeme);
+        ptok->tid = token_check(ptok->lexeme);
         if((ptok->tid) == T_ID && (ptok->size) > 8)
             print_lex_error(LERR_LONG_ID, pdfa, ptok);
         if((ptok->tid) == T_ID && ptok->lexeme[0] == '_')
