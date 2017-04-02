@@ -84,9 +84,20 @@ void copy_symbol(Symbol* symb, const Token* tok)
     symb->tid = tok->tid;
     symb->num.f = tok->num.f;
     symb->size = tok->size;
-    symb->lexeme = malloc(sizeof(char) * (tok->size + 1));
-    symb->dyn_lexeme = true;
-    strcpy(symb->lexeme, tok->lexeme);
+    int tid = symb->tid;
+    if(tid == T_ID || tid == T_ERR) {
+        symb->lexeme = malloc(sizeof(char) * (tok->size + 1));
+        symb->dyn_lexeme = true;
+        strcpy(symb->lexeme, tok->lexeme);
+    }
+    else if(tid == T_NUM || tid == T_RNUM) {
+        symb->lexeme = NULL;
+        symb->dyn_lexeme = false;
+    }
+    else {
+        symb->lexeme = TOK_STRS2[tid];
+        symb->dyn_lexeme = false;
+    }
 }
 
 Symbol * make_symbol(gsymb_t sid){
@@ -600,6 +611,10 @@ void print_node(const TreeNode* root, FILE* fp)
     {
         if(root->value->lexeme != NULL)
             fprintf(fp, "%s  %s\n", GS_STRS[root->value->tid], root->value->lexeme);
+        else if(root->value->tid == T_NUM)
+            fprintf(fp, "%s  %d\n", GS_STRS[root->value->tid], root->value->num.i);
+        else if(root->value->tid == T_RNUM)
+            fprintf(fp, "%s  %lf\n", GS_STRS[root->value->tid], root->value->num.f);
         else
             fprintf(fp, "%s  (null)\n", GS_STRS[root->value->tid]);
     }

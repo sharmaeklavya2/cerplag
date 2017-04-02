@@ -30,6 +30,11 @@ char* TOK_STRS[] = {
 #include "data/tok.xmac"
 };
 #undef X
+#define X(a, b) b,
+char* TOK_STRS2[] = {
+#include "data/tok.xmac"
+};
+#undef X
 
 #define X(a) #a,
 char* CCLASS_STRS[] = {

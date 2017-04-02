@@ -49,6 +49,10 @@ typedef union
     lerr_t lerr;
 }tok_or_err_t;
 
+// Extern variables -----------------------------------------------------------
+
+extern char* TOK_STRS2[];
+
 // Data structures ------------------------------------------------------------
 
 typedef struct
