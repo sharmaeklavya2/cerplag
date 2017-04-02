@@ -22,24 +22,24 @@ void ITYPED(hmap_destroy_chain)(ITYPED(hmap_node)* p)
     }
 }
 
-void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int size)
+void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int capacity)
 {
-    phmap->plist = calloc(size, sizeof(ITYPED(hmap_node)*));
-    phmap->size = size;
-    phmap->count = 0;
+    phmap->plist = calloc(capacity, sizeof(ITYPED(hmap_node)*));
+    phmap->capacity = capacity;
+    phmap->size = 0;
 }
 
 void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap)
 {
     int i;
-    for(i=0; i < (phmap->size); ++i)
+    for(i=0; i < (phmap->capacity); ++i)
         ITYPED(hmap_destroy_chain)(phmap->plist[i]);
     free(phmap->plist);
 }
 
 ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k)
 {
-    unsigned h = KTYPED(hash)(k) % (phmap->size);
+    unsigned h = KTYPED(hash)(k) % (phmap->capacity);
     ITYPED(hmap_node)* n = phmap->plist[h];
     while(n != NULL && !(KTYPED(equals)(n->key, k)))
         n = n->next;
@@ -48,7 +48,7 @@ ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k)
 
 void ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
 {
-    unsigned h = KTYPED(hash)(k) % (phmap->size);
+    unsigned h = KTYPED(hash)(k) % (phmap->capacity);
     phmap->plist[h] = ITYPED(hmap_get_node)(k, v, phmap->plist[h]);
-    (phmap->count)++;
+    (phmap->size)++;
 }

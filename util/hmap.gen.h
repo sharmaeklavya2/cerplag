@@ -12,8 +12,8 @@ ITYPED(hmap_node)* ITYPED(hmap_get_node)(KTYPE k, VTYPE v, ITYPED(hmap_node)* ne
 typedef struct
 {
     ITYPED(hmap_node)** plist;
+    int capacity;
     int size;
-    int count;
 }ITYPED(hmap);
 
 void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int size);
