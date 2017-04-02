@@ -25,3 +25,7 @@ ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k);
 VTYPE ITYPED(hmap_get)(ITYPED(hmap)* phmap, KTYPE k);
 
 void ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v);
+
+double ITYPED(hmap_load_factor)(ITYPED(hmap)* phmap);
+
+void ITYPED(hmap_rehash)(ITYPED(hmap)* phmap, int new_capacity);

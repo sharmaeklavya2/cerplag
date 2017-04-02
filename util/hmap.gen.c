@@ -62,4 +62,29 @@ void ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
     unsigned h = KTYPED(hash)(k) % (phmap->capacity);
     phmap->plist[h] = ITYPED(hmap_get_node)(k, v, phmap->plist[h]);
     (phmap->size)++;
+    const int lf_num = 3, lf_den = 4;
+    if(lf_den * phmap->size > lf_num * phmap->capacity)
+        ITYPED(hmap_rehash)(phmap, 2 * (phmap->capacity));
+}
+
+double ITYPED(hmap_load_factor)(ITYPED(hmap)* phmap)
+{return (double)(phmap->size) / (phmap->capacity);}
+
+void ITYPED(hmap_rehash)(ITYPED(hmap)* phmap, int new_capacity)
+{
+    int i;
+    ITYPED(hmap_node)** plist2 = calloc(new_capacity, sizeof(ITYPED(hmap_node)*));
+    for(i=0; i<(phmap->capacity); ++i) {
+        ITYPED(hmap_node)* n = phmap->plist[i];
+        while(n != NULL) {
+            unsigned h = KTYPED(hash)(n->key) % new_capacity;
+            plist2[h] = ITYPED(hmap_get_node)(n->key, n->value, plist2[h]);
+            n = n->next;
+        }
+        ITYPED(hmap_destroy_chain)(phmap->plist[i]);
+    }
+
+    free(phmap->plist);
+    phmap->plist = plist2;
+    phmap->capacity = new_capacity;
 }
