@@ -213,7 +213,7 @@ void precompute_dfa()
 
 void precompute_token_hmap()
 {
-    pch_int_hmap_init(&token_hmap, 100);
+    pch_int_hmap_init(&token_hmap, 100, false);
 #define X(t, k) pch_int_hmap_update(&token_hmap, k, T_##t);
 #include "data/tok.xmac"
 #undef X

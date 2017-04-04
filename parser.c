@@ -125,7 +125,7 @@ TreeNode* get_first_child_or_successor(const TreeNode* curr)
 
 void init_gsymb_ht()
 {
-    pch_int_hmap_init(&gsymb_ht, 150);
+    pch_int_hmap_init(&gsymb_ht, 150, false);
 #define X(a, b) pch_int_hmap_update(&gsymb_ht, #a, GS_##a);
 #include "data/tok.xmac"
 #undef X

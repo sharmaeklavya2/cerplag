@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 struct ITYPED(hmap_node_)
 {
     struct ITYPED(hmap_node_)* next;
@@ -14,9 +16,10 @@ typedef struct
     ITYPED(hmap_node)** plist;
     int capacity;
     int size;
+    bool destroy_key;
 }ITYPED(hmap);
 
-void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int size);
+void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int size, bool destroy_key);
 
 void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap);
 

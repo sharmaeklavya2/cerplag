@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 ITYPED(hmap_node)* ITYPED(hmap_get_node)(KTYPE k, VTYPE v, ITYPED(hmap_node)* next)
 {
@@ -10,30 +11,33 @@ ITYPED(hmap_node)* ITYPED(hmap_get_node)(KTYPE k, VTYPE v, ITYPED(hmap_node)* ne
     return n;
 }
 
-void ITYPED(hmap_destroy_chain)(ITYPED(hmap_node)* p)
+void ITYPED(hmap_destroy_chain)(ITYPED(hmap_node)* p, bool destroy_key)
 {
     ITYPED(hmap_node)* p2 = NULL;
     while(p != NULL)
     {
         p2 = p->next;
         p->next = NULL;
+        if(destroy_key)
+            KTYPED(destroy)(p->key);
         free(p);
         p = p2;
     }
 }
 
-void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int capacity)
+void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int capacity, bool destroy_key)
 {
     phmap->plist = calloc(capacity, sizeof(ITYPED(hmap_node)*));
     phmap->capacity = capacity;
     phmap->size = 0;
+    phmap->destroy_key = destroy_key;
 }
 
 void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap)
 {
     int i;
     for(i=0; i < (phmap->capacity); ++i)
-        ITYPED(hmap_destroy_chain)(phmap->plist[i]);
+        ITYPED(hmap_destroy_chain)(phmap->plist[i], phmap->destroy_key);
     free(phmap->plist);
 }
 
@@ -80,7 +84,7 @@ void ITYPED(hmap_rehash)(ITYPED(hmap)* phmap, int new_capacity)
             plist2[h] = ITYPED(hmap_get_node)(n->key, n->value, plist2[h]);
             n = n->next;
         }
-        ITYPED(hmap_destroy_chain)(phmap->plist[i]);
+        ITYPED(hmap_destroy_chain)(phmap->plist[i], phmap->destroy_key);
     }
 
     free(phmap->plist);
