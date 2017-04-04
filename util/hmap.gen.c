@@ -60,14 +60,20 @@ VTYPE ITYPED(hmap_get)(ITYPED(hmap)* phmap, KTYPE k)
     return n->value;
 }
 
-void ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
+ITYPED(hmap_node)* ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
 {
-    unsigned h = KTYPED(hash)(k) % (phmap->capacity);
-    phmap->plist[h] = ITYPED(hmap_get_node)(k, v, phmap->plist[h]);
-    (phmap->size)++;
     const int lf_num = 3, lf_den = 4;
-    if(lf_den * phmap->size > lf_num * phmap->capacity)
+    if(lf_den * (phmap->size+1) > lf_num * phmap->capacity)
         ITYPED(hmap_rehash)(phmap, 2 * (phmap->capacity));
+    unsigned h = KTYPED(hash)(k) % (phmap->capacity);
+    ITYPED(hmap_node)* n = phmap->plist[h];
+    while(n != NULL && !(KTYPED(equals)(n->key, k)))
+        n = n->next;
+    if(n == NULL) {
+        (phmap->size)++;
+        n = phmap->plist[h] = ITYPED(hmap_get_node)(k, v, phmap->plist[h]);
+    }
+    return n;
 }
 
 double ITYPED(hmap_load_factor)(ITYPED(hmap)* phmap)
