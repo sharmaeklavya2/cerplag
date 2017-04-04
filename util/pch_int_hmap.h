@@ -1,8 +1,6 @@
 #ifndef H_PCH_INT_HMAP
 #define H_PCH_INT_HMAP
 
-typedef const char* pch;
-
 #define KTYPE pch
 #define VTYPE int
 
@@ -10,6 +8,7 @@ typedef const char* pch;
 #define VTYPED(x) int_##x
 #define ITYPED(x) pch_int_##x
 
+#include "pch.h"
 #include "hmap.gen.h"
 
 #undef KTYPE

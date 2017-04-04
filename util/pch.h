@@ -3,8 +3,13 @@
 
 #include <stdbool.h>
 
-unsigned pch_hash(const char* str);
+typedef const char* pch;
+typedef char* mpch;
 
-bool pch_equals(const char* s1, const char* s2);
+unsigned pch_hash(pch);
+
+bool pch_equals(pch, pch);
+
+void pch_destroy(pch);
 
 #endif  // H_PCH

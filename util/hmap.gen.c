@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "pch.h"
 
 ITYPED(hmap_node)* ITYPED(hmap_get_node)(KTYPE k, VTYPE v, ITYPED(hmap_node)* next)
 {
