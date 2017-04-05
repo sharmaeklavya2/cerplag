@@ -61,7 +61,7 @@ int get_nt_id(gsymb_t s){
     return -1;
 }
 
-void push_ll(int_Stack* pst, gt_node * head){
+void push_ll(int_stack* pst, gt_node * head){
     if(head == NULL) return;
     push_ll(pst, head->next);
     int_stack_push(pst, head->value);
@@ -468,7 +468,7 @@ void read_parse_table(const char* file_name){
 
 // Build parse tree ------------------------------------------------------------
 
-TreeNode* handle_parse_error_1(const Token* ptok, int_Stack* pst, TreeNode* tn)
+TreeNode* handle_parse_error_1(const Token* ptok, int_stack* pst, TreeNode* tn)
 // handle case where top of stack is a terminal and it doesn't match lookahead
 {
     error_count++;
@@ -481,7 +481,7 @@ TreeNode* handle_parse_error_1(const Token* ptok, int_Stack* pst, TreeNode* tn)
     return get_successor(tn);
 }
 
-TreeNode* handle_parse_error_2(const Token* ptok, int_Stack* pst, TreeNode* tn)
+TreeNode* handle_parse_error_2(const Token* ptok, int_stack* pst, TreeNode* tn)
 // handle case where there is no entry in parse table
 {
     error_count++;
@@ -494,7 +494,7 @@ TreeNode* handle_parse_error_2(const Token* ptok, int_Stack* pst, TreeNode* tn)
 
 TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
 
-    int_Stack st;
+    int_stack st;
     int_stack_init(&st);
     int_stack_push(&st, GS_EOF);
     int_stack_push(&st, start_sym);

@@ -2,23 +2,23 @@
 #include <stdlib.h>
 
 
-TYPED(StackNode)* TYPED(get_stack_node)(TYPE value, TYPED(StackNode)* next)
+TYPED(stack_node)* TYPED(get_stack_node)(TYPE value, TYPED(stack_node)* next)
 {
-    TYPED(StackNode)* sn = malloc(sizeof(TYPED(StackNode)));
+    TYPED(stack_node)* sn = malloc(sizeof(TYPED(stack_node)));
     sn->value = value;
     sn->next = next;
     return sn;
 }
 
-void TYPED(stack_init)(TYPED(Stack) *ps)
+void TYPED(stack_init)(TYPED(stack) *ps)
 {
     ps->top = NULL;
     ps->size = 0;
 }
 
-void TYPED(stack_destroy)(TYPED(Stack) *ps)
+void TYPED(stack_destroy)(TYPED(stack) *ps)
 {
-    TYPED(StackNode) *p = ps->top, *todel = NULL;
+    TYPED(stack_node) *p = ps->top, *todel = NULL;
     while(p != NULL)
     {
         todel = p;
@@ -31,7 +31,7 @@ void TYPED(stack_destroy)(TYPED(Stack) *ps)
     ps->size = 0;
 }
 
-void TYPED(stack_push)(TYPED(Stack)* ps, TYPE value)
+void TYPED(stack_push)(TYPED(stack)* ps, TYPE value)
 {
     /*
     fprintf(stderr, "Pushing: ");
@@ -39,7 +39,7 @@ void TYPED(stack_push)(TYPED(Stack)* ps, TYPE value)
     fprintf(stderr, "\n");
     */
     if(ps->size > 100){
-        fprintf(stderr,"Stack size exceeded limit!\n");
+        fprintf(stderr,"stack size exceeded limit!\n");
         exit(1);
     }
     ps->top = TYPED(get_stack_node)(value, ps->top);
@@ -47,10 +47,10 @@ void TYPED(stack_push)(TYPED(Stack)* ps, TYPE value)
 }
 
 // Prints stack top to bottom
-void TYPED(stack_print)(TYPED(Stack)* ps, FILE* fp)
+void TYPED(stack_print)(TYPED(stack)* ps, FILE* fp)
 {
     fprintf(fp, "[");
-    TYPED(StackNode)* p = ps->top;
+    TYPED(stack_node)* p = ps->top;
     if(p != NULL)
     {
         TYPED(print)(p->value, fp);
@@ -67,7 +67,7 @@ void TYPED(stack_print)(TYPED(Stack)* ps, FILE* fp)
 
 #pragma GCC diagnostic ignored "-Wreturn-type"
 
-TYPE TYPED(stack_top)(TYPED(Stack)* ps)
+TYPE TYPED(stack_top)(TYPED(stack)* ps)
 {
     if(ps->size == 0)
         fprintf(stderr, "top called on empty stack\n");
@@ -75,13 +75,13 @@ TYPE TYPED(stack_top)(TYPED(Stack)* ps)
         return ps->top->value;
 }
 
-TYPE TYPED(stack_pop)(TYPED(Stack)* ps)
+TYPE TYPED(stack_pop)(TYPED(stack)* ps)
 {
     if(ps->size == 0)
         fprintf(stderr, "pop called on empty stack\n");
     else
     {
-        TYPED(StackNode)* tmp = ps->top;
+        TYPED(stack_node)* tmp = ps->top;
         ps->top = tmp->next;
         TYPE v = tmp->value;
         free(tmp);

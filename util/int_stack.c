@@ -23,7 +23,7 @@ int main()
 {
     const int n = 5;
     int token_vals[5] = {12,2,323,52,1};
-    int_Stack s;
+    int_stack s;
     int_stack_init(&s);
     int_stack_print(&s, stdout);
     for(int i=0; i<n; i++){

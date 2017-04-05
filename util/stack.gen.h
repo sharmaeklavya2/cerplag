@@ -1,26 +1,26 @@
 #include <stdio.h>
 
-typedef struct TYPED(StackNode){
+typedef struct TYPED(stack_node){
     TYPE value;
-    struct TYPED(StackNode)* next;
-}TYPED(StackNode);
+    struct TYPED(stack_node)* next;
+}TYPED(stack_node);
 
 typedef struct{
-    TYPED(StackNode)* top;
+    TYPED(stack_node)* top;
     int size;
-}TYPED(Stack);
+}TYPED(stack);
 
-TYPED(StackNode)* TYPED(get_stack_node)(TYPE value, TYPED(StackNode)* next);
+TYPED(stack_node)* TYPED(get_stack_node)(TYPE value, TYPED(stack_node)* next);
 
-void TYPED(stack_init)(TYPED(Stack) *ps);
+void TYPED(stack_init)(TYPED(stack) *ps);
 
-void TYPED(stack_destroy)(TYPED(Stack) *ps);
+void TYPED(stack_destroy)(TYPED(stack) *ps);
 
-void TYPED(stack_push)(TYPED(Stack)* ps, TYPE value);
+void TYPED(stack_push)(TYPED(stack)* ps, TYPE value);
 
-TYPE TYPED(stack_top)(TYPED(Stack)* ps);
+TYPE TYPED(stack_top)(TYPED(stack)* ps);
 
-TYPE TYPED(stack_pop)(TYPED(Stack)* ps);
+TYPE TYPED(stack_pop)(TYPED(stack)* ps);
 
-void TYPED(stack_print)(TYPED(Stack)* ps, FILE* fp);
+void TYPED(stack_print)(TYPED(stack)* ps, FILE* fp);
 // Prints stack top to bottom
