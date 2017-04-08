@@ -16,10 +16,6 @@ typedef enum
 
 #define NUM_TOKENS T_LAST
 
-typedef union
-{int i; double f;}
-i_or_f_t;
-
 typedef struct
 {
     int line, col;
@@ -27,7 +23,10 @@ typedef struct
     bool dyn_lexeme;
     int size;
     int tid;
-    i_or_f_t num;
+    union {
+        int i;
+        float f;
+    };
 }Token;
 
 typedef void token_printer(const Token*, FILE*);

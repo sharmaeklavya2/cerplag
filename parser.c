@@ -77,7 +77,7 @@ void init_symbol(Symbol * symb){
     symb->size = 0;
     symb->dyn_lexeme = false;
     symb->tid = T_ERR;
-    symb->num.f = 0.0;
+    symb->f = 0.0;
 }
 
 void copy_symbol(Symbol* symb, const Token* tok)
@@ -85,7 +85,7 @@ void copy_symbol(Symbol* symb, const Token* tok)
     symb->line = tok->line;
     symb->col = tok->col;
     symb->tid = tok->tid;
-    symb->num.f = tok->num.f;
+    symb->f = tok->f;
     symb->size = tok->size;
     int tid = symb->tid;
     if(tid == T_ERR) {
@@ -593,9 +593,9 @@ void print_node_sub(const parse_tree_node* root, FILE* fp)
         fprintf(fp, "%20s %2s %20s ", empty, "--", empty);
 
     if(s->tid == T_NUM)
-        fprintf(fp, "%20d ", s->num.i);
+        fprintf(fp, "%20d ", s->i);
     else if(s->tid == T_RNUM)
-        fprintf(fp, "%20lf ", s->num.f);
+        fprintf(fp, "%20lf ", s->f);
     else
         fprintf(fp, "%20s ", empty);
 
@@ -633,9 +633,9 @@ void print_node(const parse_tree_node* root, FILE* fp)
         if(root->value->lexeme != NULL)
             fprintf(fp, "%s  %s\n", GS_STRS[root->value->tid], root->value->lexeme);
         else if(root->value->tid == T_NUM)
-            fprintf(fp, "%s  %d\n", GS_STRS[root->value->tid], root->value->num.i);
+            fprintf(fp, "%s  %d\n", GS_STRS[root->value->tid], root->value->i);
         else if(root->value->tid == T_RNUM)
-            fprintf(fp, "%s  %lf\n", GS_STRS[root->value->tid], root->value->num.f);
+            fprintf(fp, "%s  %lf\n", GS_STRS[root->value->tid], root->value->f);
         else
             fprintf(fp, "%s  (null)\n", GS_STRS[root->value->tid]);
     }

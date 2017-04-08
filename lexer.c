@@ -466,7 +466,7 @@ void init_token(Token* ptok)
     ptok->size = 0;
     ptok->dyn_lexeme = false;
     ptok->tid = T_ERR;
-    ptok->num.f = 0.0;
+    ptok->f = 0.0;
 }
 
 tok_t token_check(const char* s)
@@ -488,14 +488,14 @@ void post_process(Dfa* pdfa, Token* ptok)
             print_lex_error(LERR_LONG_ID, pdfa, ptok);
         if((ptok->tid) == T_ID && ptok->lexeme[0] == '_')
             print_lex_error(LERR_ID_UNSC, pdfa, ptok);
-        ptok->num.f = 0.0;
+        ptok->f = 0.0;
     }
     else if(ptok->tid == T_NUM)
-        ptok->num.i = atoi(ptok->lexeme);
+        ptok->i = atoi(ptok->lexeme);
     else if(ptok->tid == T_RNUM)
-        ptok->num.f = atof(ptok->lexeme);
+        ptok->f = atof(ptok->lexeme);
     else
-        ptok->num.f = 0.0;
+        ptok->f = 0.0;
 }
 
 bool tick_dfa(char ch, Dfa* pdfa, Token* ptok, bool debug)
@@ -538,9 +538,9 @@ void print_token(const Token* ptok, FILE* fp)
 {
     fprintf(fp, "%2d %2d %s %s", ptok->line, ptok->col, TOK_STRS[ptok->tid], ptok->lexeme);
     if(ptok->tid == T_NUM)
-        fprintf(fp, " %d\n", ptok->num.i);
+        fprintf(fp, " %d\n", ptok->i);
     else if(ptok->tid == T_RNUM)
-        fprintf(fp, " %lf\n", ptok->num.f);
+        fprintf(fp, " %lf\n", ptok->f);
     else
         fprintf(fp, "\n");
 }
