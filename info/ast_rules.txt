@@ -7,7 +7,7 @@ moduleDeclaration DECLARE MODULE ID SEMICOL : registerModule(3.varname);
 otherModules module otherModules : 0.tree = 1.tree; 1.next = 2.tree; 2.driver = 0.driver;
 otherModules : 0.tree = 0.driver;
 driverModule DRIVERDEF DRIVER PROGRAM DRIVERENDDEF moduleBody :
-    0.tree = new ModuleNode(name=NULL, iParamList=NULL, oParamList=NULL, body=5.body, next=0.next);
+    0.tree = new ModuleNode(name=NULL, iParamList=NULL, oParamList=NULL, body=5.tree, next=0.next);
 module DEF MODULE ID ENDDEF TAKES INPUT SQBO iParamList SQBC SEMICOL oParamStmt moduleBody :
     0.tree = new ModuleNode(name=3.varname, iParamList=8.tree, oParamList=11.tree, body=12.tree, next=0.next);
     registerModule(3.varname);
@@ -32,9 +32,9 @@ basicType REAL : 0.type = REAL;
 basicType BOOLEAN : 0.type = BOOLEAN;
 type basicType : 0.type = 1.type; 0.size = 0;
 type ARRAY SQBO cRange SQBC OF basicType : 0.type = 6.type; 0.size = 3.end; assert(3.beg == 1);
-var ID whichID : 2.acc = 1.lexeme; 0.tree = 2.tree;
-whichID SQBO index SQBC : 0.tree = new DerefNode(var=0.acc, index=2.tree);
-whichID : 0.tree = new VarNode(var=0.acc);
+var ID whichID : 2.varname = 1.lexeme; 0.tree = 2.tree;
+whichID SQBO index SQBC : 0.tree = new DerefNode(var=0.varname, index=2.tree);
+whichID : 0.tree = new VarNode(var=0.varname);
 aliteral var : 0.tree = 1.tree;
 aliteral NUM : 0.tree = new NumNode(val=1.val);
 aliteral RNUM : 0.tree = new RNumNode(val=1.val);
