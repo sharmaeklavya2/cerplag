@@ -3,6 +3,7 @@
 
 #include "token.h"
 #include "util/bitset.h"
+#include "util/pch_int_hmap.h"
 
 /*
 typedef enum
@@ -47,6 +48,7 @@ typedef struct
     gt_node* tail;
 }Rule;
 
+extern pch_int_hmap intern_table;
 
 typedef Token Symbol;
 

@@ -42,6 +42,9 @@ int error_count;
 const bitset_t unset_bitset = -1;
 const bitset_t empty_bitset = 0ull;
 
+pch_int_hmap intern_table;
+int intern_counter = 0;
+
 // Utility ---------------------------------------------------------------------
 
 bool is_t(gsymb_t x)
@@ -85,10 +88,26 @@ void copy_symbol(Symbol* symb, const Token* tok)
     symb->num.f = tok->num.f;
     symb->size = tok->size;
     int tid = symb->tid;
-    if(tid == T_ID || tid == T_ERR) {
+    if(tid == T_ERR) {
         symb->lexeme = malloc(sizeof(char) * (tok->size + 1));
         symb->dyn_lexeme = true;
         strcpy(symb->lexeme, tok->lexeme);
+    }
+    else if(tid == T_ID) {
+        symb->dyn_lexeme = false;
+        pch_int_hmap_node* pnode = pch_int_hmap_update(&intern_table, tok->lexeme, intern_counter);
+        if(pnode->key == tok->lexeme) {
+            // this means the lexeme wasn't already present in intern_table
+            symb->lexeme = malloc(sizeof(char) * (tok->size + 1));
+            strcpy(symb->lexeme, tok->lexeme);
+            pnode->key = symb->lexeme;
+            intern_counter++;
+            //fprintf(stderr, "new insert %p(\"%s\"): %d\n", pnode->key, pnode->key, pnode->value);
+        }
+        else {
+            symb->lexeme = (char*)pnode->key;
+            //fprintf(stderr, "already present %p(\"%s\"): %d\n", pnode->key, pnode->key, pnode->value);
+        }
     }
     else if(tid == T_NUM || tid == T_RNUM) {
         symb->lexeme = NULL;
@@ -225,6 +244,7 @@ gsymb_t init_parser()
     error_count = 0;
 
     init_gsymb_ht();
+    pch_int_hmap_init(&intern_table, 50, true);
     char str[100];
     FILE* gfp = fopen("data/grammar.txt", "r");
     fscanf(gfp, "%s", str);
@@ -280,6 +300,7 @@ void destroy_parser()
     destroy_lexer();
     pch_int_hmap_destroy(&gsymb_ht);
     destroy_rules();
+    pch_int_hmap_destroy(&intern_table);
 }
 
 // Get parse table -------------------------------------------------------------
