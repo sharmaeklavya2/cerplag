@@ -1,20 +1,9 @@
-#include "tree.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-void destroy_value(tree_type value)
+TYPED(tree_node)* TYPED(tree_get_node)(TYPE value)
 {
-    if(value->dyn_lexeme) {
-        free(value->lexeme);
-        value->lexeme = NULL;
-        value->dyn_lexeme = false;
-    }
-    free(value);
-}
-
-TreeNode * get_new_tree_node(tree_type value)
-{
-    TreeNode * new_node = (TreeNode *)malloc(sizeof(TreeNode));
+    TYPED(tree_node)* new_node = malloc(sizeof(TYPED(tree_node)));
     if(new_node == NULL){
         fprintf(stderr, "tree: No memory!\n");
     }else{
@@ -28,8 +17,8 @@ TreeNode * get_new_tree_node(tree_type value)
     return new_node;
 }
 
-TreeNode * insert_node(TreeNode * parent, tree_type value){
-    TreeNode * new_node = get_new_tree_node(value);
+TYPED(tree_node)* TYPED(tree_insert)(TYPED(tree_node)* parent, TYPE value){
+    TYPED(tree_node)* new_node = TYPED(tree_get_node)(value);
     new_node->parent = parent;
     if(parent->first_child == NULL && parent->last_child == NULL){
         parent->first_child = new_node;
@@ -41,15 +30,15 @@ TreeNode * insert_node(TreeNode * parent, tree_type value){
     return new_node;
 }
 
-void destroy_tree(TreeNode* root)
+void TYPED(tree_destroy)(TYPED(tree_node)* root)
 {
     if(root != NULL)
     {
-        TreeNode* sibling = root->next_sibling;
-        TreeNode* child = root->first_child;
-        destroy_value(root->value);
+        TYPED(tree_node)* sibling = root->next_sibling;
+        TYPED(tree_node)* child = root->first_child;
+        TYPED(destroy)(root->value);
         free(root);
-        destroy_tree(child);
-        destroy_tree(sibling);
+        TYPED(tree_destroy)(child);
+        TYPED(tree_destroy)(sibling);
     }
 }

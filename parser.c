@@ -7,7 +7,7 @@
 #include "lexer.h"
 #include "token.h"
 #include "util/int_stack.h"
-#include "util/tree.h"
+#include "parse_tree.h"
 #include "util/bitset.h"
 
 #define NUM_NONTERMS NUM_GS - NUM_TOKENS
@@ -126,7 +126,7 @@ Symbol * make_symbol(gsymb_t sid){
     return ret;
 }
 
-TreeNode * get_successor(const TreeNode * curr){
+parse_tree_node * get_successor(const parse_tree_node * curr){
     while(curr != NULL && curr->next_sibling == NULL)
         curr = curr->parent;
     if(curr != NULL)
@@ -134,7 +134,7 @@ TreeNode * get_successor(const TreeNode * curr){
     return NULL;
 }
 
-TreeNode* get_first_child_or_successor(const TreeNode* curr)
+parse_tree_node* get_first_child_or_successor(const parse_tree_node* curr)
 {
     if(curr->first_child != NULL) return curr->first_child;
     else return get_successor(curr);
@@ -489,7 +489,7 @@ void read_parse_table(const char* file_name){
 
 // Build parse tree ------------------------------------------------------------
 
-TreeNode* handle_parse_error_1(const Token* ptok, int_stack* pst, TreeNode* tn)
+parse_tree_node* handle_parse_error_1(const Token* ptok, int_stack* pst, parse_tree_node* tn)
 // handle case where top of stack is a terminal and it doesn't match lookahead
 {
     error_count++;
@@ -502,7 +502,7 @@ TreeNode* handle_parse_error_1(const Token* ptok, int_stack* pst, TreeNode* tn)
     return get_successor(tn);
 }
 
-TreeNode* handle_parse_error_2(const Token* ptok, int_stack* pst, TreeNode* tn)
+parse_tree_node* handle_parse_error_2(const Token* ptok, int_stack* pst, parse_tree_node* tn)
 // handle case where there is no entry in parse table
 {
     error_count++;
@@ -513,7 +513,7 @@ TreeNode* handle_parse_error_2(const Token* ptok, int_stack* pst, TreeNode* tn)
     return get_first_child_or_successor(tn);
 }
 
-TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
+parse_tree_node* build_parse_tree(FILE * ifp, gsymb_t start_sym){
 
     int_stack st;
     int_stack_init(&st);
@@ -526,8 +526,8 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
     init_token(&cur_tkn);
 
     Symbol* symb = make_symbol(start_sym);
-    TreeNode * current_tn = get_new_tree_node(symb);
-    TreeNode * root = current_tn;
+    parse_tree_node * current_tn = parse_tree_get_node(symb);
+    parse_tree_node * root = current_tn;
 
     get_token(ifp, &dfa, &cur_tkn, false);
     //fprintf(stderr, "%s\n", GS_STRS[cur_tkn.tid]);
@@ -554,7 +554,7 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
             gt_node * tmp = rules[rule_num].head;
             while(tmp != NULL){
                 Symbol * ps = make_symbol(tmp->value);
-                insert_node(current_tn, ps);
+                parse_tree_insert(current_tn, ps);
                 tmp = tmp->next;
             }
             current_tn = get_first_child_or_successor(current_tn);
@@ -576,7 +576,7 @@ TreeNode* build_parse_tree(FILE * ifp, gsymb_t start_sym){
 
 // Output ----------------------------------------------------------------------
 
-void print_node_sub(const TreeNode* root, FILE* fp)
+void print_node_sub(const parse_tree_node* root, FILE* fp)
 {
     /*
     if(root == NULL)
@@ -612,11 +612,11 @@ void print_node_sub(const TreeNode* root, FILE* fp)
     fprintf(fp, "%20s\n", GS_STRS[s->tid]);
 }
 
-void print_tree_sub(const TreeNode* root, FILE* fp)
+void print_tree_sub(const parse_tree_node* root, FILE* fp)
 {
     if(root != NULL)
     {
-        TreeNode* n = root->first_child;
+        parse_tree_node* n = root->first_child;
         if(n != NULL)
             print_tree_sub(n, fp);
         print_node_sub(root, fp);
@@ -626,7 +626,7 @@ void print_tree_sub(const TreeNode* root, FILE* fp)
     }
 }
 
-void print_node(const TreeNode* root, FILE* fp)
+void print_node(const parse_tree_node* root, FILE* fp)
 {
     if(root != NULL)
     {
@@ -641,25 +641,25 @@ void print_node(const TreeNode* root, FILE* fp)
     }
 }
 
-void print_tree_helper(const TreeNode* root, FILE* fp, int indent)
+void print_tree_helper(const parse_tree_node* root, FILE* fp, int indent)
 {
     if(root != NULL)
     {
         for(int i=0; i<indent; ++i)
             fprintf(fp, "  ");
         print_node(root, fp);
-        TreeNode* p = root->first_child;
+        parse_tree_node* p = root->first_child;
         for(; p != NULL; p = p->next_sibling)
             print_tree_helper(p, fp, indent + 1);
     }
 }
 
-void print_tree(const TreeNode* root, FILE* fp)
+void print_tree(const parse_tree_node* root, FILE* fp)
 {print_tree_helper(root, fp, 0);}
 
-void dont_print_tree(const TreeNode* root, FILE* fp){}
+void dont_print_tree(const parse_tree_node* root, FILE* fp){}
 
-int parser_main(FILE* ifp, FILE* ofp, int verbosity, tree_printer tp)
+int parser_main(FILE* ifp, FILE* ofp, int verbosity, parse_tree_printer tp)
 {
     gsymb_t start_symb = init_parser();
 
@@ -671,9 +671,9 @@ int parser_main(FILE* ifp, FILE* ofp, int verbosity, tree_printer tp)
         print_parse_table();
     }
 
-    TreeNode* root = build_parse_tree(ifp, start_symb);
+    parse_tree_node* root = build_parse_tree(ifp, start_symb);
     tp(root, ofp);
-    destroy_tree(root);
+    parse_tree_destroy(root);
 
     destroy_parser();
     return error_count;
