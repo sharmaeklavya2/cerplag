@@ -75,26 +75,24 @@ void init_symbol(Symbol * symb){
     symb->col = 0;
     symb->lexeme = NULL;
     symb->size = 0;
-    symb->dyn_lexeme = false;
-    symb->tid = T_ERR;
+    symb->sid = T_ERR;
     symb->f = 0.0;
+    symb->rule_num = -1;
 }
 
 void copy_symbol(Symbol* symb, const Token* tok)
 {
     symb->line = tok->line;
     symb->col = tok->col;
-    symb->tid = tok->tid;
+    symb->sid = tok->tid;
     symb->f = tok->f;
     symb->size = tok->size;
-    int tid = symb->tid;
-    if(tid == T_ERR) {
-        symb->lexeme = malloc(sizeof(char) * (tok->size + 1));
-        symb->dyn_lexeme = true;
-        strcpy(symb->lexeme, tok->lexeme);
+    int sid = symb->sid;
+    if(sid == T_ERR || sid == T_EOF) {
+        symb->lexeme = NULL;
+        fprintf(stderr, "copy_symbol: Bad token type assigned to a symbol\n");
     }
-    else if(tid == T_ID) {
-        symb->dyn_lexeme = false;
+    else if(sid == T_ID) {
         pch_int_hmap_node* pnode = pch_int_hmap_update(&intern_table, tok->lexeme, intern_counter);
         if(pnode->key == tok->lexeme) {
             // this means the lexeme wasn't already present in intern_table
@@ -109,20 +107,18 @@ void copy_symbol(Symbol* symb, const Token* tok)
             //fprintf(stderr, "already present %p(\"%s\"): %d\n", pnode->key, pnode->key, pnode->value);
         }
     }
-    else if(tid == T_NUM || tid == T_RNUM) {
+    else if(sid == T_NUM || sid == T_RNUM) {
         symb->lexeme = NULL;
-        symb->dyn_lexeme = false;
     }
     else {
-        symb->lexeme = TOK_STRS2[tid];
-        symb->dyn_lexeme = false;
+        symb->lexeme = TOK_STRS2[sid];
     }
 }
 
 Symbol * make_symbol(gsymb_t sid){
     Symbol * ret = (Symbol*)malloc(sizeof(Symbol));
     init_symbol(ret);
-    ret->tid = sid;
+    ret->sid = sid;
     return ret;
 }
 
@@ -552,6 +548,7 @@ parse_tree_node* build_parse_tree(FILE * ifp, gsymb_t start_sym){
             int_stack_pop(&st);
             push_ll(&st, rules[rule_num].head);
             gt_node * tmp = rules[rule_num].head;
+            current_tn->value->rule_num = rule_num;
             while(tmp != NULL){
                 Symbol * ps = make_symbol(tmp->value);
                 parse_tree_insert(current_tn, ps);
@@ -587,14 +584,14 @@ void print_node_sub(const parse_tree_node* root, FILE* fp)
     Symbol* s = root->value;
     char empty[] = "----";
     char* lexeme = (s->lexeme == NULL ? empty : s->lexeme);
-    if((int)(s->tid) < NUM_TOKENS)
-        fprintf(fp, "%20s %2d %20s ", lexeme, s->line, GS_STRS[s->tid]);
+    if((int)(s->sid) < NUM_TOKENS)
+        fprintf(fp, "%20s %2d %20s ", lexeme, s->line, GS_STRS[s->sid]);
     else
         fprintf(fp, "%20s %2s %20s ", empty, "--", empty);
 
-    if(s->tid == T_NUM)
+    if(s->sid == T_NUM)
         fprintf(fp, "%20d ", s->i);
-    else if(s->tid == T_RNUM)
+    else if(s->sid == T_RNUM)
         fprintf(fp, "%20lf ", s->f);
     else
         fprintf(fp, "%20s ", empty);
@@ -602,14 +599,14 @@ void print_node_sub(const parse_tree_node* root, FILE* fp)
     if(root->parent == NULL)
         fprintf(fp, "%20s ", empty);
     else
-        fprintf(fp, "%20s ", GS_STRS[root->parent->value->tid]);
+        fprintf(fp, "%20s ", GS_STRS[root->parent->value->sid]);
 
     if(root->first_child == NULL)
         fprintf(fp, "yes ");
     else
         fprintf(fp, " no ");
 
-    fprintf(fp, "%20s\n", GS_STRS[s->tid]);
+    fprintf(fp, "%20s\n", GS_STRS[s->sid]);
 }
 
 void print_tree_sub(const parse_tree_node* root, FILE* fp)
@@ -630,14 +627,16 @@ void print_node(const parse_tree_node* root, FILE* fp)
 {
     if(root != NULL)
     {
+        fprintf(fp, "%s  ", GS_STRS[root->value->sid]);
+        if(root->value->rule_num >= 0)
+            fprintf(fp, "(%2d)  ", root->value->rule_num);
         if(root->value->lexeme != NULL)
-            fprintf(fp, "%s  %s\n", GS_STRS[root->value->tid], root->value->lexeme);
-        else if(root->value->tid == T_NUM)
-            fprintf(fp, "%s  %d\n", GS_STRS[root->value->tid], root->value->i);
-        else if(root->value->tid == T_RNUM)
-            fprintf(fp, "%s  %lf\n", GS_STRS[root->value->tid], root->value->f);
-        else
-            fprintf(fp, "%s  (null)\n", GS_STRS[root->value->tid]);
+            fprintf(fp, "%s", root->value->lexeme);
+        else if(root->value->sid == T_NUM)
+            fprintf(fp, "%d", root->value->i);
+        else if(root->value->sid == T_RNUM)
+            fprintf(fp, "%lf", root->value->f);
+        fprintf(fp, "\n");
     }
 }
 

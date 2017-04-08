@@ -50,6 +50,17 @@ typedef struct
 
 extern pch_int_hmap intern_table;
 
-typedef Token Symbol;
+typedef struct
+{
+    int line, col;
+    char* lexeme;
+    int size;
+    int sid;
+    union {
+        int i;
+        float f;
+    };
+    int rule_num;
+}Symbol;
 
 #endif  // H_PARSER_DEFS
