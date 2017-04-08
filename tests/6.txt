@@ -1,0 +1,12 @@
+** Module defined twice **
+
+<<module f1>>
+takes input [n: integer];
+start end
+
+<<module f1>>
+takes input [n: integer];
+start end
+
+<<<driver program>>>
+start end
