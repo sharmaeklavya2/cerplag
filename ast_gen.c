@@ -97,6 +97,46 @@ void build_ast(parse_tree_node* p) {
         case 10:
             s[0]->tree = NULL;
             break;
+        case 41:
+        case 42:
+        case 43:
+        case 44:
+        case 45:
+        case 46:
+        case 47:
+        case 48:
+            s[1]->next = s[0]->next;
+            build_ast(n[1]);
+            s[0]->tree = s[1]->tree;
+            //print_ast(stdout,s[0]->tree,0);
+            break;
+        case 49:;
+            InputNode* input_node = (InputNode*)get_ast_node(ASTN_Input);
+            input_node->next = s[0]->next;
+            input_node->varname = s[3]->lexeme;
+            s[0]->tree = input_node;
+            //print_ast(stdout,s[0]->tree,0);
+            break;
+        case 50:;
+            OutputNode* output_node = (OutputNode*)get_ast_node(ASTN_Output);
+            output_node->next = s[0]->next;
+            build_ast(n[3]);
+            output_node->var = s[3]->tree;
+            s[0]->tree = output_node;
+            //print_ast(stdout,s[1]->tree,0);
+            break;
+        case 51:;
+            AssnNode* assn_node = (AssnNode*)get_ast_node(ASTN_Assn);
+            build_ast(n[1]);
+            build_ast(n[3]);
+            assn_node->target = s[1]->tree;
+            assn_node->expr = s[3]->tree;
+            assn_node->next = s[0]->next;
+            s[0]->tree = assn_node;
+            break;
+
+
+
         default:
             s[0]->tree = NULL;
     }
