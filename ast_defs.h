@@ -1,0 +1,42 @@
+#ifndef H_AST_DEFS
+#define H_AST_DEFS
+
+#include <stdbool.h>
+
+typedef enum {
+#define X(a, b) ASTN_##a,
+#include "data/ast_nodes.xmac"
+#undef X
+    ASTN_LAST
+} astn_t;
+
+#define NUM_ASTN ASTN_LAST
+
+typedef enum {TYPE_INTEGER, TYPE_REAL, TYPE_BOOLEAN} valtype_t;
+#define TYPE_STRS_LIST {"int", "real", "bool"}
+
+typedef enum {
+    OP_PLUS, OP_MINUS,
+    OP_LT, OP_GT,
+    OP_LE, OP_GE,
+    OP_EQ, OP_NE,
+    OP_MUL, OP_DIV,
+    OP_LAST
+} op_t;
+
+#define NUM_OP OP_LAST
+
+#define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/"}
+
+typedef struct {astn_t node_type; valtype_t type; int size;} AstNode;
+typedef AstNode* pAstNode;
+
+#define X(a, b) typedef struct {astn_t node_type; valtype_t type; int size; b} a##Node;
+#include "data/ast_nodes.xmac"
+#undef X
+
+extern char* ASTN_STRS[];
+extern char* TYPE_STRS[];
+extern char* OP_STRS[];
+
+#endif  // H_AST_DEFS
