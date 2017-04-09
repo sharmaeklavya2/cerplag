@@ -11,7 +11,7 @@ driverModule DRIVERDEF DRIVER PROGRAM DRIVERENDDEF moduleBody :
 module DEF MODULE ID ENDDEF TAKES INPUT SQBO iParamList SQBC SEMICOL oParamStmt moduleBody :
     0.tree = new ModuleNode(name=3.varname, iParamList=8.tree, oParamList=11.tree, body=12.tree, next=0.next);
     registerModule(3.varname);
-moduleBody START stmts END : 0.tree = 1.tree;
+moduleBody START stmts END : 0.tree = 2.tree;
 stmts stmt stmts : 0.tree = 1.tree; 1.next = 2.tree;
 stmts : 0.tree = NULL;
 
@@ -60,7 +60,7 @@ stmt whileStmt : 0.tree = 1.tree; 1.next = 0.next
 inputStmt GET_VALUE BO ID BC SEMICOL : 0.tree = new InputNode(var=3.lexeme, next=0.next);
 outputStmt PRINT BO aliteral BC SEMICOL : 0.tree = new OutputNode(var=3.tree, next=0.next);
 assignStmt var ASSIGNOP expr SEMICOL :
-    0.tree = new AssnNode(target=0.tree, expr=3.tree, next=0.next);
+    0.tree = new AssnNode(target=1.tree, expr=3.tree, next=0.next);
 fCallStmt retCapture USE MODULE ID WITH PARAMETERS idList SEMICOL :
     0.tree = new FCallNode(name=4.lexeme, iParamList=7.tree, oParamList=1.tree, next=0.next);
 retCapture SQBO idList SQBC ASSIGNOP : 0.tree = 2.tree;
