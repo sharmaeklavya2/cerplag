@@ -174,7 +174,7 @@ void build_ast(parse_tree_node* p) {
             build_ast(n[2]);
             DeclNode* decl_node = (DeclNode*)get_ast_node(ASTN_Decl);
             decl_node->next = s[0]->next;
-            decl_node->idTypeList = s[2]->tree;
+            decl_node->idList = s[2]->tree;
             decl_node->type = s[4]->type;
             decl_node->size = s[4]->size;
             s[0]->tree = decl_node;

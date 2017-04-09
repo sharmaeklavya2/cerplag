@@ -166,7 +166,7 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
 
         case ASTN_Decl:
             fprintf(fp, ":\n");
-            print_ast(fp, ((DeclNode*)p)->idTypeList, indent+1);
+            print_ast(fp, ((DeclNode*)p)->idList, indent+1);
             print_ast(fp, ((DeclNode*)p)->next, indent);
             break;
 

@@ -69,7 +69,7 @@ idList ID idList2 : 0.tree = new IDListNode(var=1.lexeme, next=2.tree);
 idList2 COMMA ID idList2 : 0.tree = new IDListNode(var=2.lexeme, next=3.tree);
 idList2 : 0.tree = NULL;
 declareStmt DECLARE idList COLON type SEMICOL :
-    0.tree = new DeclNode(idTypeList=2.tree, next=0.next, type=4.type, size=4.size);
+    0.tree = new DeclNode(idList=2.tree, next=0.next, type=4.type, size=4.size);
 condStmt SWITCH BO ID BC START caseStmt caseStmts defaultCase END :
     0.tree = new SwitchNode(var=3.lexeme, next=0.next, default=8.tree, cases=6.tree);
     6.next = 7.tree;
