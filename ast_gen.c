@@ -42,12 +42,23 @@ void build_ast(parse_tree_node* p) {
             break;
         case 1:
         case 9:
+        case 13:
+        case 17:
+        case 60:
             build_ast(n[2]);
             s[1]->next = s[2]->tree;
             build_ast(n[1]);
             s[0]->tree = s[1]->tree;
             break;
         case 2:
+        case 10:
+        case 12:
+        case 15:
+        case 19:
+        case 54:
+        case 57:
+        case 61:
+        case 64:
             s[0]->tree = NULL;
             break;
         case 3: {
@@ -91,11 +102,10 @@ void build_ast(parse_tree_node* p) {
             break;
         }
         case 8:
+        case 53:
+        case 85:
             build_ast(n[2]);
             s[0]->tree = s[2]->tree;
-            break;
-        case 10:
-            s[0]->tree = NULL;
             break;
         case 41:
         case 42:
@@ -144,13 +154,6 @@ void build_ast(parse_tree_node* p) {
             fcall_node->next = s[0]->next;
             s[0]->tree = fcall_node;
             break;
-        case 53:
-            build_ast(n[2]);
-            s[0]->tree = s[2]->tree;
-            break;
-        case 54:
-            s[0]->tree = NULL;
-            break;
         case 55: {
             build_ast(n[2]);
             IDListNode* idlist_node = (IDListNode*)get_ast_node(ASTN_IDList);
@@ -167,9 +170,6 @@ void build_ast(parse_tree_node* p) {
             s[0]->tree = idlist_node;
             break;
         }
-        case 57:
-            s[0]->tree = NULL;
-            break;
         case 58: {
             build_ast(n[2]);
             DeclNode* decl_node = (DeclNode*)get_ast_node(ASTN_Decl);
@@ -192,15 +192,6 @@ void build_ast(parse_tree_node* p) {
             switch_node->cases = s[6]->tree;
             break;
         }
-        case 60:
-            build_ast(n[2]);
-            s[1]->next = s[2]->tree;
-            build_ast(n[1]);
-            s[0]->tree = s[1]->tree;
-            break;
-        case 61:
-            s[0]->tree = NULL;
-            break;
         case 62: {
             CaseNode* case_node = (CaseNode*)get_ast_node(ASTN_Case);
             build_ast(n[2]);
@@ -219,9 +210,6 @@ void build_ast(parse_tree_node* p) {
             s[0]->tree = case_node;
             break;
         }
-        case 64:
-            s[0]->tree = NULL;
-            break;
         case 65: {
             build_ast(n[8]);
             ForNode* for_node = (ForNode*)get_ast_node(ASTN_For);
