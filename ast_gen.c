@@ -134,9 +134,115 @@ void build_ast(parse_tree_node* p) {
             assn_node->next = s[0]->next;
             s[0]->tree = assn_node;
             break;
-
-
-
+        case 52:
+            build_ast(n[7]);
+            build_ast(n[1]);
+            FCallNode* fcall_node = (FCallNode*)get_ast_node(ASTN_FCall);
+            fcall_node->name = s[4]->lexeme;
+            fcall_node->iParamList = s[7]->tree;
+            fcall_node->oParamList = s[1]->tree;
+            fcall_node->next = s[0]->next;
+            s[0]->tree = fcall_node;
+            break;
+        case 53:
+            build_ast(n[2]);
+            s[0]->tree = s[2]->tree;
+            break;
+        case 54:
+            s[0]->tree = NULL;
+            break;
+        case 55: {
+            build_ast(n[2]);
+            IDListNode* idlist_node = (IDListNode*)get_ast_node(ASTN_IDList);
+            idlist_node->next = s[2]->tree;
+            idlist_node->varname = s[1]->lexeme;
+            s[0]->tree = idlist_node;
+            break;
+        }
+        case 56: {
+            build_ast(n[3]);
+            IDListNode* idlist_node = (IDListNode*)get_ast_node(ASTN_IDList);
+            idlist_node->varname = s[2]->lexeme;
+            idlist_node->next = s[3]->tree;
+            s[0]->tree = idlist_node;
+            break;
+        }
+        case 57:
+            s[0]->tree = NULL;
+            break;
+        case 58: {
+            build_ast(n[2]);
+            DeclNode* decl_node = (DeclNode*)get_ast_node(ASTN_Decl);
+            decl_node->next = s[0]->next;
+            decl_node->idTypeList = s[2]->tree;
+            decl_node->type = s[4]->type;
+            decl_node->size = s[4]->size;
+            s[0]->tree = decl_node;
+            break;
+        }
+        case 59: {
+            build_ast(n[7]);
+            s[6]->next = s[7]->tree;
+            build_ast(n[6]);
+            build_ast(n[8]);
+            SwitchNode* switch_node = (SwitchNode*)get_ast_node(ASTN_Switch);
+            switch_node->varname = s[3]->lexeme;
+            switch_node->next = s[0]->next;
+            switch_node->defaultcase = s[8]->tree;
+            switch_node->cases = s[6]->tree;
+            break;
+        }
+        case 60:
+            build_ast(n[2]);
+            s[1]->next = s[2]->tree;
+            build_ast(n[1]);
+            s[0]->tree = s[1]->tree;
+            break;
+        case 61:
+            s[0]->tree = NULL;
+            break;
+        case 62: {
+            CaseNode* case_node = (CaseNode*)get_ast_node(ASTN_Case);
+            build_ast(n[2]);
+            build_ast(n[4]);
+            case_node->val = s[2]->tree;
+            case_node->stmts = s[4]->tree;
+            case_node->next = s[0]->next;
+            s[0]->tree = case_node;
+            break;
+        }
+        case 63: {
+            CaseNode* case_node = (CaseNode*)get_ast_node(ASTN_Case);
+            build_ast(n[3]);
+            case_node->val = NULL;
+            case_node->next = NULL;
+            s[0]->tree = case_node;
+            break;
+        }
+        case 64:
+            s[0]->tree = NULL;
+            break;
+        case 65: {
+            build_ast(n[8]);
+            ForNode* for_node = (ForNode*)get_ast_node(ASTN_For);
+            for_node->beg = s[5]->beg;
+            for_node->end = s[5]->end;
+            for_node->varname = s[3]->varname;
+            for_node->body = s[8]->tree;
+            for_node->next = s[0]->next;
+            s[0]->tree = for_node;
+            break;
+        }
+        case 66: {
+            build_ast(n[6]);
+            build_ast(n[3]);
+            WhileNode* while_node = (WhileNode*)get_ast_node(ASTN_While);
+            while_node->cond = s[3]->tree;
+            while_node->body = s[6]->tree;
+            while_node->next = s[0]->next;
+            s[0]->tree = while_node;
+            break;
+        }
         default:
             s[0]->tree = NULL;
     }
