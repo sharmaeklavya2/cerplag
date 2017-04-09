@@ -292,6 +292,7 @@ void build_ast(parse_tree_node* p) {
         }
         case 58: {
             build_ast(n[2]);
+            build_ast(n[4]);
             DeclNode* decl_node = (DeclNode*)get_ast_node(ASTN_Decl);
             decl_node->next = s[0]->next;
             decl_node->idList = s[2]->tree;
@@ -310,6 +311,7 @@ void build_ast(parse_tree_node* p) {
             switch_node->next = s[0]->next;
             switch_node->defaultcase = s[8]->tree;
             switch_node->cases = s[6]->tree;
+            s[0]->tree = switch_node;
             break;
         }
         case 62: {
@@ -335,7 +337,7 @@ void build_ast(parse_tree_node* p) {
             ForNode* for_node = (ForNode*)get_ast_node(ASTN_For);
             for_node->beg = s[5]->beg;
             for_node->end = s[5]->end;
-            for_node->varname = s[3]->varname;
+            for_node->varname = s[3]->lexeme;
             for_node->body = s[8]->tree;
             for_node->next = s[0]->next;
             s[0]->tree = for_node;
