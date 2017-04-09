@@ -283,12 +283,14 @@ void destroy_rules()
         }
     }
 }
-void destroy_parser()
+void destroy_parser(bool destroy_intern_table)
 {
     destroy_lexer();
     pch_int_hmap_destroy(&gsymb_ht);
     destroy_rules();
-    pch_int_hmap_destroy(&intern_table);
+    if(destroy_intern_table) {
+        pch_int_hmap_destroy(&intern_table);
+    }
 }
 
 // Get parse table -------------------------------------------------------------
@@ -666,6 +668,6 @@ int parser_main(FILE* ifp, FILE* ofp, int verbosity, parse_tree_printer tp)
     tp(root, ofp);
     parse_tree_destroy(root);
 
-    destroy_parser();
+    destroy_parser(true);
     return parser_error_count;
 }
