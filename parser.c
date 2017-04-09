@@ -74,10 +74,10 @@ void init_symbol(Symbol * symb){
     symb->line = 0;
     symb->col = 0;
     symb->lexeme = NULL;
-    symb->size = 0;
     symb->sid = T_ERR;
     symb->f = 0.0;
     symb->rule_num = -1;
+    symb->tree = symb->next = symb->driver = NULL;
 }
 
 void copy_symbol(Symbol* symb, const Token* tok)
@@ -86,7 +86,7 @@ void copy_symbol(Symbol* symb, const Token* tok)
     symb->col = tok->col;
     symb->sid = tok->tid;
     symb->f = tok->f;
-    symb->size = tok->size;
+    symb->tree = symb->next = symb->driver = NULL;
     int sid = symb->sid;
     if(sid == T_ERR || sid == T_EOF) {
         symb->lexeme = NULL;

@@ -54,13 +54,31 @@ typedef struct
 {
     int line, col;
     char* lexeme;
-    int size;
     int sid;
     union {
         int i;
         float f;
     };
     int rule_num;
+
+    void* tree;
+    union {
+        void* next;
+        void* acc;
+    };
+    union {
+        void* driver;
+        struct {
+            int type;
+            int size;
+        };
+        char* varname;
+        struct {
+            int beg;
+            int end;
+        };
+        int op;
+    };
 }Symbol;
 
 #endif  // H_PARSER_DEFS
