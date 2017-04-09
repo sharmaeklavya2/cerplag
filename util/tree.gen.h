@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 typedef struct TYPED(tree_node)
 {
     TYPE value;

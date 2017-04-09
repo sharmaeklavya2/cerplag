@@ -1,6 +1,3 @@
-#include <string.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include "pch_int_hmap.h"
 
 #define KTYPE pch
