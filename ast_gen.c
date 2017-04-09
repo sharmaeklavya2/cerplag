@@ -107,6 +107,126 @@ void build_ast(parse_tree_node* p) {
             build_ast(n[2]);
             s[0]->tree = s[2]->tree;
             break;
+        case 11:
+            build_ast(n[3]);
+            s[0]->tree = s[3]->tree;
+            break;
+        case 14:
+        case 18:
+            build_ast(n[3]);
+            s[2]->next = s[3]->tree;
+            build_ast(n[2]);
+            s[0]->tree = s[2]->tree;
+            break;
+        case 16: {
+            build_ast(n[3]);
+            IDTypeListNode* mynode = (IDTypeListNode*)get_ast_node(ASTN_IDTypeList);
+            mynode->varname = s[1]->lexeme;
+            mynode->type = s[3]->type;
+            mynode->size = 0;
+            mynode->next = s[0]->next;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 20: {
+            build_ast(n[3]);
+            IDTypeListNode* mynode = (IDTypeListNode*)get_ast_node(ASTN_IDTypeList);
+            mynode->varname = s[1]->lexeme;
+            mynode->type = s[3]->type;
+            mynode->size = s[3]->size;
+            mynode->next = s[0]->next;
+            s[0]->tree = mynode;
+            break;
+        }
+
+        case 21:
+            s[0]->type = TYPE_INTEGER;
+            break;
+        case 22:
+            s[0]->type = TYPE_REAL;
+            break;
+        case 23:
+            s[0]->type = TYPE_BOOLEAN;
+            break;
+        case 24:
+            build_ast(n[1]);
+            s[0]->type = s[1]->type;
+            s[0]->size = 0;
+            break;
+        case 25:
+            build_ast(n[3]);
+            build_ast(n[6]);
+            s[0]->type = s[6]->type;
+            s[0]->size = s[3]->end;
+            if(s[3]->beg != 1) {
+                // TODO: handle error correctly
+                fprintf(stderr, "Start index of array should be 1\n");
+            }
+            break;
+        case 26:
+            s[2]->varname = s[1]->lexeme;
+            build_ast(n[2]);
+            s[0]->tree = s[2]->tree;
+            break;
+        case 27: {
+            build_ast(n[2]);
+            DerefNode* mynode = (DerefNode*)get_ast_node(ASTN_Deref);
+            mynode->varname = s[0]->varname;
+            mynode->index = s[2]->tree;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 28: {
+            VarNode* mynode = (VarNode*)get_ast_node(ASTN_Var);
+            mynode->varname = s[0]->varname;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 29:
+        case 36:
+        case 37:
+        case 83:
+        case 84:
+            build_ast(n[1]);
+            s[0]->tree = s[1]->tree;
+            break;
+        case 30:
+        case 32:
+        case 38: {
+            NumNode* mynode = (NumNode*)get_ast_node(ASTN_Num);
+            mynode->val = s[1]->i;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 31:
+        case 33: {
+            RNumNode* mynode = (RNumNode*)get_ast_node(ASTN_RNum);
+            mynode->val = s[1]->f;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 34: {
+            BoolNode* mynode = (BoolNode*)get_ast_node(ASTN_Bool);
+            mynode->val = true;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 35: {
+            BoolNode* mynode = (BoolNode*)get_ast_node(ASTN_Bool);
+            mynode->val = false;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 39: {
+            VarNode* mynode = (VarNode*)get_ast_node(ASTN_Var);
+            mynode->varname = s[1]->lexeme;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 40:
+            s[0]->beg = s[1]->i;
+            s[0]->end = s[3]->i;
+            break;
         case 41:
         case 42:
         case 43:
@@ -231,6 +351,72 @@ void build_ast(parse_tree_node* p) {
             s[0]->tree = while_node;
             break;
         }
+        case 67:
+        case 70:
+        case 73:
+        case 76:
+        case 79:
+            build_ast(n[1]);
+            s[2]->acc = s[1]->tree;
+            build_ast(n[2]);
+            s[0]->tree = s[2]->tree;
+            break;
+        case 69:
+        case 72:
+        case 75:
+        case 78:
+        case 81:
+            s[0]->tree = s[0]->acc;
+            break;
+        case 68: {
+            build_ast(n[2]);
+            BOpNode* mynode = (BOpNode*)get_ast_node(ASTN_BOp);
+            mynode->op = OP_OR;
+            mynode->arg1 = s[0]->acc;
+            mynode->arg2 = s[2]->tree;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 71: {
+            build_ast(n[2]);
+            BOpNode* mynode = (BOpNode*)get_ast_node(ASTN_BOp);
+            mynode->op = OP_AND;
+            mynode->arg1 = s[0]->acc;
+            mynode->arg2 = s[2]->tree;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 74:
+        case 77:
+        case 80: {
+            build_ast(n[1]);
+            build_ast(n[2]);
+            BOpNode* mynode = (BOpNode*)get_ast_node(ASTN_BOp);
+            mynode->op = s[1]->op;
+            mynode->arg1 = s[0]->acc;
+            mynode->arg2 = s[2]->tree;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 82: {
+            build_ast(n[1]);
+            build_ast(n[2]);
+            UOpNode* mynode = (UOpNode*)get_ast_node(ASTN_UOp);
+            mynode->op = s[1]->op;
+            mynode->arg = s[2]->tree;
+            s[0]->tree = mynode;
+            break;
+        }
+        case 86: s[0]->op = OP_PLUS; break;
+        case 87: s[0]->op = OP_MINUS; break;
+        case 88: s[0]->op = OP_LT; break;
+        case 89: s[0]->op = OP_LE; break;
+        case 90: s[0]->op = OP_GT; break;
+        case 91: s[0]->op = OP_GE; break;
+        case 92: s[0]->op = OP_EQ; break;
+        case 93: s[0]->op = OP_NE; break;
+        case 94: s[0]->op = OP_MUL; break;
+        case 95: s[0]->op = OP_DIV; break;
         default:
             s[0]->tree = NULL;
     }
