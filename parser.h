@@ -1,10 +1,7 @@
 #ifndef H_PARSER
 #define H_PARSER
 
-#include "parser_defs.h"
 #include "parse_tree.h"
-
-extern char* GS_STRS[];
 
 void init_parser();
 void destroy_parser();

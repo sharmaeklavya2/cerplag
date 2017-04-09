@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include "parser_defs.h"
+#include "symbol_defs.h"
+#include "rule_defs.h"
 #include "util/pch_int_hmap.h"
 #include "lexer.h"
 #include "token.h"
@@ -19,15 +20,6 @@ static pch_int_hmap gsymb_ht;
 Rule rules[NUM_RULES];  // list of rules in the grammar
 
 int pt[NUM_NONTERMS][NUM_TOKENS];   // parse table
-
-char* GS_STRS[] = {
-#define X(a, b) #a,
-#include "data/tok.xmac"
-#undef X
-#define X(a) #a,
-#include "data/nonterms.xmac"
-#undef X
-};
 
 int rule_begin[NUM_NONTERMS], rule_end[NUM_GS];
 // rule_begin[i] is the rule number of the first rule for the non-terminal i.
@@ -64,7 +56,7 @@ int get_nt_id(gsymb_t s){
     return -1;
 }
 
-void push_ll(int_stack* pst, gt_node * head){
+void push_ll(int_stack* pst, RuleNode * head){
     if(head == NULL) return;
     push_ll(pst, head->next);
     int_stack_push(pst, head->value);
@@ -160,9 +152,9 @@ gsymb_t get_gsymb_id(const char* str)
     return hmap_n->value;
 }
 
-gt_node* get_gt_node(gsymb_t sid)
+RuleNode* getRuleNode(gsymb_t sid)
 {
-    gt_node* n = malloc(sizeof(gt_node));
+    RuleNode* n = malloc(sizeof(RuleNode));
     n->value = sid;
     n->next = NULL;
     n->first = unset_bitset;
@@ -211,7 +203,7 @@ int read_grammar(FILE* fp)
         }
         else
         {
-            gt_node* n = get_gt_node(sid);
+            RuleNode* n = getRuleNode(sid);
             if(rules[i].head == NULL)
                 rules[i].head = n;
             else
@@ -280,7 +272,7 @@ void destroy_rules()
     for(i=0; i < NUM_RULES; ++i)
     {
         rules[i].tail = NULL;
-        gt_node *p = rules[i].head, *todel = NULL;
+        RuleNode *p = rules[i].head, *todel = NULL;
         rules[i].head = NULL;
         while(p != NULL)
         {
@@ -301,7 +293,7 @@ void destroy_parser()
 
 // Get parse table -------------------------------------------------------------
 
-bitset_t get_first_str(gt_node*);
+bitset_t get_first_str(RuleNode*);
 
 bitset_t get_first_symb(gsymb_t sid)
 // get first set of a symbol
@@ -327,7 +319,7 @@ bitset_t get_first_symb(gsymb_t sid)
     }
 }
 
-bitset_t get_first_str(gt_node* node)
+bitset_t get_first_str(RuleNode* node)
 // get first set of a linked list string starting at node
 {
     if(node == NULL)
@@ -347,7 +339,7 @@ bitset_t get_first_str(gt_node* node)
 void update_follow_helper(int rule_no)
 // update follow using rule number i
 {
-    gt_node* n = rules[rule_no].head;
+    RuleNode* n = rules[rule_no].head;
     for(; n != NULL; n = n->next)
     {
         gsymb_t sid = n->value;
@@ -547,7 +539,7 @@ parse_tree_node* build_parse_tree(FILE * ifp, gsymb_t start_sym){
         if(rule_num != -1){
             int_stack_pop(&st);
             push_ll(&st, rules[rule_num].head);
-            gt_node * tmp = rules[rule_num].head;
+            RuleNode * tmp = rules[rule_num].head;
             current_tn->value->rule_num = rule_num;
             while(tmp != NULL){
                 Symbol * ps = make_symbol(tmp->value);

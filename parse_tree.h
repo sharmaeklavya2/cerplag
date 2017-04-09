@@ -1,7 +1,7 @@
 #ifndef H_PARSE_TREE
 #define H_PARSE_TREE
 
-#include "parser_defs.h"
+#include "symbol_defs.h"
 typedef Symbol* parse;
 
 #define TYPE parse

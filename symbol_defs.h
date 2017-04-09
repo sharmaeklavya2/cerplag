@@ -1,23 +1,7 @@
-#ifndef H_PARSER_DEFS
-#define H_PARSER_DEFS
+#ifndef H_SYMBOL_DEFS
+#define H_SYMBOL_DEFS
 
-#include "token.h"
-#include "util/bitset.h"
 #include "util/pch_int_hmap.h"
-
-/*
-typedef enum
-{
-#define X(a) NT_##a,
-#include "data/nonterms.xmac"
-#undef X
-    NT_LAST
-}non_term_t;
-
-#define NUM_NON_TERMS NT_LAST
-*/
-
-#define NUM_RULES 100
 
 typedef enum
 {
@@ -32,23 +16,7 @@ typedef enum
 
 #define NUM_GS GS_LAST
 
-struct gt_node_
-{
-    struct gt_node_* next;
-    gsymb_t value;
-    bitset_t first;
-};
-
-typedef struct gt_node_ gt_node;
-
-typedef struct
-{
-    gsymb_t lhs;
-    gt_node* head;
-    gt_node* tail;
-}Rule;
-
-extern pch_int_hmap intern_table;
+extern char* GS_STRS[];
 
 typedef struct
 {
@@ -81,4 +49,4 @@ typedef struct
     };
 }Symbol;
 
-#endif  // H_PARSER_DEFS
+#endif  // H_SYMBOL_DEFS
