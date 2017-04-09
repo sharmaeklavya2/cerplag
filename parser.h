@@ -3,6 +3,8 @@
 
 #include "parse_tree.h"
 
+extern int parser_error_count;
+
 void init_parser();
 void destroy_parser();
 

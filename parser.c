@@ -29,7 +29,7 @@ bitset_t first[NUM_NONTERMS], follow[NUM_NONTERMS];
 
 bool follow_changed = false;
 int num_rules;
-int error_count;
+int parser_error_count;
 
 const bitset_t unset_bitset = -1;
 const bitset_t empty_bitset = 0ull;
@@ -229,7 +229,7 @@ gsymb_t init_parser()
 {
     init_lexer();
 
-    error_count = 0;
+    parser_error_count = 0;
 
     init_gsymb_ht();
     pch_int_hmap_init(&intern_table, 50, true);
@@ -480,7 +480,7 @@ void read_parse_table(const char* file_name){
 parse_tree_node* handle_parse_error_1(const Token* ptok, int_stack* pst, parse_tree_node* tn)
 // handle case where top of stack is a terminal and it doesn't match lookahead
 {
-    error_count++;
+    parser_error_count++;
     gsymb_t cur_st_top = int_stack_top(pst);
     fprintf(stderr, "parse_error_1: line %2d, col %2d: \'%s\' (%s)\nGot %s (\'%s\') instead of %s.\n\n",
         ptok->line, ptok->col, ptok->lexeme, GS_STRS[ptok->tid],
@@ -493,7 +493,7 @@ parse_tree_node* handle_parse_error_1(const Token* ptok, int_stack* pst, parse_t
 parse_tree_node* handle_parse_error_2(const Token* ptok, int_stack* pst, parse_tree_node* tn)
 // handle case where there is no entry in parse table
 {
-    error_count++;
+    parser_error_count++;
     fprintf(stderr, "parse_error_2: line %2d, col %2d: \'%s\' (%s)\n%s (\'%s\') isn't expected here.\n\n",
         ptok->line, ptok->col, ptok->lexeme, GS_STRS[ptok->tid],
         GS_STRS[ptok->tid], ptok->lexeme);
@@ -559,7 +559,7 @@ parse_tree_node* build_parse_tree(FILE * ifp, gsymb_t start_sym){
         //int_stack_print(&st, stderr);
     }
     int_stack_destroy(&st);
-    error_count += dfa.error_count;
+    parser_error_count += dfa.error_count;
     return root;
 }
 
@@ -667,5 +667,5 @@ int parser_main(FILE* ifp, FILE* ofp, int verbosity, parse_tree_printer tp)
     parse_tree_destroy(root);
 
     destroy_parser();
-    return error_count;
+    return parser_error_count;
 }
