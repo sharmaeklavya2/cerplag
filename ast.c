@@ -52,6 +52,12 @@ pAstNode get_next_ast_node(pAstNode p) {
     }
 }
 
+static void print_type(FILE* fp, valtype_t type, int size) {
+    fprintf(fp, "%s", TYPE_STRS[type]);
+    if(size > 0)
+        fprintf(fp, "[%d]", size);
+}
+
 void print_ast(FILE* fp, pAstNode p, int indent) {
     int i;
     const char INDENT_STR[] = "  ";
@@ -99,9 +105,8 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
                 print_ast(fp, ((IDListNode*)p)->next, indent);
             break;
         case ASTN_IDTypeList:
-            fprintf(fp, "(%s, %s", ((IDTypeListNode*)p)->varname, TYPE_STRS[((IDTypeListNode*)p)->type]);
-            if(((IDTypeListNode*)p)->size > 0)
-                fprintf(fp, "[%d]", ((IDTypeListNode*)p)->size);
+            fprintf(fp, "(%s, ", ((IDTypeListNode*)p)->varname);
+            print_type(fp, ((IDTypeListNode*)p)->type, ((IDTypeListNode*)p)->size);
             fprintf(fp, ")\n");
             if(((IDTypeListNode*)p)->next != NULL)
                 print_ast(fp, ((IDTypeListNode*)p)->next, indent);
@@ -122,7 +127,8 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "body=\n");
             print_ast(fp, ((ModuleNode*)p)->body, indent+2);
 
-            print_ast(fp, ((ModuleNode*)p)->next, indent);
+            if(((ModuleNode*)p)->next != NULL)
+                print_ast(fp, ((ModuleNode*)p)->next, indent);
             break;
         case ASTN_Program:
             fprintf(fp, ":\n");
@@ -141,7 +147,8 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "expr=\n");
             print_ast(fp, ((AssnNode*)p)->expr, indent+2);
 
-            print_ast(fp, ((AssnNode*)p)->next, indent);
+            if(((AssnNode*)p)->next != NULL)
+                print_ast(fp, ((AssnNode*)p)->next, indent);
             break;
 
         case ASTN_While:
@@ -155,30 +162,37 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "body=\n");
             print_ast(fp, ((WhileNode*)p)->body, indent+2);
 
-            print_ast(fp, ((WhileNode*)p)->next, indent);
+            if(((WhileNode*)p)->next != NULL)
+                print_ast(fp, ((WhileNode*)p)->next, indent);
             break;
 
         case ASTN_For:
             fprintf(fp, "(%s, %d, %d):\n", ((ForNode*)p)->varname, ((ForNode*)p)->beg, ((ForNode*)p)->end);
             print_ast(fp, ((ForNode*)p)->body, indent+1);
-            print_ast(fp, ((ForNode*)p)->next, indent);
+            if(((ForNode*)p)->next != NULL)
+                print_ast(fp, ((ForNode*)p)->next, indent);
             break;
 
         case ASTN_Decl:
-            fprintf(fp, ":\n");
+            fprintf(fp, "(");
+            print_type(fp, ((DeclNode*)p)->type, ((DeclNode*)p)->size);
+            fprintf(fp, "):\n");
             print_ast(fp, ((DeclNode*)p)->idList, indent+1);
-            print_ast(fp, ((DeclNode*)p)->next, indent);
+            if(((DeclNode*)p)->next != NULL)
+                print_ast(fp, ((DeclNode*)p)->next, indent);
             break;
 
         case ASTN_Input:
             fprintf(fp, "(%s)\n", ((InputNode*)p)->varname);
-            print_ast(fp, ((InputNode*)p)->next, indent);
+            if(((InputNode*)p)->next != NULL)
+                print_ast(fp, ((InputNode*)p)->next, indent);
             break;
 
         case ASTN_Output:
             fprintf(fp, ":\n");
             print_ast(fp, ((OutputNode*)p)->var, indent+1);
-            print_ast(fp, ((OutputNode*)p)->next, indent);
+            if(((OutputNode*)p)->next != NULL)
+                print_ast(fp, ((OutputNode*)p)->next, indent);
             break;
 
         case ASTN_FCall:
@@ -192,7 +206,8 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "oParamList=\n");
             print_ast(fp, ((FCallNode*)p)->oParamList, indent+2);
 
-            print_ast(fp, ((FCallNode*)p)->next, indent);
+            if(((FCallNode*)p)->next != NULL)
+                print_ast(fp, ((FCallNode*)p)->next, indent);
             break;
 
         case ASTN_Switch:
@@ -206,7 +221,8 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "cases=\n");
             print_ast(fp, ((SwitchNode*)p)->cases, indent+2);
 
-            print_ast(fp, ((SwitchNode*)p)->next, indent);
+            if(((SwitchNode*)p)->next != NULL)
+                print_ast(fp, ((SwitchNode*)p)->next, indent);
             break;
 
         case ASTN_Case:
@@ -220,7 +236,8 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "stmts=\n");
             print_ast(fp, ((CaseNode*)p)->stmts, indent+2);
 
-            print_ast(fp, ((CaseNode*)p)->next, indent);
+            if(((CaseNode*)p)->next != NULL)
+                print_ast(fp, ((CaseNode*)p)->next, indent);
             break;
         default:
             complain_ast_node_type(__func__, p->node_type);
