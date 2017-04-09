@@ -45,6 +45,7 @@ ModuleNode:
 * next
 
 ProgramNode:
+* decls
 * driver
 * modules
 

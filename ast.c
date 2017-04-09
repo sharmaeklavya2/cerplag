@@ -126,6 +126,7 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             break;
         case ASTN_Program:
             fprintf(fp, ":\n");
+            print_ast(fp, ((ProgramNode*)p)->decls, indent+1);
             print_ast(fp, ((ProgramNode*)p)->modules, indent+1);
             break;
 

@@ -1,9 +1,9 @@
 program moduleDeclarations otherModules driverModule otherModules :
-    0.tree = new ProgramNode(driver=3.tree, modules=2.tree);
+    0.tree = new ProgramNode(decls=1.tree, driver=3.tree, modules=2.tree);
     3.next = 4.tree; 2.driver = 3.tree; 4.driver = NULL;
-moduleDeclarations moduleDeclaration moduleDeclarations : Nothing
-moduleDeclarations : Nothing
-moduleDeclaration DECLARE MODULE ID SEMICOL : registerModule(3.varname);
+moduleDeclarations moduleDeclaration moduleDeclarations : 0.tree = 1.tree; 1.next = 2.tree;
+moduleDeclarations : 0.tree = NULL
+moduleDeclaration DECLARE MODULE ID SEMICOL : 0.tree = new IDListNode(var=3.varname);
 otherModules module otherModules : 0.tree = 1.tree; 1.next = 2.tree; 2.driver = 0.driver;
 otherModules : 0.tree = 0.driver;
 driverModule DRIVERDEF DRIVER PROGRAM DRIVERENDDEF moduleBody :
