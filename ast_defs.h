@@ -21,12 +21,13 @@ typedef enum {
     OP_LE, OP_GE,
     OP_EQ, OP_NE,
     OP_MUL, OP_DIV,
+    OP_AND, OP_OR,
     OP_LAST
 } op_t;
 
 #define NUM_OP OP_LAST
 
-#define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/"}
+#define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "&", "|"}
 
 typedef struct {astn_t node_type; valtype_t type; int size;} AstNode;
 typedef AstNode* pAstNode;
