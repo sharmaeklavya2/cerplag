@@ -543,6 +543,8 @@ parse_tree_node* build_parse_tree(FILE * ifp, gsymb_t start_sym){
             push_ll(&st, rules[rule_num].head);
             RuleNode * tmp = rules[rule_num].head;
             current_tn->value->rule_num = rule_num;
+            current_tn->value->line = cur_tkn.line;
+            current_tn->value->col = cur_tkn.col;
             while(tmp != NULL){
                 Symbol * ps = make_symbol(tmp->value);
                 parse_tree_insert(current_tn, ps);
@@ -630,7 +632,7 @@ void print_node(const parse_tree_node* root, FILE* fp)
             fprintf(fp, "%d", root->value->i);
         else if(root->value->sid == T_RNUM)
             fprintf(fp, "%lf", root->value->f);
-        fprintf(fp, "\n");
+        fprintf(fp, " (%d:%d)\n", root->value->line, root->value->col);
     }
 }
 
