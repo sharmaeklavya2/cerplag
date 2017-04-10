@@ -27,7 +27,6 @@ pAstNode get_ast_node(astn_t node_type) {
 #undef X
         default:
             complain_ast_node_type(__func__, node_type);
-            fprintf(stderr, "get_ast_node: invalid node_type\n");
     }
     return p;
 }
