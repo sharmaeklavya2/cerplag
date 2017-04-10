@@ -458,6 +458,7 @@ int ast_gen_main(FILE* ifp, FILE* ofp, int verbosity)
 
     print_ast(stdout, ast, 0);
 
+    destroy_ast(ast);
     pch_int_hmap_destroy(&intern_table);
     return 0;
 }

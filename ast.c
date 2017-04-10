@@ -247,3 +247,77 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             complain_ast_node_type(__func__, p->base.node_type);
     }
 }
+
+void destroy_ast(pAstNode p) {
+    if(p == NULL) return;
+    switch(p->base.node_type) {
+        case ASTN_BOp:
+            destroy_ast(((BOpNode*)p)->arg1);
+            destroy_ast(((BOpNode*)p)->arg2);
+            break;
+        case ASTN_UOp:
+            destroy_ast(((UOpNode*)p)->arg);
+            break;
+        case ASTN_Deref:
+            destroy_ast(((DerefNode*)p)->index);
+            break;
+        case ASTN_IDList:
+            destroy_ast(((IDListNode*)p)->next);
+            break;
+        case ASTN_IDTypeList:
+            destroy_ast(((IDTypeListNode*)p)->next);
+            break;
+        case ASTN_Module:
+            destroy_ast(((ModuleNode*)p)->next);
+            destroy_ast(((ModuleNode*)p)->iParamList);
+            destroy_ast(((ModuleNode*)p)->oParamList);
+            destroy_ast(((ModuleNode*)p)->body);
+            break;
+        case ASTN_Program:
+            destroy_ast(((ProgramNode*)p)->decls);
+            destroy_ast(((ProgramNode*)p)->modules);
+            break;
+        case ASTN_Assn:
+            destroy_ast(((AssnNode*)p)->next);
+            destroy_ast(((AssnNode*)p)->target);
+            destroy_ast(((AssnNode*)p)->expr);
+            break;
+        case ASTN_While:
+            destroy_ast(((WhileNode*)p)->next);
+            destroy_ast(((WhileNode*)p)->cond);
+            destroy_ast(((WhileNode*)p)->body);
+            break;
+        case ASTN_For:
+            destroy_ast(((ForNode*)p)->next);
+            destroy_ast(((ForNode*)p)->body);
+            break;
+        case ASTN_Decl:
+            destroy_ast(((DeclNode*)p)->next);
+            destroy_ast(((DeclNode*)p)->idList);
+            break;
+        case ASTN_Input:
+            destroy_ast(((InputNode*)p)->next);
+            break;
+        case ASTN_Output:
+            destroy_ast(((OutputNode*)p)->next);
+            destroy_ast(((OutputNode*)p)->var);
+            break;
+        case ASTN_FCall:
+            destroy_ast(((FCallNode*)p)->next);
+            destroy_ast(((FCallNode*)p)->iParamList);
+            destroy_ast(((FCallNode*)p)->oParamList);
+            break;
+        case ASTN_Switch:
+            destroy_ast(((SwitchNode*)p)->next);
+            destroy_ast(((SwitchNode*)p)->cases);
+            destroy_ast(((SwitchNode*)p)->defaultcase);
+            break;
+        case ASTN_Case:
+            destroy_ast(((CaseNode*)p)->next);
+            destroy_ast(((CaseNode*)p)->val);
+            destroy_ast(((CaseNode*)p)->stmts);
+            break;
+        default:;
+    }
+    free(p);
+}
