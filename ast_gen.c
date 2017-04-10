@@ -377,7 +377,9 @@ void build_ast(parse_tree_node* p) {
             mynode->op = OP_OR;
             mynode->arg1 = s[0]->acc;
             mynode->arg2 = s[2]->tree;
-            s[0]->tree = mynode;
+            s[3]->acc = mynode;
+            build_ast(n[3]);
+            s[0]->tree = s[3]->tree;
             break;
         }
         case 71: {
@@ -386,7 +388,9 @@ void build_ast(parse_tree_node* p) {
             mynode->op = OP_AND;
             mynode->arg1 = s[0]->acc;
             mynode->arg2 = s[2]->tree;
-            s[0]->tree = mynode;
+            s[3]->acc = mynode;
+            build_ast(n[3]);
+            s[0]->tree = s[3]->tree;
             break;
         }
         case 74:
@@ -398,7 +402,9 @@ void build_ast(parse_tree_node* p) {
             mynode->op = s[1]->op;
             mynode->arg1 = s[0]->acc;
             mynode->arg2 = s[2]->tree;
-            s[0]->tree = mynode;
+            s[3]->acc = mynode;
+            build_ast(n[3]);
+            s[0]->tree = s[3]->tree;
             break;
         }
         case 82: {
