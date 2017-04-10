@@ -33,6 +33,7 @@ typedef struct {
     astn_t node_type;
     valtype_t type;
     int size;
+    int line, col;
 } BaseAstNode;
 
 typedef struct {BaseAstNode base;} AstNode;

@@ -60,6 +60,11 @@ static void print_type(FILE* fp, valtype_t type, int size) {
 void print_ast(FILE* fp, pAstNode p, int indent) {
     int i;
     const char INDENT_STR[] = "  ";
+    const char* INITIAL_INDENT = "        ";
+    if(p != NULL)
+        fprintf(fp, "(%2d:%2d) ", p->base.line, p->base.col);
+    else
+        fprintf(fp, "%s", INITIAL_INDENT);
     for(i=0; i<indent; ++i)
         fprintf(fp, INDENT_STR);
     if(p == NULL) {
@@ -115,15 +120,15 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "(%s):\n", ((ModuleNode*)p)->name);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "iParamList=\n");
+            fprintf(fp, "%siParamList=\n", INITIAL_INDENT);
             print_ast(fp, ((ModuleNode*)p)->iParamList, indent+2);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "oParamList=\n");
+            fprintf(fp, "%soParamList=\n", INITIAL_INDENT);
             print_ast(fp, ((ModuleNode*)p)->oParamList, indent+2);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "body=\n");
+            fprintf(fp, "%sbody=\n", INITIAL_INDENT);
             print_ast(fp, ((ModuleNode*)p)->body, indent+2);
 
             if(((ModuleNode*)p)->next != NULL)
@@ -139,11 +144,11 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, ":\n");
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "target=\n");
+            fprintf(fp, "%starget=\n", INITIAL_INDENT);
             print_ast(fp, ((AssnNode*)p)->target, indent+2);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "expr=\n");
+            fprintf(fp, "%sexpr=\n", INITIAL_INDENT);
             print_ast(fp, ((AssnNode*)p)->expr, indent+2);
 
             if(((AssnNode*)p)->next != NULL)
@@ -154,11 +159,11 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, ":\n");
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "cond=\n");
+            fprintf(fp, "%scond=\n", INITIAL_INDENT);
             print_ast(fp, ((WhileNode*)p)->cond, indent+2);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "body=\n");
+            fprintf(fp, "%sbody=\n", INITIAL_INDENT);
             print_ast(fp, ((WhileNode*)p)->body, indent+2);
 
             if(((WhileNode*)p)->next != NULL)
@@ -198,11 +203,11 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "(%s):\n", ((FCallNode*)p)->name);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "iParamList=\n");
+            fprintf(fp, "%siParamList=\n", INITIAL_INDENT);
             print_ast(fp, ((FCallNode*)p)->iParamList, indent+2);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "oParamList=\n");
+            fprintf(fp, "%soParamList=\n", INITIAL_INDENT);
             print_ast(fp, ((FCallNode*)p)->oParamList, indent+2);
 
             if(((FCallNode*)p)->next != NULL)
@@ -213,11 +218,11 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, "(%s):\n", ((SwitchNode*)p)->varname);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "defaultcase=\n");
+            fprintf(fp, "%sdefaultcase=\n", INITIAL_INDENT);
             print_ast(fp, ((SwitchNode*)p)->defaultcase, indent+2);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "cases=\n");
+            fprintf(fp, "%scases=\n", INITIAL_INDENT);
             print_ast(fp, ((SwitchNode*)p)->cases, indent+2);
 
             if(((SwitchNode*)p)->next != NULL)
@@ -228,11 +233,11 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             fprintf(fp, ":\n");
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "val=\n");
+            fprintf(fp, "%sval=\n", INITIAL_INDENT);
             print_ast(fp, ((CaseNode*)p)->val, indent+2);
 
             for(i=-1; i<indent; ++i) fprintf(fp, INDENT_STR);
-            fprintf(fp, "stmts=\n");
+            fprintf(fp, "%sstmts=\n", INITIAL_INDENT);
             print_ast(fp, ((CaseNode*)p)->stmts, indent+2);
 
             if(((CaseNode*)p)->next != NULL)
