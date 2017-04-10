@@ -26,6 +26,7 @@ void build_ast(parse_tree_node* p) {
     for(i=0; i<=num; ++i)
         s[i] = n[i]->value;
     //fprintf(stderr, "build_ast called on %s (rule %d)\n", GS_STRS[p->value->sid], p->value->rule_num);
+    pAstNode old_tree = s[0]->tree;
     switch(p->value->rule_num) {
         case 0:
             s[4]->driver = NULL;
@@ -377,6 +378,8 @@ void build_ast(parse_tree_node* p) {
             mynode->op = OP_OR;
             mynode->arg1 = s[0]->acc;
             mynode->arg2 = s[2]->tree;
+            mynode->base.line = s[1]->line;
+            mynode->base.col = s[1]->col;
             s[3]->acc = mynode;
             build_ast(n[3]);
             s[0]->tree = s[3]->tree;
@@ -388,6 +391,8 @@ void build_ast(parse_tree_node* p) {
             mynode->op = OP_AND;
             mynode->arg1 = s[0]->acc;
             mynode->arg2 = s[2]->tree;
+            mynode->base.line = s[1]->line;
+            mynode->base.col = s[1]->col;
             s[3]->acc = mynode;
             build_ast(n[3]);
             s[0]->tree = s[3]->tree;
@@ -402,6 +407,8 @@ void build_ast(parse_tree_node* p) {
             mynode->op = s[1]->op;
             mynode->arg1 = s[0]->acc;
             mynode->arg2 = s[2]->tree;
+            mynode->base.line = s[1]->line;
+            mynode->base.col = s[1]->col;
             s[3]->acc = mynode;
             build_ast(n[3]);
             s[0]->tree = s[3]->tree;
@@ -428,6 +435,14 @@ void build_ast(parse_tree_node* p) {
         case 95: s[0]->op = OP_DIV; break;
         default:
             s[0]->tree = NULL;
+    }
+    pAstNode new_tree = s[0]->tree;
+    // set line and col using first symbol of grammar rule
+    if(new_tree != NULL && new_tree != old_tree && num >= 1 && s[1] != NULL) {
+        if(new_tree->base.line == 0)
+            new_tree->base.line = s[1]->line;
+        if(new_tree->base.col == 0)
+            new_tree->base.col = s[1]->col;
     }
 }
 
