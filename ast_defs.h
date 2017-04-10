@@ -29,10 +29,16 @@ typedef enum {
 
 #define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "&", "|"}
 
-typedef struct {astn_t node_type; valtype_t type; int size;} AstNode;
+typedef struct {
+    astn_t node_type;
+    valtype_t type;
+    int size;
+} BaseAstNode;
+
+typedef struct {BaseAstNode base;} AstNode;
 typedef AstNode* pAstNode;
 
-#define X(a, b) typedef struct {astn_t node_type; valtype_t type; int size; b} a##Node;
+#define X(a, b) typedef struct {BaseAstNode base; b} a##Node;
 #include "data/ast_nodes.xmac"
 #undef X
 

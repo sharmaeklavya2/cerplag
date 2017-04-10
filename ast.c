@@ -22,7 +22,7 @@ void complain_ast_node_type(const char* funcname, astn_t node_type) {
 pAstNode get_ast_node(astn_t node_type) {
     pAstNode p = NULL;
     switch(node_type) {
-#define X(a, b) case ASTN_##a: p = malloc(sizeof(a##Node)); memset(p, 0, sizeof(a##Node)); p->node_type = node_type; break;
+#define X(a, b) case ASTN_##a: p = malloc(sizeof(a##Node)); memset(p, 0, sizeof(a##Node)); p->base.node_type = node_type; break;
 #include "data/ast_nodes.xmac"
 #undef X
         default:
@@ -32,7 +32,7 @@ pAstNode get_ast_node(astn_t node_type) {
 }
 
 pAstNode get_next_ast_node(pAstNode p) {
-    switch(p->node_type) {
+    switch(p->base.node_type) {
         case ASTN_IDList: return ((IDListNode*)p)->next;
         case ASTN_IDTypeList: return ((IDTypeListNode*)p)->next;
         case ASTN_Module: return ((ModuleNode*)p)->next;
@@ -46,7 +46,7 @@ pAstNode get_next_ast_node(pAstNode p) {
         case ASTN_Switch: return ((SwitchNode*)p)->next;
         case ASTN_Case: return ((CaseNode*)p)->next;
         default:
-            complain_ast_node_type(__func__, p->node_type);
+            complain_ast_node_type(__func__, p->base.node_type);
             return NULL;
     }
 }
@@ -66,8 +66,8 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
         fprintf(fp, "NULL\n");
         return;
     }
-    fprintf(fp, "%s", ASTN_STRS[p->node_type]);
-    switch(p->node_type) {
+    fprintf(fp, "%s", ASTN_STRS[p->base.node_type]);
+    switch(p->base.node_type) {
         case ASTN_BOp:
             fprintf(fp, "(%s):\n", OP_STRS[((BOpNode*)p)->op]);
             print_ast(fp, ((BOpNode*)p)->arg1, indent+1);
@@ -105,7 +105,7 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
             break;
         case ASTN_IDTypeList:
             fprintf(fp, "(%s, ", ((IDTypeListNode*)p)->varname);
-            print_type(fp, ((IDTypeListNode*)p)->type, ((IDTypeListNode*)p)->size);
+            print_type(fp, ((IDTypeListNode*)p)->base.type, ((IDTypeListNode*)p)->base.size);
             fprintf(fp, ")\n");
             if(((IDTypeListNode*)p)->next != NULL)
                 print_ast(fp, ((IDTypeListNode*)p)->next, indent);
@@ -174,7 +174,7 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
 
         case ASTN_Decl:
             fprintf(fp, "(");
-            print_type(fp, ((DeclNode*)p)->type, ((DeclNode*)p)->size);
+            print_type(fp, ((DeclNode*)p)->base.type, ((DeclNode*)p)->base.size);
             fprintf(fp, "):\n");
             print_ast(fp, ((DeclNode*)p)->idList, indent+1);
             if(((DeclNode*)p)->next != NULL)
@@ -239,6 +239,6 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
                 print_ast(fp, ((CaseNode*)p)->next, indent);
             break;
         default:
-            complain_ast_node_type(__func__, p->node_type);
+            complain_ast_node_type(__func__, p->base.node_type);
     }
 }

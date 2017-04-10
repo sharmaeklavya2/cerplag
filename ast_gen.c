@@ -123,8 +123,8 @@ void build_ast(parse_tree_node* p) {
             build_ast(n[3]);
             IDTypeListNode* mynode = (IDTypeListNode*)get_ast_node(ASTN_IDTypeList);
             mynode->varname = s[1]->lexeme;
-            mynode->type = s[3]->type;
-            mynode->size = 0;
+            mynode->base.type = s[3]->type;
+            mynode->base.size = 0;
             mynode->next = s[0]->next;
             s[0]->tree = mynode;
             break;
@@ -133,8 +133,8 @@ void build_ast(parse_tree_node* p) {
             build_ast(n[3]);
             IDTypeListNode* mynode = (IDTypeListNode*)get_ast_node(ASTN_IDTypeList);
             mynode->varname = s[1]->lexeme;
-            mynode->type = s[3]->type;
-            mynode->size = s[3]->size;
+            mynode->base.type = s[3]->type;
+            mynode->base.size = s[3]->size;
             mynode->next = s[0]->next;
             s[0]->tree = mynode;
             break;
@@ -297,8 +297,8 @@ void build_ast(parse_tree_node* p) {
             DeclNode* decl_node = (DeclNode*)get_ast_node(ASTN_Decl);
             decl_node->next = s[0]->next;
             decl_node->idList = s[2]->tree;
-            decl_node->type = s[4]->type;
-            decl_node->size = s[4]->size;
+            decl_node->base.type = s[4]->type;
+            decl_node->base.size = s[4]->size;
             s[0]->tree = decl_node;
             break;
         }
