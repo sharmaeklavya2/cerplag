@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include "error.h"
 #include "symbol_defs.h"
 #include "rule_defs.h"
 #include "util/pch_int_hmap.h"
@@ -484,10 +485,9 @@ parse_tree_node* handle_parse_error_1(const Token* ptok, int_stack* pst, parse_t
 {
     parser_error_count++;
     gsymb_t cur_st_top = int_stack_top(pst);
-    fprintf(stderr, "parse_error_1: line %2d, col %2d: \'%s\' (%s)\nGot %s (\'%s\') instead of %s.\n\n",
-        ptok->line, ptok->col, ptok->lexeme, GS_STRS[ptok->tid],
-        GS_STRS[ptok->tid], ptok->lexeme, GS_STRS[cur_st_top]);
-
+    static char err_msg[50];
+    sprintf(err_msg, "Got %s instead of %s.", GS_STRS[ptok->tid], GS_STRS[cur_st_top]);
+    print_error("parse", 1, ptok->line, ptok->col, ptok->lexeme, NULL, err_msg);
     int_stack_pop(pst);
     return get_successor(tn);
 }
@@ -496,9 +496,9 @@ parse_tree_node* handle_parse_error_2(const Token* ptok, int_stack* pst, parse_t
 // handle case where there is no entry in parse table
 {
     parser_error_count++;
-    fprintf(stderr, "parse_error_2: line %2d, col %2d: \'%s\' (%s)\n%s (\'%s\') isn't expected here.\n\n",
-        ptok->line, ptok->col, ptok->lexeme, GS_STRS[ptok->tid],
-        GS_STRS[ptok->tid], ptok->lexeme);
+    static char err_msg[50];
+    sprintf(err_msg, "Token \'%s\' isn't expected here.", GS_STRS[ptok->tid]);
+    print_error("parse", 2, ptok->line, ptok->col, ptok->lexeme, NULL, err_msg);
     int_stack_pop(pst);
     return get_first_child_or_successor(tn);
 }

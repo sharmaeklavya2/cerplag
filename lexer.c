@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "token.h"
+#include "error.h"
 #include "lexer_defs.h"
 #include "assert.h"
 #include "util/pch_int_hmap.h"
@@ -328,12 +329,8 @@ tok_t predict_token_from_state(state_t s)
 
 void print_lex_error(lerr_t lerr, Dfa* pdfa, const Token* ptok)
 {
-    if(lerr != LERR_NONE)
-    {
-        (pdfa->error_count)++;
-        fprintf(stderr, "lex_error_%d: line %2d, col %2d: \'%s\' \n%s: %s\n\n", lerr,
-            ptok->line, ptok->col, ptok->lexeme, ERRORS1[lerr], ERRORS2[lerr]);
-    }
+    (pdfa->error_count)++;
+    print_error("lex", lerr, ptok->line, ptok->col, ptok->lexeme, ERRORS1[lerr], ERRORS2[lerr]);
 }
 
 // DFA implementation ----------------------------------------------------------
@@ -441,7 +438,8 @@ void execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
         assert(false);
         break;
     }
-    print_lex_error(lerr, pdfa, ptok);
+    if(lerr != LERR_NONE)
+        print_lex_error(lerr, pdfa, ptok);
 }
 
 void init_dfa(Dfa* pdfa)

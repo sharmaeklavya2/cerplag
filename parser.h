@@ -3,7 +3,6 @@
 
 #include "parse_tree.h"
 
-extern int parser_error_count;
 extern pch_int_hmap intern_table;
 
 gsymb_t init_parser();

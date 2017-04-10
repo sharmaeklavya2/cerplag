@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "error.h"
 #include "lexer.h"
 #include "parser.h"
 #include "ast_gen.h"
@@ -116,17 +117,20 @@ int main(int argc, char* argv[])
     }
 
     // call appropriate function
-    int retval = 0;
+    //int retval = 0;
     if(type == 'l')
-        retval = lexer_main(ifp, ofp, verbosity, print_token);
+        lexer_main(ifp, ofp, verbosity, print_token);
     else if(type == 'p')
-        retval = parser_main(ifp, ofp, verbosity, print_tree);
+        parser_main(ifp, ofp, verbosity, print_tree);
     else
-        retval = ast_gen_main(ifp, ofp, verbosity);
+        ast_gen_main(ifp, ofp, verbosity);
 
     if(ifp != stdin)
         fclose(ifp);
     if(ofp != stdout && ofp != stderr)
         fclose(ofp);
-    return retval;
+
+    if(error_count > 0)
+        fprintf(stderr, "%d errors\n", error_count);
+    return error_count;
 }

@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "ast.h"
 #include "symbol_defs.h"
+#include "error.h"
 
 int read_children(parse_tree_node** nodes, parse_tree_node* root) {
     //for(i=0; i<n; ++i) nodes[i] = NULL;
@@ -160,7 +161,7 @@ void build_ast(parse_tree_node* p) {
             s[0]->size = s[3]->end;
             if(s[3]->beg != 1) {
                 // TODO: handle error correctly
-                fprintf(stderr, "Start index of array should be 1\n");
+                print_error("ast_gen", 1, -1, -1, NULL, NULL, "Start index of array should be 1.");
             }
             break;
         case 26:
@@ -437,5 +438,5 @@ int ast_gen_main(FILE* ifp, FILE* ofp, int verbosity)
     print_ast(stdout, ast, 0);
 
     pch_int_hmap_destroy(&intern_table);
-    return parser_error_count;
+    return 0;
 }
