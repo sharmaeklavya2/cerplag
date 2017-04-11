@@ -14,6 +14,7 @@ typedef enum {
 
 typedef enum {TYPE_INTEGER, TYPE_REAL, TYPE_BOOLEAN} valtype_t;
 #define TYPE_STRS_LIST {"int", "real", "bool"}
+#define TYPE_SIZES_LIST {sizeof(int), sizeof(double), sizeof(bool)}
 
 typedef enum {
     OP_PLUS, OP_MINUS,
@@ -45,6 +46,8 @@ typedef AstNode* pAstNode;
 
 extern char* ASTN_STRS[];
 extern char* TYPE_STRS[];
+extern int TYPE_SIZES[];
+extern int TYPE_ALIGNS[];
 extern char* OP_STRS[];
 
 #endif  // H_AST_DEFS

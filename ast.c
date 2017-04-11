@@ -11,6 +11,8 @@ char* ASTN_STRS[] = {
 
 char* TYPE_STRS[] = TYPE_STRS_LIST;
 char* OP_STRS[] = OP_STRS_LIST;
+int TYPE_SIZES[] = TYPE_SIZES_LIST;
+int TYPE_ALIGNS[] = TYPE_SIZES_LIST;
 
 void complain_ast_node_type(const char* funcname, astn_t node_type) {
     if(node_type >= NUM_ASTN)
