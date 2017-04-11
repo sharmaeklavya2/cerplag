@@ -97,3 +97,19 @@ void ITYPED(hmap_rehash)(ITYPED(hmap)* phmap, int new_capacity)
     phmap->plist = plist2;
     phmap->capacity = new_capacity;
 }
+
+void ITYPED(hmap_print)(ITYPED(hmap)* phmap, FILE* fp) {
+    int capacity = phmap->capacity;
+    ITYPED(hmap_node)** plist = phmap->plist;
+    ITYPED(hmap_node)* n = NULL;
+    fprintf(fp, "hmap(size=%d, capacity=%d):\n", phmap->size, capacity);
+    for(int i=0; i<capacity; ++i) {
+        for(n = plist[i]; n != NULL; n = n->next) {
+            fprintf(fp, "  ");
+            KTYPED(print)(n->key, fp);
+            fprintf(fp, ": ");
+            VTYPED(print)(n->value, fp);
+            fprintf(fp, "\n");
+        }
+    }
+}

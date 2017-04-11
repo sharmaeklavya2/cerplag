@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdio.h>
 
 struct ITYPED(hmap_node_)
 {
@@ -32,3 +33,5 @@ ITYPED(hmap_node)* ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v);
 double ITYPED(hmap_load_factor)(ITYPED(hmap)* phmap);
 
 void ITYPED(hmap_rehash)(ITYPED(hmap)* phmap, int new_capacity);
+
+void ITYPED(hmap_print)(ITYPED(hmap)*, FILE*);

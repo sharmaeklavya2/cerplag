@@ -9,6 +9,7 @@
 #define ITYPED(x) vptr_int_##x
 
 #include "vptr.h"
+#include "int.h"
 #include "hmap.gen.h"
 
 #undef KTYPE

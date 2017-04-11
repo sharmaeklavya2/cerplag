@@ -9,6 +9,7 @@
 #define ITYPED(x) pch_int_##x
 
 #include "pch.h"
+#include "int.h"
 #include "hmap.gen.h"
 
 #undef KTYPE
