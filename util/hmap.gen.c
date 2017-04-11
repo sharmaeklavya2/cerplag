@@ -11,7 +11,7 @@ ITYPED(hmap_node)* ITYPED(hmap_get_node)(KTYPE k, VTYPE v, ITYPED(hmap_node)* ne
     return n;
 }
 
-void ITYPED(hmap_destroy_chain)(ITYPED(hmap_node)* p, bool destroy_key)
+void ITYPED(hmap_destroy_chain)(ITYPED(hmap_node)* p, bool destroy_key, bool destroy_value)
 {
     ITYPED(hmap_node)* p2 = NULL;
     while(p != NULL)
@@ -20,6 +20,8 @@ void ITYPED(hmap_destroy_chain)(ITYPED(hmap_node)* p, bool destroy_key)
         p->next = NULL;
         if(destroy_key)
             KTYPED(destroy)(p->key);
+        if(destroy_value)
+            VTYPED(destroy)(p->value);
         free(p);
         p = p2;
     }
@@ -31,13 +33,14 @@ void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int capacity, bool destroy_key)
     phmap->capacity = capacity;
     phmap->size = 0;
     phmap->destroy_key = destroy_key;
+    phmap->destroy_value = true;
 }
 
 void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap)
 {
     int i;
     for(i=0; i < (phmap->capacity); ++i)
-        ITYPED(hmap_destroy_chain)(phmap->plist[i], phmap->destroy_key);
+        ITYPED(hmap_destroy_chain)(phmap->plist[i], phmap->destroy_key, phmap->destroy_value);
     free(phmap->plist);
 }
 
@@ -90,7 +93,7 @@ void ITYPED(hmap_rehash)(ITYPED(hmap)* phmap, int new_capacity)
             plist2[h] = ITYPED(hmap_get_node)(n->key, n->value, plist2[h]);
             n = n->next;
         }
-        ITYPED(hmap_destroy_chain)(phmap->plist[i], phmap->destroy_key);
+        ITYPED(hmap_destroy_chain)(phmap->plist[i], false, false);
     }
 
     free(phmap->plist);

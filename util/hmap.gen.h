@@ -18,6 +18,7 @@ typedef struct
     int capacity;
     int size;
     bool destroy_key;
+    bool destroy_value;
 }ITYPED(hmap);
 
 void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int size, bool destroy_key);
