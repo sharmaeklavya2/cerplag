@@ -397,6 +397,8 @@ void execute_action(action_t a, char ch, Dfa* pdfa, Token* ptok)
 
         ptok->line = pdfa->line;
         ptok->col = pdfa->col - ptok->size + 1;
+        if(a == A_TOKN)
+            ptok->col -= 2;
 
         if(pdfa->trunc)
         {
