@@ -57,7 +57,9 @@ VTYPE ITYPED(hmap_get)(ITYPED(hmap)* phmap, KTYPE k)
 {
     ITYPED(hmap_node)* n = ITYPED(hmap_query)(phmap, k);
     if(n == NULL) {
-        fprintf(stderr, "KeyError\n");
+        fprintf(stderr, "KeyError: ");
+        KTYPED(print)(k, stderr);
+        fprintf(stderr, "\n");
         abort();
     }
     return n->value;
