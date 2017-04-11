@@ -161,8 +161,7 @@ void build_ast(parse_tree_node* p) {
             s[0]->type = s[6]->type;
             s[0]->size = s[3]->end;
             if(s[3]->beg != 1) {
-                // TODO: handle error correctly
-                print_error("ast_gen", 1, -1, -1, NULL, NULL, "Start index of array should be 1.");
+                print_error("ast_gen", 1, s[3]->line, s[3]->col, NULL, NULL, "Start index of array should be 1.");
             }
             break;
         case 26:
