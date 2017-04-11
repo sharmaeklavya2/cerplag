@@ -42,3 +42,22 @@ void TYPED(tree_destroy)(TYPED(tree_node)* root)
         TYPED(tree_destroy)(sibling);
     }
 }
+
+void TYPED(tree_print_helper)(TYPED(tree_node)* root, FILE* fp, int indent, void printer(TYPE, FILE*)) {
+    if(root != NULL) {
+        int i;
+        for(i=0; i<indent; ++i)
+            fprintf(fp, "  ");
+        printer(root->value, fp);
+        fprintf(fp, "\n");
+        TYPED(tree_print_helper)(root->first_child, fp, indent+1, printer);
+        TYPED(tree_print_helper)(root->next_sibling, fp, indent, printer);
+    }
+}
+
+void TYPED(tree_print)(TYPED(tree_node)* root, FILE* fp) {
+    if(root == NULL)
+        fprintf(fp, "null_tree\n");
+    else
+        TYPED(tree_print_helper)(root, fp, 0, TYPED(print));
+}

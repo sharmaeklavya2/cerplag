@@ -17,3 +17,7 @@ TYPED(tree_node) * TYPED(tree_insert)(TYPED(tree_node)*, TYPE);
 void TYPED(tree_destroy)(TYPED(tree_node)* root);
 
 typedef void TYPED(tree_printer)(const TYPED(tree_node)* root, FILE* fp);
+
+void TYPED(tree_print_helper)(TYPED(tree_node)* root, FILE* fp, int indent, void printer(TYPE, FILE*));
+
+void TYPED(tree_print)(TYPED(tree_node)* root, FILE* fp);
