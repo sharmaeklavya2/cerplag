@@ -86,7 +86,7 @@ void copy_symbol(Symbol* symb, const Token* tok)
         fprintf(stderr, "copy_symbol: Bad token type assigned to a symbol\n");
     }
     else if(sid == T_ID) {
-        pch_int_hmap_node* pnode = pch_int_hmap_update(&intern_table, tok->lexeme, intern_counter);
+        pch_int_hmap_node* pnode = pch_int_hmap_insert(&intern_table, tok->lexeme, intern_counter);
         if(pnode->key == tok->lexeme) {
             // this means the lexeme wasn't already present in intern_table
             symb->lexeme = malloc(sizeof(char) * (tok->size + 1));

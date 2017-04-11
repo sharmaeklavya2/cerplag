@@ -63,7 +63,7 @@ VTYPE ITYPED(hmap_get)(ITYPED(hmap)* phmap, KTYPE k)
     return n->value;
 }
 
-ITYPED(hmap_node)* ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
+ITYPED(hmap_node)* ITYPED(hmap_insert)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
 {
     const int lf_num = 3, lf_den = 4;
     if(lf_den * (phmap->size+1) > lf_num * phmap->capacity)
@@ -75,6 +75,19 @@ ITYPED(hmap_node)* ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
     if(n == NULL) {
         (phmap->size)++;
         n = phmap->plist[h] = ITYPED(hmap_get_node)(k, v, phmap->plist[h]);
+    }
+    return n;
+}
+
+
+ITYPED(hmap_node)* ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
+{
+    int old_size = phmap->size;
+    ITYPED(hmap_node)* n = ITYPED(hmap_insert)(phmap, k, v);
+    if(phmap->size == old_size) {
+        if(phmap->destroy_value)
+            VTYPED(destroy)(n->value);
+        n->value = v;
     }
     return n;
 }

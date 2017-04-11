@@ -29,7 +29,11 @@ ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k);
 
 VTYPE ITYPED(hmap_get)(ITYPED(hmap)* phmap, KTYPE k);
 
+ITYPED(hmap_node)* ITYPED(hmap_insert)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v);
+// insert (k, v) if k is present. Otherwise don't do anything.
+
 ITYPED(hmap_node)* ITYPED(hmap_update)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v);
+// insert (k, v) if k is present. Otherwise update k's corresponding value to v.
 
 double ITYPED(hmap_load_factor)(ITYPED(hmap)* phmap);
 
