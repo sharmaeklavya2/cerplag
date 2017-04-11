@@ -1,16 +1,11 @@
 #include <stdio.h>
 #include "int_stack.h"
+#include "int.h"
 
 #define TYPE int
 #define TYPED(x) int_##x
 
 //#include "../parser.h"
-
-void int_print(int x, FILE* fp)
-{fprintf(fp, "%d", x);}
-//{fprintf(fp, "%s", GS_STRS[x]);}
-
-void int_destroy(int x){}
 
 #include "stack.gen.c"
 
