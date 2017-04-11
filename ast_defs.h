@@ -40,7 +40,7 @@ typedef struct {
 typedef struct {BaseAstNode base;} AstNode;
 typedef AstNode* pAstNode;
 
-#define X(a, b) typedef struct {BaseAstNode base; b} a##Node;
+#define X(a, b) typedef struct a##Node {BaseAstNode base; b} a##Node;
 #include "data/ast_nodes.xmac"
 #undef X
 

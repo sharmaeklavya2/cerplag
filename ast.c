@@ -33,6 +33,8 @@ pAstNode get_ast_node(astn_t node_type) {
     return p;
 }
 
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
+
 pAstNode get_next_ast_node(pAstNode p) {
     switch(p->base.node_type) {
         case ASTN_IDList: return ((IDListNode*)p)->next;
