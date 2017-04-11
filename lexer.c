@@ -330,7 +330,7 @@ tok_t predict_token_from_state(state_t s)
 void print_lex_error(lerr_t lerr, Dfa* pdfa, const Token* ptok)
 {
     (pdfa->error_count)++;
-    print_error("lex", lerr, ptok->line, ptok->col, ptok->lexeme, ERRORS1[lerr], ERRORS2[lerr]);
+    print_error("lex", ERROR, lerr, ptok->line, ptok->col, ptok->lexeme, ERRORS1[lerr], ERRORS2[lerr]);
 }
 
 // DFA implementation ----------------------------------------------------------

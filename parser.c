@@ -487,7 +487,7 @@ parse_tree_node* handle_parse_error_1(const Token* ptok, int_stack* pst, parse_t
     gsymb_t cur_st_top = int_stack_top(pst);
     static char err_msg[50];
     sprintf(err_msg, "Got %s instead of %s.", GS_STRS[ptok->tid], GS_STRS[cur_st_top]);
-    print_error("parse", 1, ptok->line, ptok->col, ptok->lexeme, NULL, err_msg);
+    print_error("parse", ERROR, 1, ptok->line, ptok->col, ptok->lexeme, NULL, err_msg);
     int_stack_pop(pst);
     return get_successor(tn);
 }
@@ -498,7 +498,7 @@ parse_tree_node* handle_parse_error_2(const Token* ptok, int_stack* pst, parse_t
     parser_error_count++;
     static char err_msg[50];
     sprintf(err_msg, "Token \'%s\' isn't expected here.", GS_STRS[ptok->tid]);
-    print_error("parse", 2, ptok->line, ptok->col, ptok->lexeme, NULL, err_msg);
+    print_error("parse", ERROR, 2, ptok->line, ptok->col, ptok->lexeme, NULL, err_msg);
     int_stack_pop(pst);
     return get_first_child_or_successor(tn);
 }

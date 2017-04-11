@@ -132,5 +132,7 @@ int main(int argc, char* argv[])
 
     if(error_count > 0)
         fprintf(stderr, "%d errors\n", error_count);
+    if(warning_count > 0)
+        fprintf(stderr, "%d warnings\n", warning_count);
     return error_count;
 }
