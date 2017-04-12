@@ -329,9 +329,21 @@ void compile_node(pAstNode p) {
             compile_node_chain(q->body);
             break;
         }
-        case ASTN_For:
+        case ASTN_For: {
+            ForNode* q = (ForNode*)p;
+            pSTEntry entry = ST_get_entry(&mySTStack, q->varname);
+            if(entry == NULL) {
+                print_undecl_id_error(q->varname, q->base.line, q->base.col);
+            }
+            else if(!(entry->type == 1 && entry->size == 0)) {
+                char tstr[24];
+                get_type_str(tstr, entry->type, entry->size);
+                sprintf(msg, "Loop variable %s should be an INTEGER, not %s.", q->varname, tstr);
+                print_error("type", ERROR, 24, q->base.line, q->base.col, NULL, "LOOPVAR_NOTINT", msg);
+            }
             compile_node_chain(((ForNode*)p)->body);
             break;
+        }
         case ASTN_Decl: {
             DeclNode* q = (DeclNode*)p;
             IDListNode* node = (IDListNode*)(q->idList);
