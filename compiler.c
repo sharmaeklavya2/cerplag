@@ -489,7 +489,13 @@ void compile(ProgramNode* root) {
     module_node = root->modules;
     while(module_node != NULL) {
         if(module_node->name != NULL) {
-            vptr_int_hmap_insert(&module_status, module_node->name, 0)->value |= MODULE_DEFINED;
+            vptr_int_hmap_node* hmap_node = vptr_int_hmap_insert(&module_status, module_node->name, 0);
+            hmap_node->value |= MODULE_DEFINED;
+            int status = hmap_node->value;
+            if((status & MODULE_DECLARED) && (~status & MODULE_USED)) {
+                print_error("compile", WARNING, 6, module_node->base.line, module_node->base.col, module_node->name,
+                    "NEEDLESS_DECLARE", "Module has been declared but not used before defining it.");
+            }
         }
         ST_reinit(&mySTStack, module_node->name);
         compile_node((pAstNode)module_node);
