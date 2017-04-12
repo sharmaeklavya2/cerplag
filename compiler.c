@@ -128,6 +128,49 @@ void add_idTypeListNode_to_ST(IDTypeListNode* node) {
 #endif
 }
 
+void compare_lists_type(const char* func_name, const char* list_type, IDListNode* actual, IDTypeListNode* formal) {
+    int acount=0, fcount=0;
+    IDListNode* org_actual = actual;
+    IDTypeListNode* org_formal = formal;
+    for(; actual != NULL; actual = actual->next, acount++);
+    for(; formal != NULL; formal = formal->next, fcount++);
+    actual = org_actual;
+    formal = org_formal;
+    if(acount < fcount) {
+        print_error("type", ERROR, 41, actual->base.line, actual->base.col, func_name,
+            "FEW_ARGS", "Too few arguments to function.");
+    }
+    else if(acount > fcount) {
+        print_error("type", ERROR, 42, actual->base.line, actual->base.col, func_name,
+            "MANY_ARGS", "Too many arguments to function.");
+    }
+    else {
+        while(actual != NULL) {
+            int ftype = formal->base.type;
+            int fsize = formal->base.size;
+            pSTEntry entry = ST_get_entry(&mySTStack, actual->varname);
+            if(entry == NULL) {
+                print_undecl_id_error(actual->varname, actual->base.line, actual->base.col);
+            }
+            else {
+                int atype = entry->type;
+                int asize = entry->size;
+                if(!(atype == TYPE_ERROR || (atype == ftype && asize == fsize))) {
+                    char fstr[24], astr[24];
+                    get_type_str(astr, atype, asize);
+                    get_type_str(fstr, ftype, fsize);
+                    sprintf(msg, "Actual %s parameter has type %s, but formal %s parameter has type %s.",
+                        list_type, astr, list_type, fstr);
+                    print_error("type", ERROR, 43, actual->base.line, actual->base.col, actual->varname,
+                        "FCALL_TYPE_MISMATCH", msg);
+                }
+            }
+            actual = actual->next;
+            formal = formal->next;
+        }
+    }
+}
+
 void compile_node(pAstNode p) {
     if(p == NULL) return;
     //fprintf(stderr, "%s(%s)\n", __func__, ASTN_STRS[p->base.node_type]);
@@ -317,8 +360,31 @@ void compile_node(pAstNode p) {
         case ASTN_Output:
             compile_node(((OutputNode*)p)->var);
             break;
-        case ASTN_FCall:
+        case ASTN_FCall: {
+            FCallNode* q = (FCallNode*)p;
+            if(q->name == mySTStack.func_name) {
+                print_error("compile", ERROR, 21, q->base.line, q->base.col, q->name, "RECURSE_CALL",
+                    "Recursive calls are not allowed.");
+            }
+            vptr_pMN_hmap_node* hmap_node = vptr_pMN_hmap_query(&module_node_map, q->name);
+            if(hmap_node == NULL) {
+                print_undecl_id_error(q->name, q->base.line, q->base.col);
+            }
+            else {
+                ModuleNode* module_node = hmap_node->value;
+                vptr_int_hmap_node* hmap_node = vptr_int_hmap_insert(&module_status, q->name, 0);
+                hmap_node->value |= MODULE_USED;
+                if(!((hmap_node->value & MODULE_DEFINED) || (hmap_node->value & MODULE_DECLARED))) {
+                    print_error("compile", ERROR, 22, q->base.line, q->base.col, q->name, "UNDEF_MODULE",
+                        "Module must be defined or declared before using it.");
+                }
+                compare_lists_type(q->name, "input", q->iParamList, module_node->iParamList);
+                if(q->oParamList != NULL) {
+                    compare_lists_type(q->name, "output", q->oParamList, module_node->oParamList);
+                }
+            }
             break;
+        }
         case ASTN_Switch: {
             SwitchNode* q = (SwitchNode*)p;
             pSTEntry entry = ST_get_entry(&mySTStack, q->varname);
