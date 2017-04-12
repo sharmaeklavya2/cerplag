@@ -12,9 +12,9 @@ typedef enum {
 
 #define NUM_ASTN ASTN_LAST
 
-typedef enum {TYPE_INTEGER, TYPE_REAL, TYPE_BOOLEAN, TYPE_ERROR} valtype_t;
-#define TYPE_STRS_LIST {"INTEGER", "REAL", "BOOLEAN", "ERROR"}
-#define TYPE_SIZES_LIST {sizeof(int), sizeof(double), sizeof(bool)}
+typedef enum {TYPE_ERROR, TYPE_INTEGER, TYPE_REAL, TYPE_BOOLEAN} valtype_t;
+#define TYPE_STRS_LIST {"ERROR", "INTEGER", "REAL", "BOOLEAN"}
+#define TYPE_SIZES_LIST {0, sizeof(int), sizeof(double), sizeof(bool)}
 
 typedef enum {
     OP_PLUS, OP_MINUS,
@@ -28,7 +28,7 @@ typedef enum {
 
 #define NUM_OP OP_LAST
 
-#define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "&", "|"}
+#define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "AND", "OR"}
 
 typedef struct {
     astn_t node_type;
