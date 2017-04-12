@@ -459,12 +459,18 @@ int ast_gen_main(FILE* ifp, FILE* ofp, int verbosity)
     gsymb_t start_symb = init_parser();
 
     parse_tree_node* proot = build_parse_tree(ifp, start_symb);
-    build_ast(proot);
-    pAstNode ast = proot->value->tree;
+    pAstNode ast = NULL;
+    int parse_errors = error_count;
+    if(parse_errors == 0) {
+        build_ast(proot);
+        ast = proot->value->tree;
+    }
     parse_tree_destroy(proot);
     destroy_parser(false);
 
-    print_ast(stdout, ast, 0);
+    if(parse_errors == 0) {
+        print_ast(stdout, ast, 0);
+    }
 
     destroy_ast(ast);
     pch_int_hmap_clear(&intern_table);

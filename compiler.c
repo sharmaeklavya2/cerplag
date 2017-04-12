@@ -466,18 +466,25 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
     gsymb_t start_symb = init_parser();
 
     parse_tree_node* proot = build_parse_tree(ifp, start_symb);
-    build_ast(proot);
-    ProgramNode* ast = (ProgramNode*)proot->value->tree;
-    if(ast->base.node_type != ASTN_Program) {
-        fprintf(stderr, "Root node of AST is %s instead of ProgramNode", ASTN_STRS[ast->base.node_type]);
-        abort();
+    int parse_errors = error_count;
+    ProgramNode* ast = NULL;
+
+    if(parse_errors == 0) {
+        build_ast(proot);
+        ast = (ProgramNode*)proot->value->tree;
+        if(ast->base.node_type != ASTN_Program) {
+            fprintf(stderr, "Root node of AST is %s instead of ProgramNode", ASTN_STRS[ast->base.node_type]);
+            abort();
+        }
     }
     parse_tree_destroy(proot);
     destroy_parser(false);
 
-    compile(ast);
+    if(parse_errors == 0) {
+        compile(ast);
+        destroy_ast((pAstNode)ast);
+    }
 
-    destroy_ast((pAstNode)ast);
     pch_int_hmap_clear(&intern_table);
     return 0;
 }
