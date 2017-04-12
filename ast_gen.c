@@ -196,6 +196,8 @@ void build_ast(parse_tree_node* p) {
         case 38: {
             NumNode* mynode = (NumNode*)get_ast_node(ASTN_Num);
             mynode->val = s[1]->i;
+            mynode->base.type = TYPE_INTEGER;
+            mynode->base.size = 0;
             s[0]->tree = mynode;
             break;
         }
@@ -203,18 +205,24 @@ void build_ast(parse_tree_node* p) {
         case 33: {
             RNumNode* mynode = (RNumNode*)get_ast_node(ASTN_RNum);
             mynode->val = s[1]->f;
+            mynode->base.type = TYPE_REAL;
+            mynode->base.size = 0;
             s[0]->tree = mynode;
             break;
         }
         case 34: {
             BoolNode* mynode = (BoolNode*)get_ast_node(ASTN_Bool);
             mynode->val = true;
+            mynode->base.type = TYPE_BOOLEAN;
+            mynode->base.size = 0;
             s[0]->tree = mynode;
             break;
         }
         case 35: {
             BoolNode* mynode = (BoolNode*)get_ast_node(ASTN_Bool);
             mynode->val = false;
+            mynode->base.type = TYPE_BOOLEAN;
+            mynode->base.size = 0;
             s[0]->tree = mynode;
             break;
         }
