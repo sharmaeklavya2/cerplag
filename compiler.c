@@ -458,6 +458,10 @@ void compile_node(pAstNode p) {
                 }
                 compile_node_chain((pAstNode)(q->defaultcase->stmts));
             }
+            else if(type == TYPE_INTEGER) {
+                print_error("type", ERROR, 28, q->base.line, q->base.col, NULL, NULL,
+                    "Default case is mandatory when switch variable is an INTEGER.");
+            }
             break;
         }
         default:
