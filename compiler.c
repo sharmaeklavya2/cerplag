@@ -321,14 +321,65 @@ void compile_node(pAstNode p) {
             break;
         case ASTN_Switch: {
             SwitchNode* q = (SwitchNode*)p;
-            compile_node_chain((pAstNode)(q->cases));
-            compile_node((pAstNode)(q->defaultcase));
-            break;
-        }
-        case ASTN_Case: {
-            CaseNode* q = (CaseNode*)p;
-            compile_node(q->val);
-            compile_node_chain(q->stmts);
+            pSTEntry entry = ST_get_entry(&mySTStack, q->varname);
+            int type = TYPE_ERROR;
+            char tstr[24] = "ERROR", tstr2[24];
+            if(entry == NULL) {
+                print_undecl_id_error(q->varname, q->base.line, q->base.col);
+            }
+            else if(entry->size > 0 || (entry->type != TYPE_INTEGER && entry->type != TYPE_BOOLEAN)) {
+                get_type_str(tstr2, entry->type, entry->size);
+                sprintf(msg, "Switch variable's type should be INTEGER or BOOLEAN, not %s", tstr2);
+                print_error("type", ERROR, 25, q->base.line, q->base.col, q->varname, NULL, msg);
+            }
+            else {
+                type = entry->type;
+                get_type_str(tstr, type, 0);
+            }
+            CaseNode* node = q->cases;
+            int count[2] = {0, 0};
+            while(node != NULL) {
+                compile_node(node->val);
+                int type2 = node->val->base.type;
+                int size2 = node->val->base.size;
+                if(size2 > 0 || (type2 != type && type != TYPE_ERROR)) {
+                    get_type_str(tstr2, type2, size2);
+                    sprintf(msg, "Switch variable has type %s, but case variable has type %s.", tstr, tstr2);
+                    print_error("type", ERROR, 26, node->val->base.line, node->val->base.col, NULL, NULL, msg);
+                }
+                else if(type == TYPE_BOOLEAN) {
+                    if(node->val->base.node_type == ASTN_Bool) {
+                        bool val = ((BoolNode*)(node->val))->val;
+                        count[val & 1]++;
+                        if(count[val & 1] > 1) {
+                            print_error("type", ERROR, 27, node->val->base.line, node->val->base.col,
+                                NULL, NULL, "Duplicate value in switch statement.");
+                        }
+                    }
+                    else {
+                        fprintf(stderr, "Assert failure in boolean switch.\n");
+                    }
+                }
+                compile_node_chain((pAstNode)(node->stmts));
+                node = node->next;
+            }
+            if(type == TYPE_BOOLEAN) {
+                if(count[0] == 0) {
+                    print_error("type", ERROR, 28, p->base.line, p->base.col,
+                        NULL, NULL, "The case 'false' hasn't been handled.");
+                }
+                if(count[1] == 0) {
+                    print_error("type", ERROR, 28, p->base.line, p->base.col,
+                        NULL, NULL, "The case 'true' hasn't been handled.");
+                }
+            }
+            if(q->defaultcase != NULL) {
+                if(type == TYPE_BOOLEAN) {
+                    print_error("type", ERROR, 27, q->defaultcase->base.line, q->defaultcase->base.col,
+                        NULL, NULL, "Default case is not allowed when switch variable is BOOLEAN.");
+                }
+                compile_node_chain((pAstNode)(q->defaultcase->stmts));
+            }
             break;
         }
         default:
