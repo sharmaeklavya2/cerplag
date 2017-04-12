@@ -66,6 +66,7 @@ void build_ast(parse_tree_node* p) {
         case 3: {
             IDListNode* mynode = (IDListNode*)get_ast_node(ASTN_IDList);
             mynode->varname = s[3]->lexeme;
+            mynode->next = s[0]->next;
             s[0]->tree = mynode;
             break;
         }
