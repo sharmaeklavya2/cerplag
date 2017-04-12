@@ -110,6 +110,24 @@ static void get_type_str(char* str, valtype_t type, int size) {
         sprintf(str, "%s[%d]", TYPE_STRS[type], size);
 }
 
+void add_idTypeListNode_to_ST(IDTypeListNode* node) {
+    pSTEntry entry = malloc(sizeof(STEntry));
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Allocated STEntry %p\n", __func__, (void*)entry);
+#endif
+    entry->type = node->base.type;
+    entry->size = node->base.size;
+    entry->line = node->base.line;
+    entry->col = node->base.col;
+    entry->offset = 0;
+    entry->lexeme = node->varname;
+    ST_add_entry(&mySTStack, entry);
+    //free(entry);
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
+#endif
+}
+
 void compile_node(pAstNode p) {
     if(p == NULL) return;
     //fprintf(stderr, "%s(%s)\n", __func__, ASTN_STRS[p->base.node_type]);
@@ -225,6 +243,17 @@ void compile_node(pAstNode p) {
             break;
         case ASTN_Module: {
             ModuleNode* q = (ModuleNode*)p;
+            IDTypeListNode* node = NULL;
+            node = q->iParamList;
+            while(node != NULL) {
+                add_idTypeListNode_to_ST(node);
+                node = node->next;
+            }
+            node = q->oParamList;
+            while(node != NULL) {
+                add_idTypeListNode_to_ST(node);
+                node = node->next;
+            }
             compile_node_chain(q->body);
             break;
         }
