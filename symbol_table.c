@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "symbol_table.h"
+#include "error.h"
 #include "ast.h"
 
 void pSTEntry_destroy(pSTEntry p)
@@ -51,7 +52,14 @@ void ST_reinit(STStack* psts, const char* func_name) {
 }
 
 void ST_add_entry(STStack* psts, pSTEntry pentry) {
-    ST_hmap_update(ST_hmap_stack_top(&(psts->map_stack)), pentry->lexeme, pentry);
+    ST_hmap* phmap = ST_hmap_stack_top(&(psts->map_stack));
+    int old_size = phmap->size;
+    ST_hmap_node* node = ST_hmap_insert(phmap, pentry->lexeme, pentry);
+    if(phmap->size == old_size) {
+        char msg[80];
+        sprintf(msg, "Variable has already been declared at line %d col %d.", node->value->line, node->value->col);
+        print_error("compile", ERROR, 5, pentry->line, pentry->col, pentry->lexeme, "ALREADY_DECL", msg);
+    }
 
     int offset = int_stack_top(&(psts->offsets));
     int align_size = TYPE_ALIGNS[pentry->type];
