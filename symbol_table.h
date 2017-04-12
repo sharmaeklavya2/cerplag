@@ -8,6 +8,6 @@ void ST_add_entry(STStack* psts, pSTEntry pentry);
 pSTEntry ST_get_entry(STStack* psts, const char* lexeme);
 void ST_add_table(STStack*);
 void ST_remove_table(STStack*);
-void STStack_destroy(STStack*);
+void STStack_clear(STStack*);
 
 #endif  // H_SYMBOL_TABLE

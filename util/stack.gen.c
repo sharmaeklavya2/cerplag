@@ -12,11 +12,14 @@ TYPED(stack_node)* TYPED(get_stack_node)(TYPE value, TYPED(stack_node)* next)
 
 void TYPED(stack_init)(TYPED(stack) *ps)
 {
+#ifdef LOG_MEM
+    fprintf(stderr, "Called %s(%p)\n", __func__, (void*)ps);
+#endif
     ps->top = NULL;
     ps->size = 0;
 }
 
-void TYPED(stack_destroy)(TYPED(stack) *ps)
+void TYPED(stack_clear)(TYPED(stack) *ps)
 {
     TYPED(stack_node) *p = ps->top, *todel = NULL;
     while(p != NULL)
@@ -29,6 +32,15 @@ void TYPED(stack_destroy)(TYPED(stack) *ps)
     }
     ps->top = NULL;
     ps->size = 0;
+}
+
+void TYPED(stack_destroy)(TYPED(stack) *ps)
+{
+#ifdef LOG_MEM
+    fprintf(stderr, "Called %s(%p)\n", __func__, (void*)ps);
+#endif
+    TYPED(stack_clear)(ps);
+    free(ps);
 }
 
 void TYPED(stack_push)(TYPED(stack)* ps, TYPE value)

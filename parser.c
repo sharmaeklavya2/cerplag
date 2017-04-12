@@ -287,10 +287,10 @@ void destroy_rules()
 void destroy_parser(bool destroy_intern_table)
 {
     destroy_lexer();
-    pch_int_hmap_destroy(&gsymb_ht);
+    pch_int_hmap_clear(&gsymb_ht);
     destroy_rules();
     if(destroy_intern_table) {
-        pch_int_hmap_destroy(&intern_table);
+        pch_int_hmap_clear(&intern_table);
     }
 }
 
@@ -562,7 +562,7 @@ parse_tree_node* build_parse_tree(FILE * ifp, gsymb_t start_sym){
         fprintf(stderr, "Current Token: %s\n", GS_STRS[cur_tkn.tid]);
         //int_stack_print(&st, stderr);
     }
-    int_stack_destroy(&st);
+    int_stack_clear(&st);
     parser_error_count += dfa.error_count;
     return root;
 }

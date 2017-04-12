@@ -230,7 +230,7 @@ void init_lexer()
 
 void destroy_lexer()
 {
-    pch_int_hmap_destroy(&token_hmap);
+    pch_int_hmap_clear(&token_hmap);
 }
 
 // Utility functions -----------------------------------------------------------

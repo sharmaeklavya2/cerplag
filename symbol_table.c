@@ -3,7 +3,12 @@
 #include "ast.h"
 
 void pSTEntry_destroy(pSTEntry p)
-{free(p);}
+{
+#ifdef LOG_MEM
+    fprintf(stderr, "Called %s(%p)\n", __func__, (void*)p);
+#endif
+    free(p);
+}
 
 void pSTEntry_print(pSTEntry p, FILE* fp)
 {
@@ -32,12 +37,15 @@ void pSTEntry_print(pSTEntry p, FILE* fp)
 #undef TYPE
 
 void ST_reinit(STStack* psts, const char* func_name) {
-    int_stack_destroy(&(psts->offsets));
+    int_stack_clear(&(psts->offsets));
     int_stack_push(&(psts->offsets), 0);
 
-    ST_hmap_stack_destroy(&(psts->map_stack));
+    ST_hmap_stack_clear(&(psts->map_stack));
     psts->func_name = func_name;
     ST_hmap* phmap = malloc(sizeof(ST_hmap));
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Allocated ST_hmap %p\n", __func__, (void*)phmap);
+#endif
     ST_hmap_init(phmap, 10, false);
     ST_hmap_stack_push(&(psts->map_stack), phmap);
 }
@@ -76,6 +84,9 @@ pSTEntry ST_get_entry(STStack* psts, const char* lexeme) {
 
 void ST_add_table(STStack* psts) {
     ST_hmap* phmap = malloc(sizeof(ST_hmap));
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Allocated ST_hmap %p\n", __func__, (void*)phmap);
+#endif
     ST_hmap_init(phmap, 10, false);
     ST_hmap_stack_push(&(psts->map_stack), phmap);
 
@@ -87,7 +98,7 @@ void ST_remove_table(STStack* psts) {
     int_stack_pop(&(psts->offsets));
 }
 
-void STStack_destroy(STStack* psts) {
-    ST_hmap_stack_destroy(&(psts->map_stack));
-    int_stack_destroy(&(psts->offsets));
+void STStack_clear(STStack* psts) {
+    ST_hmap_stack_clear(&(psts->map_stack));
+    int_stack_clear(&(psts->offsets));
 }

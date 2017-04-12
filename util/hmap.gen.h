@@ -23,6 +23,8 @@ typedef struct
 
 void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int size, bool destroy_key);
 
+void ITYPED(hmap_clear)(ITYPED(hmap)* phmap);
+
 void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap);
 
 ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k);

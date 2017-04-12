@@ -14,7 +14,8 @@
 
 typedef ModuleNode* pMN;
 
-static void pMN_destroy(pMN p){}
+static void pMN_destroy(pMN p){
+}
 static void pMN_print(pMN p, FILE* fp)
 {fprintf(fp, "ModuleNode(%s, %d:%d)", p->name, p->base.line, p->base.col);}
 
@@ -108,9 +109,9 @@ void compile(ProgramNode* root) {
         module_node = module_node->next;
     }
 
-    vptr_int_hmap_destroy(&module_status);
-    vptr_pMN_hmap_destroy(&module_node_map);
-    STStack_destroy(&mySTStack);
+    vptr_int_hmap_clear(&module_status);
+    vptr_pMN_hmap_clear(&module_node_map);
+    STStack_clear(&mySTStack);
 }
 
 int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
@@ -129,6 +130,6 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
     compile(ast);
 
     destroy_ast((pAstNode)ast);
-    pch_int_hmap_destroy(&intern_table);
+    pch_int_hmap_clear(&intern_table);
     return 0;
 }

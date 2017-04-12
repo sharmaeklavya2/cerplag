@@ -29,6 +29,9 @@ void ITYPED(hmap_destroy_chain)(ITYPED(hmap_node)* p, bool destroy_key, bool des
 
 void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int capacity, bool destroy_key)
 {
+#ifdef LOG_MEM
+    fprintf(stderr, "Called %s(%p, %d, %d)\n", __func__, (void*)phmap, capacity, destroy_key);
+#endif
     phmap->plist = calloc(capacity, sizeof(ITYPED(hmap_node)*));
     phmap->capacity = capacity;
     phmap->size = 0;
@@ -36,12 +39,25 @@ void ITYPED(hmap_init)(ITYPED(hmap)* phmap, int capacity, bool destroy_key)
     phmap->destroy_value = true;
 }
 
-void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap)
+void ITYPED(hmap_clear)(ITYPED(hmap)* phmap)
 {
     int i;
-    for(i=0; i < (phmap->capacity); ++i)
+    for(i=0; i < (phmap->capacity); ++i) {
         ITYPED(hmap_destroy_chain)(phmap->plist[i], phmap->destroy_key, phmap->destroy_value);
+        phmap->plist[i] = NULL;
+    }
     free(phmap->plist);
+    phmap->plist = NULL;
+    phmap->size = 0;
+}
+
+void ITYPED(hmap_destroy)(ITYPED(hmap)* phmap)
+{
+#ifdef LOG_MEM
+    fprintf(stderr, "Called %s(%p)\n", __func__, (void*)phmap);
+#endif
+    ITYPED(hmap_clear)(phmap);
+    free(phmap);
 }
 
 ITYPED(hmap_node)* ITYPED(hmap_query)(ITYPED(hmap)* phmap, KTYPE k)
@@ -71,12 +87,13 @@ ITYPED(hmap_node)* ITYPED(hmap_insert)(ITYPED(hmap)* phmap, KTYPE k, VTYPE v)
     if(lf_den * (phmap->size+1) > lf_num * phmap->capacity)
         ITYPED(hmap_rehash)(phmap, 2 * (phmap->capacity));
     unsigned h = KTYPED(hash)(k) % (phmap->capacity);
-    ITYPED(hmap_node)* n = phmap->plist[h];
+    ITYPED(hmap_node)** plist = phmap->plist;
+    ITYPED(hmap_node)* n = plist[h];
     while(n != NULL && !(KTYPED(equals)(n->key, k)))
         n = n->next;
     if(n == NULL) {
         (phmap->size)++;
-        n = phmap->plist[h] = ITYPED(hmap_get_node)(k, v, phmap->plist[h]);
+        n = plist[h] = ITYPED(hmap_get_node)(k, v, plist[h]);
     }
     return n;
 }
@@ -109,6 +126,7 @@ void ITYPED(hmap_rehash)(ITYPED(hmap)* phmap, int new_capacity)
             n = n->next;
         }
         ITYPED(hmap_destroy_chain)(phmap->plist[i], false, false);
+        phmap->plist[i] = NULL;
     }
 
     free(phmap->plist);

@@ -7,5 +7,7 @@ sub:
 	gcc $(debug_flags) $(sources) driver_sub.c -o stage1exe
 debug:
 	gcc $(debug_flags) $(sources) driver.c
+dbgmem:
+	gcc $(debug_flags) -DLOG_MEM $(sources) driver.c
 release:
 	gcc $(release_flags) $(sources) driver.c
