@@ -4,11 +4,12 @@
 #include "error.h"
 #include "lexer.h"
 #include "parser.h"
+#include "compiler.h"
 #include "ast_gen.h"
 
 #define USAGE_SIZE 512
 
-static char usage_template[] = "usage: %s (-l | -p | -a) (infile | --) [-v] [-o outfile] OR %s infile outfile\n";
+static char usage_template[] = "usage: %s (-l | -p | -a | -c) (infile | --) [-v] [-o outfile] OR %s infile outfile\n";
 static char usage[USAGE_SIZE];
 
 int cry_error()
@@ -47,6 +48,7 @@ int main(int argc, char* argv[])
             case 'l':
             case 'p':
             case 'a':
+            case 'c':
                 type = ch;
                 if(i+1 < argc)
                     ifname = argv[++i];
@@ -122,8 +124,10 @@ int main(int argc, char* argv[])
         lexer_main(ifp, ofp, verbosity, print_token);
     else if(type == 'p')
         parser_main(ifp, ofp, verbosity, print_tree);
-    else
+    else if(type == 'a')
         ast_gen_main(ifp, ofp, verbosity);
+    else if(type == 'c')
+        compiler_main(ifp, ofp, verbosity);
 
     if(ifp != stdin)
         fclose(ifp);
