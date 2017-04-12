@@ -338,6 +338,7 @@ void build_ast(parse_tree_node* p) {
             build_ast(n[3]);
             case_node->val = NULL;
             case_node->next = NULL;
+            case_node->stmts = s[3]->tree;
             s[0]->tree = case_node;
             break;
         }
