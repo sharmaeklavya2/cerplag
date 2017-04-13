@@ -12,6 +12,8 @@ typedef struct {
     int size;       // size of variable if it is an array, 0 otherwise
     int line;       // line number of definition
     int col;        // col number of definition
+    int use_line;   // line number of last use
+    int use_col;    // col number of last use
     int offset;     // offset in activation record
     bool readonly;
 } STEntry;  // Symbol Table Entry

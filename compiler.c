@@ -119,6 +119,8 @@ void add_idTypeListNode_to_SD(IDTypeListNode* node) {
     entry->size = node->base.size;
     entry->line = node->base.line;
     entry->col = node->base.col;
+    entry->use_line = 0;
+    entry->use_col = 0;
     entry->offset = 0;
     entry->readonly = false;
     entry->lexeme = node->varname;
@@ -127,6 +129,16 @@ void add_idTypeListNode_to_SD(IDTypeListNode* node) {
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
 #endif
+}
+
+void log_var_set(pSTEntry entry, int line, int col) {
+    if(entry->readonly == true) {
+        sprintf(msg, "Cannot modify read-only variable '%s' (declared at line %d, col %d).",
+            entry->lexeme, entry->line, entry->col);
+        print_error("type", ERROR, 50, line, col, entry->lexeme, "RDONLY_MOD", msg);
+    }
+    entry->use_line = line;
+    entry->use_col = col;
 }
 
 void compare_lists_type(const char* func_name, bool is_output, IDListNode* actual, IDTypeListNode* formal) {
@@ -155,12 +167,7 @@ void compare_lists_type(const char* func_name, bool is_output, IDListNode* actua
                 print_undecl_id_error(actual->varname, actual->base.line, actual->base.col);
             }
             else {
-                if(entry->readonly == true) {
-                    sprintf(msg, "Cannot modify read-only variable '%s' (declared at line %d, col %d).",
-                        actual->varname, entry->line, entry->col);
-                    print_error("type", ERROR, 50, actual->base.line, actual->base.col, actual->varname,
-                        "RDONLY_MOD", msg);
-                }
+                log_var_set(entry, actual->base.line, actual->base.col);
                 int atype = entry->type;
                 int asize = entry->size;
                 if(!(atype == TYPE_ERROR || (atype == ftype && asize == fsize))) {
@@ -338,11 +345,8 @@ void compile_node(pAstNode p) {
                 varname = ((VarNode*)(q->target))->varname;
             }
             pSTEntry entry = SD_get_entry(&mySD, varname);
-            if(entry != NULL && entry->readonly) {
-                sprintf(msg, "Cannot modify read-only variable '%s' (declared at line %d, col %d).",
-                    varname, entry->line, entry->col);
-                print_error("type", ERROR, 50, q->target->base.line, q->target->base.col, varname,
-                    "RDONLY_MOD", msg);
+            if(entry != NULL) {
+                log_var_set(entry, q->target->base.line, q->target->base.col);
             }
             break;
         }
@@ -386,11 +390,8 @@ void compile_node(pAstNode p) {
             }
             if(prev_readonly) {
                 pSTEntry entry = SD_get_entry(&mySD, q->varname);
-                if(entry != NULL && entry->readonly) {
-                    sprintf(msg, "Cannot use read-only variable '%s' (declared at line %d, col %d) for looping.",
-                        q->varname, entry->line, entry->col);
-                    print_error("type", ERROR, 51, q->base.line, q->base.col, q->varname,
-                        "RDONLY_LOOPVAR", msg);
+                if(entry != NULL) {
+                    log_var_set(entry, q->base.line, q->base.col);
                 }
             }
             SD_add_scope(&mySD, p);
@@ -415,6 +416,8 @@ void compile_node(pAstNode p) {
                 entry->size = q->base.size;
                 entry->line = node->base.line;
                 entry->col = node->base.col;
+                entry->use_line = 0;
+                entry->use_col = 0;
                 entry->offset = 0;
                 entry->readonly = false;
                 entry->lexeme = node->varname;
