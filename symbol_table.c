@@ -31,37 +31,47 @@ void pSTEntry_print(pSTEntry p, FILE* fp)
 #undef VTYPED
 #undef ITYPED
 
-#define TYPE pST_hmap
-#define TYPED(x) ST_hmap_##x
+void ST_print(pST p, FILE* fp)
+{ST_hmap_print(&(p->vmap), fp);}
+
+void ST_clear(pST p)
+{ST_hmap_clear(&(p->vmap));}
+
+void ST_destroy(pST p) {
+#ifdef LOG_MEM
+    fprintf(stderr, "Called %s(%p)\n", __func__, (void*)p);
+#endif
+    ST_clear(p);
+    free(p);
+}
+
+#define TYPE pST
+#define TYPED(x) ST_##x
 #include "util/stack.gen.c"
 #undef TYPED
 #undef TYPE
 
-void ST_reinit(STStack* psts, const char* func_name) {
-    int_stack_clear(&(psts->offsets));
-    int_stack_push(&(psts->offsets), 0);
-
-    ST_hmap_stack_clear(&(psts->map_stack));
-    psts->func_name = func_name;
-    ST_hmap* phmap = malloc(sizeof(ST_hmap));
-#ifdef LOG_MEM
-    fprintf(stderr, "%s: Allocated ST_hmap %p\n", __func__, (void*)phmap);
-#endif
-    ST_hmap_init(phmap, 10, false);
-    ST_hmap_stack_push(&(psts->map_stack), phmap);
+void SD_init(pSD psd) {
+    ST_stack_clear(&(psd->st_stack));
+    psd->offset = 0;
 }
 
-void ST_add_entry(STStack* psts, pSTEntry pentry) {
-    ST_hmap* phmap = ST_hmap_stack_top(&(psts->map_stack));
-    int old_size = phmap->size;
-    ST_hmap_node* node = ST_hmap_insert(phmap, pentry->lexeme, pentry);
-    if(phmap->size == old_size) {
+void SD_add_entry(pSD psd, pSTEntry pentry) {
+    ST_stack_node* n = (psd->st_stack).top;
+    if(n == NULL) {
+        fprintf(stderr, "%s: No SymbolTable present in stack.\n", __func__);
+        return;
+    }
+    pST pst = n->value;
+    int old_size = pst->vmap.size;
+    ST_hmap_node* node = ST_hmap_insert(&(pst->vmap), pentry->lexeme, pentry);
+    if(pst->vmap.size == old_size) {
         char msg[80];
         sprintf(msg, "Variable has already been declared at line %d col %d.", node->value->line, node->value->col);
         print_error("compile", ERROR, 5, pentry->line, pentry->col, pentry->lexeme, "ALREADY_DECL", msg);
     }
 
-    int offset = int_stack_top(&(psts->offsets));
+    int offset = psd->offset;
     int align_size = TYPE_ALIGNS[pentry->type];
     int t = offset % align_size;
     if(t != 0)
@@ -72,16 +82,14 @@ void ST_add_entry(STStack* psts, pSTEntry pentry) {
         offset += TYPE_SIZES[pentry->type];
     else
         offset += TYPE_SIZES[pentry->type] * (pentry->size);
-    (psts->offsets).top->value = offset;
-    if(offset > (psts->max_offset))
-        psts->max_offset = offset;
+    psd->offset = offset;
 }
 
-pSTEntry ST_get_entry(STStack* psts, const char* lexeme) {
-    ST_hmap_stack_node* n = (psts->map_stack).top;
+pSTEntry SD_get_entry(pSD psd, const char* lexeme) {
+    ST_stack_node* n = (psd->st_stack).top;
     ST_hmap_node* res = NULL;
     while(n != NULL && res == NULL) {
-        res = ST_hmap_query(n->value, lexeme);
+        res = ST_hmap_query(&(n->value->vmap), lexeme);
         n = n->next;
     }
     if(res == NULL)
@@ -90,23 +98,29 @@ pSTEntry ST_get_entry(STStack* psts, const char* lexeme) {
         return res->value;
 }
 
-void ST_add_table(STStack* psts) {
-    ST_hmap* phmap = malloc(sizeof(ST_hmap));
+pST SD_get_root(pSD psd) {
+    ST_stack_node *p = NULL, *n = (psd->st_stack).top;
+    while(n != NULL) {
+        p = n;
+        n = n->next;
+    }
+    return p->value;
+}
+
+void SD_add_scope(pSD psd, pAstNode scope) {
+    pST pst = malloc(sizeof(ST));
 #ifdef LOG_MEM
-    fprintf(stderr, "%s: Allocated ST_hmap %p\n", __func__, (void*)phmap);
+    fprintf(stderr, "%s: Allocated ST %p\n", __func__, (void*)phmap);
 #endif
-    ST_hmap_init(phmap, 10, false);
-    ST_hmap_stack_push(&(psts->map_stack), phmap);
-
-    int_stack_push(&(psts->offsets), int_stack_top(&(psts->offsets)));
+    ST_hmap_init(&(pst->vmap), 10, false);
+    pst->scope = scope;
+    ST_stack_push(&(psd->st_stack), pst);
 }
 
-void ST_remove_table(STStack* psts) {
-    ST_hmap_destroy(ST_hmap_stack_pop(&(psts->map_stack)));
-    int_stack_pop(&(psts->offsets));
+void SD_remove_scope(pSD psd) {
+    ST_destroy(ST_stack_pop(&(psd->st_stack)));
 }
 
-void STStack_clear(STStack* psts) {
-    ST_hmap_stack_clear(&(psts->map_stack));
-    int_stack_clear(&(psts->offsets));
+void SD_clear(pSD psd) {
+    ST_stack_clear(&(psd->st_stack));
 }

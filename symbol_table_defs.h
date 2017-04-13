@@ -13,6 +13,7 @@ typedef struct {
     int line;       // line number of definition
     int col;        // col number of definition
     int offset;     // offset in activation record
+    bool readonly;
 } STEntry;  // Symbol Table Entry
 
 typedef STEntry* pSTEntry;
@@ -29,20 +30,26 @@ typedef STEntry* pSTEntry;
 #undef VTYPED
 #undef ITYPED
 
-typedef ST_hmap SymbolTable;
-typedef ST_hmap* pST_hmap;
+typedef struct SymbolTable {
+    ST_hmap vmap;
+    pAstNode scope;
+} SymbolTable;
 
-#define TYPE pST_hmap
-#define TYPED(x) ST_hmap_##x
+typedef SymbolTable ST;
+typedef ST* pST;
+
+#define TYPE pST
+#define TYPED(x) ST_##x
 #include "util/stack.gen.h"
 #undef TYPED
 #undef TYPE
 
-typedef struct {
-    ST_hmap_stack map_stack;
-    int_stack offsets;
-    const char* func_name;
-    int max_offset;
-}STStack;
+typedef struct SymbolDatabase {
+    ST_stack st_stack;
+    int offset;
+}SymbolDatabase;
+
+typedef SymbolDatabase SD;
+typedef SD* pSD;
 
 #endif  // H_SYMBOL_TABLE_DEFS

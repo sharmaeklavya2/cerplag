@@ -3,11 +3,12 @@
 
 #include "symbol_table_defs.h"
 
-void ST_reinit(STStack* psts, const char* func_name);
-void ST_add_entry(STStack* psts, pSTEntry pentry);
-pSTEntry ST_get_entry(STStack* psts, const char* lexeme);
-void ST_add_table(STStack*);
-void ST_remove_table(STStack*);
-void STStack_clear(STStack*);
+void SD_init(pSD psd);
+void SD_add_entry(pSD psd, pSTEntry pentry);
+pSTEntry SD_get_entry(pSD psd, const char* lexeme);
+pST SD_get_root(pSD psd);
+void SD_add_scope(pSD psd, pAstNode scope);
+void SD_remove_scope(pSD psd);
+void SD_clear(pSD psd);
 
 #endif  // H_SYMBOL_TABLE

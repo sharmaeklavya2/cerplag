@@ -34,7 +34,7 @@ static void pMN_print(pMN p, FILE* fp)
 
 vptr_int_hmap module_status;
 vptr_pMN_hmap module_node_map;
-STStack mySTStack;
+SD mySD;
 
 static char msg[200];
 
@@ -110,7 +110,7 @@ static void get_type_str(char* str, valtype_t type, int size) {
         sprintf(str, "%s[%d]", TYPE_STRS[type], size);
 }
 
-void add_idTypeListNode_to_ST(IDTypeListNode* node) {
+void add_idTypeListNode_to_SD(IDTypeListNode* node) {
     pSTEntry entry = malloc(sizeof(STEntry));
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated STEntry %p\n", __func__, (void*)entry);
@@ -121,7 +121,7 @@ void add_idTypeListNode_to_ST(IDTypeListNode* node) {
     entry->col = node->base.col;
     entry->offset = 0;
     entry->lexeme = node->varname;
-    ST_add_entry(&mySTStack, entry);
+    SD_add_entry(&mySD, entry);
     //free(entry);
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
@@ -148,7 +148,7 @@ void compare_lists_type(const char* func_name, const char* list_type, IDListNode
         while(actual != NULL) {
             int ftype = formal->base.type;
             int fsize = formal->base.size;
-            pSTEntry entry = ST_get_entry(&mySTStack, actual->varname);
+            pSTEntry entry = SD_get_entry(&mySD, actual->varname);
             if(entry == NULL) {
                 print_undecl_id_error(actual->varname, actual->base.line, actual->base.col);
             }
@@ -229,7 +229,7 @@ void compile_node(pAstNode p) {
             DerefNode* q = (DerefNode*)p;
             compile_node(q->index);
             q->base.size = 0;
-            pSTEntry entry = ST_get_entry(&mySTStack, q->varname);
+            pSTEntry entry = SD_get_entry(&mySD, q->varname);
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
                 q->base.type = TYPE_ERROR;
@@ -267,7 +267,7 @@ void compile_node(pAstNode p) {
         }
         case ASTN_Var: {
             VarNode* q = (VarNode*)p;
-            pSTEntry entry = ST_get_entry(&mySTStack, q->varname);
+            pSTEntry entry = SD_get_entry(&mySD, q->varname);
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
                 q->base.type = TYPE_ERROR;
@@ -289,12 +289,12 @@ void compile_node(pAstNode p) {
             IDTypeListNode* node = NULL;
             node = q->iParamList;
             while(node != NULL) {
-                add_idTypeListNode_to_ST(node);
+                add_idTypeListNode_to_SD(node);
                 node = node->next;
             }
             node = q->oParamList;
             while(node != NULL) {
-                add_idTypeListNode_to_ST(node);
+                add_idTypeListNode_to_SD(node);
                 node = node->next;
             }
             compile_node_chain(q->body);
@@ -331,7 +331,7 @@ void compile_node(pAstNode p) {
         }
         case ASTN_For: {
             ForNode* q = (ForNode*)p;
-            pSTEntry entry = ST_get_entry(&mySTStack, q->varname);
+            pSTEntry entry = SD_get_entry(&mySD, q->varname);
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
             }
@@ -341,6 +341,8 @@ void compile_node(pAstNode p) {
                 sprintf(msg, "Loop variable %s should be an INTEGER, not %s.", q->varname, tstr);
                 print_error("type", ERROR, 24, q->base.line, q->base.col, NULL, "LOOPVAR_NOTINT", msg);
             }
+            else {
+                
             compile_node_chain(((ForNode*)p)->body);
             break;
         }
@@ -358,7 +360,7 @@ void compile_node(pAstNode p) {
                 entry->col = node->base.col;
                 entry->offset = 0;
                 entry->lexeme = node->varname;
-                ST_add_entry(&mySTStack, entry);
+                SD_add_entry(&mySD, entry);
                 //free(entry);
 #ifdef LOG_MEM
                 fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
@@ -374,7 +376,7 @@ void compile_node(pAstNode p) {
             break;
         case ASTN_FCall: {
             FCallNode* q = (FCallNode*)p;
-            if(q->name == mySTStack.func_name) {
+            if(q->name == ((ModuleNode*)(SD_get_root(&mySD)->scope))->name) {
                 print_error("compile", ERROR, 21, q->base.line, q->base.col, q->name, "RECURSE_CALL",
                     "Recursive calls are not allowed.");
             }
@@ -399,7 +401,7 @@ void compile_node(pAstNode p) {
         }
         case ASTN_Switch: {
             SwitchNode* q = (SwitchNode*)p;
-            pSTEntry entry = ST_get_entry(&mySTStack, q->varname);
+            pSTEntry entry = SD_get_entry(&mySD, q->varname);
             int type = TYPE_ERROR;
             char tstr[24] = "ERROR", tstr2[24];
             if(entry == NULL) {
@@ -472,6 +474,7 @@ void compile_node(pAstNode p) {
 void compile(ProgramNode* root) {
     vptr_int_hmap_init(&module_status, 10, false);
     vptr_pMN_hmap_init(&module_node_map, 10, false);
+    SD_init(&mySD);
 
     IDListNode* decl_node = NULL;
     ModuleNode* module_node = NULL;
@@ -513,9 +516,9 @@ void compile(ProgramNode* root) {
                     "NEEDLESS_DECLARE", "Module has been declared but not used before defining it.");
             }
         }
-        ST_reinit(&mySTStack, module_node->name);
+        SD_add_scope(&mySD, (pAstNode)module_node);
         compile_node((pAstNode)module_node);
-        STStack_clear(&mySTStack);
+        SD_remove_scope(&mySD);
         module_node = module_node->next;
     }
 
@@ -547,7 +550,7 @@ void compile(ProgramNode* root) {
 
     vptr_int_hmap_clear(&module_status);
     vptr_pMN_hmap_clear(&module_node_map);
-    STStack_clear(&mySTStack);
+    SD_clear(&mySD);
 }
 
 int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
