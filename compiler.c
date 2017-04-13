@@ -120,6 +120,7 @@ void add_idTypeListNode_to_SD(IDTypeListNode* node) {
     entry->line = node->base.line;
     entry->col = node->base.col;
     entry->offset = 0;
+    entry->readonly = false;
     entry->lexeme = node->varname;
     SD_add_entry(&mySD, entry);
     //free(entry);
@@ -128,7 +129,7 @@ void add_idTypeListNode_to_SD(IDTypeListNode* node) {
 #endif
 }
 
-void compare_lists_type(const char* func_name, const char* list_type, IDListNode* actual, IDTypeListNode* formal) {
+void compare_lists_type(const char* func_name, bool is_output, IDListNode* actual, IDTypeListNode* formal) {
     int acount=0, fcount=0;
     IDListNode* org_actual = actual;
     IDTypeListNode* org_formal = formal;
@@ -145,6 +146,7 @@ void compare_lists_type(const char* func_name, const char* list_type, IDListNode
             "MANY_ARGS", "Too many arguments to function.");
     }
     else {
+        const char* list_type = is_output? "output": "input";
         while(actual != NULL) {
             int ftype = formal->base.type;
             int fsize = formal->base.size;
@@ -153,6 +155,12 @@ void compare_lists_type(const char* func_name, const char* list_type, IDListNode
                 print_undecl_id_error(actual->varname, actual->base.line, actual->base.col);
             }
             else {
+                if(entry->readonly == true) {
+                    sprintf(msg, "Cannot modify read-only variable '%s' (declared at line %d, col %d).",
+                        actual->varname, entry->line, entry->col);
+                    print_error("type", ERROR, 50, actual->base.line, actual->base.col, actual->varname,
+                        "RDONLY_MOD", msg);
+                }
                 int atype = entry->type;
                 int asize = entry->size;
                 if(!(atype == TYPE_ERROR || (atype == ftype && asize == fsize))) {
@@ -313,6 +321,20 @@ void compile_node(pAstNode p) {
                 sprintf(msg, "Type of target is %s, but type of expression is %s.", tstr1, tstr2);
                 print_error("type", ERROR, 19, q->base.line, q->base.col, NULL, NULL, msg);
             }
+            const char* varname = NULL;
+            if(q->target->base.node_type == ASTN_Deref) {
+                varname = ((DerefNode*)(q->target))->varname;
+            }
+            else if(q->target->base.node_type == ASTN_Var) {
+                varname = ((VarNode*)(q->target))->varname;
+            }
+            pSTEntry entry = SD_get_entry(&mySD, varname);
+            if(entry != NULL && entry->readonly) {
+                sprintf(msg, "Cannot modify read-only variable '%s' (declared at line %d, col %d).",
+                    varname, entry->line, entry->col);
+                print_error("type", ERROR, 50, q->target->base.line, q->target->base.col, varname,
+                    "RDONLY_MOD", msg);
+            }
             break;
         }
         case ASTN_While: {
@@ -341,9 +363,31 @@ void compile_node(pAstNode p) {
                 sprintf(msg, "Loop variable %s should be an INTEGER, not %s.", q->varname, tstr);
                 print_error("type", ERROR, 24, q->base.line, q->base.col, NULL, "LOOPVAR_NOTINT", msg);
             }
-            else {
-                
+            bool prev_readonly = false;
+            int prev_line = 0, prev_col = 0;
+            if(entry != NULL) {
+                prev_readonly = entry->readonly;
+                prev_line = entry->line;
+                prev_col = entry->col;
+                entry->readonly = true;
+                entry->line = q->base.line;
+                entry->col = q->base.col;
+            }
+            if(prev_readonly) {
+                pSTEntry entry = SD_get_entry(&mySD, q->varname);
+                if(entry != NULL && entry->readonly) {
+                    sprintf(msg, "Cannot use read-only variable '%s' (declared at line %d, col %d) for looping.",
+                        q->varname, entry->line, entry->col);
+                    print_error("type", ERROR, 51, q->base.line, q->base.col, q->varname,
+                        "RDONLY_LOOPVAR", msg);
+                }
+            }
             compile_node_chain(((ForNode*)p)->body);
+            if(entry != NULL) {
+                entry->readonly = prev_readonly;
+                entry->line = prev_line;
+                entry->col = prev_col;
+            }
             break;
         }
         case ASTN_Decl: {
@@ -359,6 +403,7 @@ void compile_node(pAstNode p) {
                 entry->line = node->base.line;
                 entry->col = node->base.col;
                 entry->offset = 0;
+                entry->readonly = false;
                 entry->lexeme = node->varname;
                 SD_add_entry(&mySD, entry);
                 //free(entry);
@@ -392,9 +437,9 @@ void compile_node(pAstNode p) {
                     print_error("compile", ERROR, 22, q->base.line, q->base.col, q->name, "UNDEF_MODULE",
                         "Module must be defined or declared before using it.");
                 }
-                compare_lists_type(q->name, "input", q->iParamList, module_node->iParamList);
+                compare_lists_type(q->name, false, q->iParamList, module_node->iParamList);
                 if(q->oParamList != NULL) {
-                    compare_lists_type(q->name, "output", q->oParamList, module_node->oParamList);
+                    compare_lists_type(q->name, true, q->oParamList, module_node->oParamList);
                 }
             }
             break;
