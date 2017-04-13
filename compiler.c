@@ -322,6 +322,15 @@ void compile_node(pAstNode p) {
                 node = node->next;
             }
             compile_node_chain(q->body);
+            node = q->oParamList;
+            while(node != NULL) {
+                pSTEntry entry = SD_get_entry(&mySD, node->varname);
+                if(entry->use_line == 0) {
+                    print_error("compile", ERROR, 52, node->base.line, node->base.col, node->varname,
+                        "UNSET_OUTPUT_PARAM", "Output parameter has not been set.");
+                }
+                node = node->next;
+            }
             break;
         }
         case ASTN_Assn: {
