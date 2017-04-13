@@ -294,6 +294,15 @@ void compile_node(pAstNode p) {
             break;
         case ASTN_Module: {
             ModuleNode* q = (ModuleNode*)p;
+            if(q->name != NULL) {
+                vptr_int_hmap_node* hmap_node = vptr_int_hmap_insert(&module_status, q->name, 0);
+                hmap_node->value |= MODULE_DEFINED;
+                int status = hmap_node->value;
+                if((status & MODULE_DECLARED) && (~status & MODULE_USED)) {
+                    print_error("compile", WARNING, 6, q->base.line, q->base.col, q->name,
+                        "NEEDLESS_DECLARE", "Module has been declared but not used before defining it.");
+                }
+            }
             IDTypeListNode* node = NULL;
             node = q->iParamList;
             while(node != NULL) {
@@ -348,7 +357,9 @@ void compile_node(pAstNode p) {
                 sprintf(msg, "While loop's condition has type %s instead of BOOLEAN.", tstr);
                 print_error("type", ERROR, 20, q->cond->base.line, q->cond->base.col, NULL, "NONBOOL_COND", msg);
             }
+            SD_add_scope(&mySD, p);
             compile_node_chain(q->body);
+            SD_remove_scope(&mySD);
             break;
         }
         case ASTN_For: {
@@ -382,7 +393,9 @@ void compile_node(pAstNode p) {
                         "RDONLY_LOOPVAR", msg);
                 }
             }
+            SD_add_scope(&mySD, p);
             compile_node_chain(((ForNode*)p)->body);
+            SD_remove_scope(&mySD);
             if(entry != NULL) {
                 entry->readonly = prev_readonly;
                 entry->line = prev_line;
@@ -463,6 +476,7 @@ void compile_node(pAstNode p) {
             }
             CaseNode* node = q->cases;
             int count[2] = {0, 0};
+            SD_add_scope(&mySD, p);
             while(node != NULL) {
                 compile_node(node->val);
                 int type2 = node->val->base.type;
@@ -509,6 +523,7 @@ void compile_node(pAstNode p) {
                 print_error("type", ERROR, 28, q->base.line, q->base.col, NULL, NULL,
                     "Default case is mandatory when switch variable is an INTEGER.");
             }
+            SD_remove_scope(&mySD);
             break;
         }
         default:
@@ -552,15 +567,6 @@ void compile(ProgramNode* root) {
 
     module_node = root->modules;
     while(module_node != NULL) {
-        if(module_node->name != NULL) {
-            vptr_int_hmap_node* hmap_node = vptr_int_hmap_insert(&module_status, module_node->name, 0);
-            hmap_node->value |= MODULE_DEFINED;
-            int status = hmap_node->value;
-            if((status & MODULE_DECLARED) && (~status & MODULE_USED)) {
-                print_error("compile", WARNING, 6, module_node->base.line, module_node->base.col, module_node->name,
-                    "NEEDLESS_DECLARE", "Module has been declared but not used before defining it.");
-            }
-        }
         SD_add_scope(&mySD, (pAstNode)module_node);
         compile_node((pAstNode)module_node);
         SD_remove_scope(&mySD);
