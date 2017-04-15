@@ -13,8 +13,8 @@ typedef enum {
 #define NUM_ASTN ASTN_LAST
 
 typedef enum {TYPE_ERROR, TYPE_INTEGER, TYPE_REAL, TYPE_BOOLEAN} valtype_t;
-#define TYPE_STRS_LIST {"ERROR", "INTEGER", "REAL", "BOOLEAN"}
-#define TYPE_SIZES_LIST {0, sizeof(int), sizeof(double), sizeof(bool)}
+#define TYPE_STRS_LIST {"error", "integer", "real", "boolean"}
+#define TYPE_SIZES_LIST {0, 2, 4, 1}
 
 typedef enum {
     OP_PLUS, OP_MINUS,

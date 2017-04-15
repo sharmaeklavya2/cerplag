@@ -198,7 +198,7 @@ void compare_lists_type(const char* func_name, bool is_output, IDListNode* actua
                     char fstr[24], astr[24];
                     get_type_str(astr, atype, asize);
                     get_type_str(fstr, ftype, fsize);
-                    sprintf(msg, "Actual %s parameter has type %s, but formal %s parameter has type %s.",
+                    sprintf(msg, "Actual %s parameter has type '%s', but formal %s parameter has type '%s'.",
                         list_type, astr, list_type, fstr);
                     print_error("type", ERROR, 43, actual->base.line, actual->base.col, actual->varname,
                         "FCALL_TYPE_MISMATCH", msg);
@@ -252,7 +252,8 @@ void compile_node(pAstNode p, const char* func_name) {
                 }
                 else {
                     q->base.type = TYPE_ERROR;
-                    sprintf(msg, "Operand's type should be INTEGER or REAL, not %s.", TYPE_STRS[subtype]);
+                    sprintf(msg, "Operand's type should be '%s' or '%s', not '%s'.",
+                        TYPE_STRS[TYPE_INTEGER], TYPE_STRS[TYPE_REAL], TYPE_STRS[subtype]);
                     print_error("type", ERROR, 14, q->arg->base.line, q->arg->base.col,
                         OP_STRS[q->op], NULL, msg);
                 }
@@ -283,21 +284,16 @@ void compile_node(pAstNode p, const char* func_name) {
                 int size = entry->size;
                 if(q->index->base.node_type == ASTN_Var) {
                     if(!(q->index->base.type == TYPE_INTEGER && q->index->base.size == 0)) {
-                        if(q->index->base.size > 0) {
-                            sprintf(msg, "Array index should be an integer, not %s[%d].",
-                                TYPE_STRS[q->index->base.type], q->index->base.size);
-                        }
-                        else {
-                            sprintf(msg, "Array index should be an integer, not %s.",
-                                TYPE_STRS[q->index->base.type]);
-                        }
+                        char tstr[20];
+                        get_type_str(tstr, q->index->base.type, q->index->base.size);
+                        sprintf(msg, "Array index should be an integer, not '%s'.", tstr);
                         print_error("type", ERROR, 17, q->base.line, q->base.col, q->varname, "NONINT_INDEX", msg);
                     }
                 }
                 else {
                     int val = ((NumNode*)(q->index))->val;
                     if(val <= 0 || val > size) {
-                        sprintf(msg, "Index of %s should be in the range 1 to %d.\n", q->varname, entry->size);
+                        sprintf(msg, "Index of '%s' should be in the range 1 to %d.\n", q->varname, entry->size);
                         print_error("type", ERROR, 18, q->index->base.line, q->index->base.col, NULL, "OOB_INDEX", msg);
                     }
                 }
@@ -367,7 +363,7 @@ void compile_node(pAstNode p, const char* func_name) {
                 char tstr1[24], tstr2[24];
                 get_type_str(tstr1, type1, size1);
                 get_type_str(tstr2, type2, size2);
-                sprintf(msg, "Type of target is %s, but type of expression is %s.", tstr1, tstr2);
+                sprintf(msg, "Type of target is '%s', but type of expression is '%s'.", tstr1, tstr2);
                 print_error("type", ERROR, 19, q->base.line, q->base.col, NULL, NULL, msg);
             }
             const char* varname = NULL;
@@ -391,7 +387,7 @@ void compile_node(pAstNode p, const char* func_name) {
             if(!(q->cond->base.type == TYPE_BOOLEAN && q->cond->base.size == 0)) {
                 char tstr[24];
                 get_type_str(tstr, type, size);
-                sprintf(msg, "While loop's condition has type %s instead of BOOLEAN.", tstr);
+                sprintf(msg, "While loop's condition has type '%s' instead of '%s'.", tstr, TYPE_STRS[TYPE_BOOLEAN]);
                 print_error("type", ERROR, 20, q->cond->base.line, q->cond->base.col, NULL, "NONBOOL_COND", msg);
             }
             SD_add_scope(&mySD, p);
@@ -408,7 +404,8 @@ void compile_node(pAstNode p, const char* func_name) {
             else if(!(entry->type == 1 && entry->size == 0)) {
                 char tstr[24];
                 get_type_str(tstr, entry->type, entry->size);
-                sprintf(msg, "Loop variable %s should be an INTEGER, not %s.", q->varname, tstr);
+                sprintf(msg, "Type of loop variable '%s' should be '%s', not '%s'.",
+                    q->varname, TYPE_STRS[TYPE_INTEGER], tstr);
                 print_error("type", ERROR, 24, q->base.line, q->base.col, NULL, "LOOPVAR_NOTINT", msg);
             }
             bool prev_readonly = false;
@@ -488,7 +485,8 @@ void compile_node(pAstNode p, const char* func_name) {
             }
             else if(entry->size > 0 || (entry->type != TYPE_INTEGER && entry->type != TYPE_BOOLEAN)) {
                 get_type_str(tstr2, entry->type, entry->size);
-                sprintf(msg, "Switch variable's type should be INTEGER or BOOLEAN, not %s", tstr2);
+                sprintf(msg, "Switch variable's type should be '%s' or '%s', not '%s'",
+                    TYPE_STRS[TYPE_INTEGER], TYPE_STRS[TYPE_BOOLEAN], tstr2);
                 print_error("type", ERROR, 25, q->base.line, q->base.col, q->varname, NULL, msg);
             }
             else {
@@ -504,7 +502,7 @@ void compile_node(pAstNode p, const char* func_name) {
                 int size2 = node->val->base.size;
                 if(size2 > 0 || (type2 != type && type != TYPE_ERROR)) {
                     get_type_str(tstr2, type2, size2);
-                    sprintf(msg, "Switch variable has type %s, but case variable has type %s.", tstr, tstr2);
+                    sprintf(msg, "Switch variable has type '%s', but case variable has type '%s'.", tstr, tstr2);
                     print_error("type", ERROR, 26, node->val->base.line, node->val->base.col, NULL, NULL, msg);
                 }
                 else if(type == TYPE_BOOLEAN) {
@@ -536,13 +534,13 @@ void compile_node(pAstNode p, const char* func_name) {
             if(q->defaultcase != NULL) {
                 if(type == TYPE_BOOLEAN) {
                     print_error("type", ERROR, 27, q->defaultcase->base.line, q->defaultcase->base.col,
-                        NULL, NULL, "Default case is not allowed when switch variable is BOOLEAN.");
+                        NULL, NULL, "Default case is not allowed when switch variable is boolean.");
                 }
                 compile_node_chain((pAstNode)(q->defaultcase->stmts), func_name);
             }
             else if(type == TYPE_INTEGER) {
                 print_error("type", ERROR, 28, q->base.line, q->base.col, NULL, NULL,
-                    "Default case is mandatory when switch variable is an INTEGER.");
+                    "Default case is mandatory when switch variable is an integer.");
             }
             SD_remove_scope(&mySD);
             break;
