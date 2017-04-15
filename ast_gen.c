@@ -330,6 +330,8 @@ void build_ast(parse_tree_node* p) {
             switch_node->next = s[0]->next;
             switch_node->defaultcase = s[8]->tree;
             switch_node->cases = s[6]->tree;
+            switch_node->scope_beg_line = s[5]->line;
+            switch_node->scope_end_line = s[9]->line;
             s[0]->tree = switch_node;
             break;
         }
@@ -361,7 +363,7 @@ void build_ast(parse_tree_node* p) {
             for_node->body = s[8]->tree;
             for_node->next = s[0]->next;
             for_node->scope_beg_line = s[7]->line;
-            for_node->scope_beg_line = s[9]->line;
+            for_node->scope_end_line = s[9]->line;
             s[0]->tree = for_node;
             break;
         }
@@ -373,7 +375,7 @@ void build_ast(parse_tree_node* p) {
             while_node->body = s[6]->tree;
             while_node->next = s[0]->next;
             while_node->scope_beg_line = s[5]->line;
-            while_node->scope_beg_line = s[7]->line;
+            while_node->scope_end_line = s[7]->line;
             s[0]->tree = while_node;
             break;
         }
