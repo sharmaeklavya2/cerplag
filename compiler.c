@@ -283,7 +283,8 @@ void compile_node(pAstNode p, const char* func_name) {
                 q->base.type = entry->type;
                 int size = entry->size;
                 if(q->index->base.node_type == ASTN_Var) {
-                    if(!(q->index->base.type == TYPE_INTEGER && q->index->base.size == 0)) {
+                    int type = q->index->base.type;
+                    if(!((type == TYPE_INTEGER || type == TYPE_ERROR) && q->index->base.size == 0)) {
                         char tstr[20];
                         get_type_str(tstr, q->index->base.type, q->index->base.size);
                         sprintf(msg, "Array index should be an integer, not '%s'.", tstr);
@@ -384,7 +385,8 @@ void compile_node(pAstNode p, const char* func_name) {
             compile_node(q->cond, func_name);
             int type = q->cond->base.type;
             int size = q->cond->base.size;
-            if(!(q->cond->base.type == TYPE_BOOLEAN && q->cond->base.size == 0)) {
+            int cond_type = q->cond->base.type;
+            if(!((cond_type == TYPE_BOOLEAN || cond_type == TYPE_ERROR) && q->cond->base.size == 0)) {
                 char tstr[24];
                 get_type_str(tstr, type, size);
                 sprintf(msg, "While loop's condition has type '%s' instead of '%s'.", tstr, TYPE_STRS[TYPE_BOOLEAN]);
@@ -401,7 +403,7 @@ void compile_node(pAstNode p, const char* func_name) {
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
             }
-            else if(!(entry->type == 1 && entry->size == 0)) {
+            else if(!(entry->type == TYPE_INTEGER && entry->size == 0)) {
                 char tstr[24];
                 get_type_str(tstr, entry->type, entry->size);
                 sprintf(msg, "Type of loop variable '%s' should be '%s', not '%s'.",
