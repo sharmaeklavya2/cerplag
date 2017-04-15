@@ -166,6 +166,7 @@ void log_var_set(pSTEntry entry, int line, int col) {
 }
 
 void compare_lists_type(const char* func_name, bool is_output, IDListNode* actual, IDTypeListNode* formal) {
+    const char* list_type = is_output? "output": "input";
     int acount=0, fcount=0;
     IDListNode* org_actual = actual;
     IDTypeListNode* org_formal = formal;
@@ -174,15 +175,16 @@ void compare_lists_type(const char* func_name, bool is_output, IDListNode* actua
     actual = org_actual;
     formal = org_formal;
     if(acount < fcount) {
+        sprintf(msg, "Too few %s parameters to function.", list_type);
         print_error("type", ERROR, 41, actual->base.line, actual->base.col, func_name,
-            "FEW_ARGS", "Too few arguments to function.");
+            "FEW_ARGS", msg);
     }
     else if(acount > fcount) {
+        sprintf(msg, "Too many %s parameters to function.", list_type);
         print_error("type", ERROR, 42, actual->base.line, actual->base.col, func_name,
-            "MANY_ARGS", "Too many arguments to function.");
+            "MANY_ARGS", msg);
     }
     else {
-        const char* list_type = is_output? "output": "input";
         while(actual != NULL) {
             int ftype = formal->base.type;
             int fsize = formal->base.size;
