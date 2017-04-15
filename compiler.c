@@ -430,11 +430,12 @@ void compile_node(pAstNode p) {
                 entry->offset = 0;
                 entry->readonly = false;
                 entry->lexeme = node->varname;
-                SD_add_entry(&mySD, entry);
-                //free(entry);
+                if(!SD_add_entry(&mySD, entry)) {
+                    free(entry);
 #ifdef LOG_MEM
-                fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
+                    fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
 #endif
+                }
                 node = node->next;
             }
             break;
@@ -446,7 +447,7 @@ void compile_node(pAstNode p) {
             break;
         case ASTN_FCall: {
             FCallNode* q = (FCallNode*)p;
-            if(q->name == ((ModuleNode*)(SD_get_root(&mySD)->scope))->name) {
+            if(q->name == ((ModuleNode*)(SD_get_subroot(&mySD)->scope))->name) {
                 print_error("compile", ERROR, 21, q->base.line, q->base.col, q->name, "RECURSE_CALL",
                     "Recursive calls are not allowed.");
             }

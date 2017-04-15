@@ -35,6 +35,7 @@ typedef STEntry* pSTEntry;
 typedef struct SymbolTable {
     ST_hmap vmap;
     pAstNode scope;
+    int level;  // depth of node in tree
 } SymbolTable;
 
 typedef SymbolTable ST;
@@ -42,12 +43,14 @@ typedef ST* pST;
 
 #define TYPE pST
 #define TYPED(x) ST_##x
-#include "util/stack.gen.h"
+#include "util/tree.gen.h"
 #undef TYPED
 #undef TYPE
 
 typedef struct SymbolDatabase {
-    ST_stack st_stack;
+    ST_tree_node* root;
+    ST_tree_node* active;
+    int level;  // depth of the active node
     int offset;
 }SymbolDatabase;
 
