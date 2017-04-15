@@ -28,6 +28,20 @@ void pSTEntry_print(pSTEntry p, FILE* fp)
     fprintf(fp, ", %d:%d, %d)", p->line, p->col, p->offset);
 }
 
+void pSTEntry_print_sub(pSTEntry p, FILE* fp) {
+    char type_str[10] = "";
+    if(p->size == 0)
+        sprintf(type_str, "%s", TYPE_STRS[p->type]);
+    else
+        sprintf(type_str, "%s[%d]", TYPE_STRS[p->type], p->size);
+    int beg_line = get_scope_beg_line(p->symbol_table->scope);
+    int end_line = get_scope_end_line(p->symbol_table->scope);
+    const char* func_name = p->func_name == NULL ? "driver" : p->func_name;
+    fprintf(fp, "%-10s %-12s %-10s %3d to %3d %6d %6d %7d\n", p->lexeme, type_str, func_name, beg_line, end_line,
+        p->symbol_table->level, get_type_width(p->type, p->size), p->offset);
+    //pSTEntry_print(p, fp);
+}
+
 #define KTYPE vptr
 #define VTYPE pSTEntry
 #define KTYPED(x) vptr_##x
@@ -153,4 +167,8 @@ void SD_clear(pSD psd) {
     psd->root = psd->active = NULL;
     psd->level = 0;
     psd->offset = 0;
+}
+
+void SD_print(pSD psd, FILE* fp) {
+    ST_tree_print(psd->root->first_child, fp);
 }

@@ -35,6 +35,9 @@ static void pMN_print(pMN p, FILE* fp)
 vptr_int_hmap module_status;
 vptr_pMN_hmap module_node_map;
 SD mySD;
+pSTEntry first_entry, last_entry;
+bool print_sd = false;
+bool print_entry_list = false;
 
 static char msg[200];
 
@@ -115,6 +118,7 @@ void add_node_to_SD(pAstNode node, const char* func_name) {
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated STEntry %p\n", __func__, (void*)entry);
 #endif
+    entry->func_name = func_name;
     entry->type = node->base.type;
     entry->size = node->base.size;
     entry->line = node->base.line;
@@ -123,6 +127,8 @@ void add_node_to_SD(pAstNode node, const char* func_name) {
     entry->use_col = 0;
     entry->offset = 0;
     entry->readonly = false;
+    entry->next = NULL;
+    entry->symbol_table = (mySD.active)->value;
     if(node->base.node_type == ASTN_IDList) {
         entry->lexeme = ((IDListNode*)node)->varname;
     }
@@ -137,6 +143,15 @@ void add_node_to_SD(pAstNode node, const char* func_name) {
 #ifdef LOG_MEM
         fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
 #endif
+    }
+    else {
+        if(first_entry == NULL) {
+            first_entry = last_entry = entry;
+        }
+        else {
+            last_entry->next = entry;
+            last_entry = entry;
+        }
     }
 }
 
@@ -542,6 +557,7 @@ void compile(ProgramNode* root) {
     vptr_pMN_hmap_init(&module_node_map, 10, false);
     SD_init(&mySD);
 
+    first_entry = last_entry = NULL;
     IDListNode* decl_node = NULL;
     ModuleNode* module_node = NULL;
 
@@ -605,6 +621,16 @@ void compile(ProgramNode* root) {
         module_node = module_node->next;
     }
 
+    if(print_sd) {
+        SD_print(&mySD, stderr);
+    }
+    if(print_entry_list) {
+        fprintf(stderr, "%-10s %-12s %-10s %-10s %6s %6s %7s\n", "lexeme", "type", "scope", "lines", "level", "width", "offset");
+        for(pSTEntry node = first_entry; node != NULL; node = node->next) {
+            pSTEntry_print_sub(node, stderr);
+        }
+    }
+
     vptr_int_hmap_clear(&module_status);
     vptr_pMN_hmap_clear(&module_node_map);
     SD_clear(&mySD);
@@ -628,6 +654,10 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
     parse_tree_destroy(proot);
     destroy_parser(false);
 
+    if(verbosity > 0) {
+        print_sd = true;
+        print_entry_list = true;
+    }
     if(parse_errors == 0) {
         compile(ast);
         destroy_ast((pAstNode)ast);

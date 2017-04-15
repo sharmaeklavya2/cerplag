@@ -6,8 +6,11 @@
 #include "util/vptr.h"
 #include "util/int_stack.h"
 
-typedef struct {
+struct SymbolTable;
+
+typedef struct STEntry {
     const char* lexeme;
+    const char* func_name;
     valtype_t type; // type of variable
     int size;       // size of variable if it is an array, 0 otherwise
     int line;       // line number of definition
@@ -16,6 +19,8 @@ typedef struct {
     int use_col;    // col number of last use
     int offset;     // offset in activation record
     bool readonly;
+    struct SymbolTable* symbol_table;
+    struct STEntry* next;
 } STEntry;  // Symbol Table Entry
 
 typedef STEntry* pSTEntry;
