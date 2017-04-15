@@ -110,7 +110,7 @@ static void get_type_str(char* str, valtype_t type, int size) {
         sprintf(str, "%s[%d]", TYPE_STRS[type], size);
 }
 
-void add_idTypeListNode_to_SD(IDTypeListNode* node) {
+void add_node_to_SD(pAstNode node) {
     pSTEntry entry = malloc(sizeof(STEntry));
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated STEntry %p\n", __func__, (void*)entry);
@@ -123,12 +123,21 @@ void add_idTypeListNode_to_SD(IDTypeListNode* node) {
     entry->use_col = 0;
     entry->offset = 0;
     entry->readonly = false;
-    entry->lexeme = node->varname;
-    SD_add_entry(&mySD, entry);
-    //free(entry);
+    if(node->base.node_type == ASTN_IDList) {
+        entry->lexeme = ((IDListNode*)node)->varname;
+    }
+    else if(node->base.node_type == ASTN_IDTypeList) {
+        entry->lexeme = ((IDTypeListNode*)node)->varname;
+    }
+    else {
+        entry->lexeme = NULL;
+    }
+    if(!SD_add_entry(&mySD, entry)) {
+        free(entry);
 #ifdef LOG_MEM
-    fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
+        fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
 #endif
+    }
 }
 
 void log_var_set(pSTEntry entry, int line, int col) {
@@ -313,12 +322,12 @@ void compile_node(pAstNode p) {
             IDTypeListNode* node = NULL;
             node = q->iParamList;
             while(node != NULL) {
-                add_idTypeListNode_to_SD(node);
+                add_node_to_SD((pAstNode)node);
                 node = node->next;
             }
             node = q->oParamList;
             while(node != NULL) {
-                add_idTypeListNode_to_SD(node);
+                add_node_to_SD((pAstNode)node);
                 node = node->next;
             }
             compile_node_chain(q->body);
@@ -417,25 +426,9 @@ void compile_node(pAstNode p) {
             DeclNode* q = (DeclNode*)p;
             IDListNode* node = (IDListNode*)(q->idList);
             while(node != NULL) {
-                pSTEntry entry = malloc(sizeof(STEntry));
-#ifdef LOG_MEM
-                fprintf(stderr, "%s: Allocated STEntry %p\n", __func__, (void*)entry);
-#endif
-                entry->type = q->base.type;
-                entry->size = q->base.size;
-                entry->line = node->base.line;
-                entry->col = node->base.col;
-                entry->use_line = 0;
-                entry->use_col = 0;
-                entry->offset = 0;
-                entry->readonly = false;
-                entry->lexeme = node->varname;
-                if(!SD_add_entry(&mySD, entry)) {
-                    free(entry);
-#ifdef LOG_MEM
-                    fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
-#endif
-                }
+                node->base.type = q->base.type;
+                node->base.size = q->base.size;
+                add_node_to_SD((pAstNode)node);
                 node = node->next;
             }
             break;
