@@ -94,11 +94,11 @@ valtype_t get_composite_type(op_t op, valtype_t type1, valtype_t type2, int line
     return TYPE_ERROR;
 }
 
-void compile_node(pAstNode p);
+void compile_node(pAstNode p, const char* func_name);
 
-void compile_node_chain(pAstNode p) {
+void compile_node_chain(pAstNode p, const char* func_name) {
     while(p != NULL) {
-        compile_node(p);
+        compile_node(p, func_name);
         p = get_next_ast_node(p);
     }
 }
@@ -110,7 +110,7 @@ static void get_type_str(char* str, valtype_t type, int size) {
         sprintf(str, "%s[%d]", TYPE_STRS[type], size);
 }
 
-void add_node_to_SD(pAstNode node) {
+void add_node_to_SD(pAstNode node, const char* func_name) {
     pSTEntry entry = malloc(sizeof(STEntry));
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated STEntry %p\n", __func__, (void*)entry);
@@ -195,14 +195,14 @@ void compare_lists_type(const char* func_name, bool is_output, IDListNode* actua
     }
 }
 
-void compile_node(pAstNode p) {
+void compile_node(pAstNode p, const char* func_name) {
     if(p == NULL) return;
     //fprintf(stderr, "%s(%s)\n", __func__, ASTN_STRS[p->base.node_type]);
     switch(p->base.node_type) {
         case ASTN_BOp: {
             BOpNode* q = (BOpNode*)p;
-            compile_node(q->arg1);
-            compile_node(q->arg2);
+            compile_node(q->arg1, func_name);
+            compile_node(q->arg2, func_name);
             valtype_t type1 = q->arg1->base.type, type2 = q->arg2->base.type;
             q->base.size = 0;
             int size1 = q->arg1->base.size, size2 = q->arg2->base.size;
@@ -224,7 +224,7 @@ void compile_node(pAstNode p) {
         }
         case ASTN_UOp: {
             UOpNode* q = (UOpNode*)p;
-            compile_node(q->arg);
+            compile_node(q->arg, func_name);
             valtype_t subtype = q->arg->base.type;
             q->base.size = 0;
             int subsize = q->arg->base.size;
@@ -251,7 +251,7 @@ void compile_node(pAstNode p) {
         }
         case ASTN_Deref: {
             DerefNode* q = (DerefNode*)p;
-            compile_node(q->index);
+            compile_node(q->index, func_name);
             q->base.size = 0;
             pSTEntry entry = SD_get_entry(&mySD, q->varname);
             if(entry == NULL) {
@@ -322,15 +322,15 @@ void compile_node(pAstNode p) {
             IDTypeListNode* node = NULL;
             node = q->iParamList;
             while(node != NULL) {
-                add_node_to_SD((pAstNode)node);
+                add_node_to_SD((pAstNode)node, func_name);
                 node = node->next;
             }
             node = q->oParamList;
             while(node != NULL) {
-                add_node_to_SD((pAstNode)node);
+                add_node_to_SD((pAstNode)node, func_name);
                 node = node->next;
             }
-            compile_node_chain(q->body);
+            compile_node_chain(q->body, func_name);
             node = q->oParamList;
             while(node != NULL) {
                 pSTEntry entry = SD_get_entry(&mySD, node->varname);
@@ -344,8 +344,8 @@ void compile_node(pAstNode p) {
         }
         case ASTN_Assn: {
             AssnNode* q = (AssnNode*)p;
-            compile_node(q->target);
-            compile_node(q->expr);
+            compile_node(q->target, func_name);
+            compile_node(q->expr, func_name);
             valtype_t type1 = q->target->base.type, type2 = q->expr->base.type;
             int size1 = q->target->base.size, size2 = q->expr->base.size;
             if((type1 != type2 || size1 != size2) && type2 != TYPE_ERROR && type1 != TYPE_ERROR) {
@@ -370,7 +370,7 @@ void compile_node(pAstNode p) {
         }
         case ASTN_While: {
             WhileNode* q = (WhileNode*)p;
-            compile_node(q->cond);
+            compile_node(q->cond, func_name);
             int type = q->cond->base.type;
             int size = q->cond->base.size;
             if(!(q->cond->base.type == TYPE_BOOLEAN && q->cond->base.size == 0)) {
@@ -380,7 +380,7 @@ void compile_node(pAstNode p) {
                 print_error("type", ERROR, 20, q->cond->base.line, q->cond->base.col, NULL, "NONBOOL_COND", msg);
             }
             SD_add_scope(&mySD, p);
-            compile_node_chain(q->body);
+            compile_node_chain(q->body, func_name);
             SD_remove_scope(&mySD);
             break;
         }
@@ -413,7 +413,7 @@ void compile_node(pAstNode p) {
                 }
             }
             SD_add_scope(&mySD, p);
-            compile_node_chain(((ForNode*)p)->body);
+            compile_node_chain(((ForNode*)p)->body, func_name);
             SD_remove_scope(&mySD);
             if(entry != NULL) {
                 entry->readonly = prev_readonly;
@@ -428,7 +428,7 @@ void compile_node(pAstNode p) {
             while(node != NULL) {
                 node->base.type = q->base.type;
                 node->base.size = q->base.size;
-                add_node_to_SD((pAstNode)node);
+                add_node_to_SD((pAstNode)node, func_name);
                 node = node->next;
             }
             break;
@@ -436,7 +436,7 @@ void compile_node(pAstNode p) {
         case ASTN_Input:
             break;
         case ASTN_Output:
-            compile_node(((OutputNode*)p)->var);
+            compile_node(((OutputNode*)p)->var, func_name);
             break;
         case ASTN_FCall: {
             FCallNode* q = (FCallNode*)p;
@@ -484,7 +484,7 @@ void compile_node(pAstNode p) {
             int count[2] = {0, 0};
             SD_add_scope(&mySD, p);
             while(node != NULL) {
-                compile_node(node->val);
+                compile_node(node->val, func_name);
                 int type2 = node->val->base.type;
                 int size2 = node->val->base.size;
                 if(size2 > 0 || (type2 != type && type != TYPE_ERROR)) {
@@ -505,7 +505,7 @@ void compile_node(pAstNode p) {
                         fprintf(stderr, "Assert failure in boolean switch.\n");
                     }
                 }
-                compile_node_chain((pAstNode)(node->stmts));
+                compile_node_chain((pAstNode)(node->stmts), func_name);
                 node = node->next;
             }
             if(type == TYPE_BOOLEAN) {
@@ -523,7 +523,7 @@ void compile_node(pAstNode p) {
                     print_error("type", ERROR, 27, q->defaultcase->base.line, q->defaultcase->base.col,
                         NULL, NULL, "Default case is not allowed when switch variable is BOOLEAN.");
                 }
-                compile_node_chain((pAstNode)(q->defaultcase->stmts));
+                compile_node_chain((pAstNode)(q->defaultcase->stmts), func_name);
             }
             else if(type == TYPE_INTEGER) {
                 print_error("type", ERROR, 28, q->base.line, q->base.col, NULL, NULL,
@@ -574,7 +574,7 @@ void compile(ProgramNode* root) {
     module_node = root->modules;
     while(module_node != NULL) {
         SD_add_scope(&mySD, (pAstNode)module_node);
-        compile_node((pAstNode)module_node);
+        compile_node((pAstNode)module_node, module_node->name);
         SD_remove_scope(&mySD);
         module_node = module_node->next;
     }
