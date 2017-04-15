@@ -55,6 +55,30 @@ pAstNode get_next_ast_node(pAstNode p) {
     }
 }
 
+int get_scope_beg_line(pAstNode p) {
+    switch(p->base.node_type) {
+        case ASTN_Module: return ((ModuleNode*)p)->scope_beg_line;
+        case ASTN_For: return ((ForNode*)p)->scope_beg_line;
+        case ASTN_While: return ((WhileNode*)p)->scope_beg_line;
+        case ASTN_Switch: return ((SwitchNode*)p)->scope_beg_line;
+        default:
+            complain_ast_node_type(__func__, p->base.node_type);
+            return 0;
+    }
+}
+
+int get_scope_end_line(pAstNode p) {
+    switch(p->base.node_type) {
+        case ASTN_Module: return ((ModuleNode*)p)->scope_end_line;
+        case ASTN_For: return ((ForNode*)p)->scope_end_line;
+        case ASTN_While: return ((WhileNode*)p)->scope_end_line;
+        case ASTN_Switch: return ((SwitchNode*)p)->scope_end_line;
+        default:
+            complain_ast_node_type(__func__, p->base.node_type);
+            return 0;
+    }
+}
+
 static void print_type(FILE* fp, valtype_t type, int size) {
     fprintf(fp, "%s", TYPE_STRS[type]);
     if(size > 0)

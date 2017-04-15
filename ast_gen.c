@@ -88,6 +88,8 @@ void build_ast(parse_tree_node* p) {
             mynode->oParamList = NULL;
             mynode->body = s[5]->tree;
             mynode->next = s[0]->next;
+            mynode->scope_beg_line = s[5]->scope_beg_line;
+            mynode->scope_end_line = s[5]->scope_end_line;
             s[0]->tree = mynode;
             break;
         }
@@ -101,10 +103,17 @@ void build_ast(parse_tree_node* p) {
             mynode->oParamList = s[11]->tree;
             mynode->body = s[12]->tree;
             mynode->next = s[0]->next;
+            mynode->scope_beg_line = s[12]->scope_beg_line;
+            mynode->scope_end_line = s[12]->scope_end_line;
             s[0]->tree = mynode;
             break;
         }
         case 8:
+            build_ast(n[2]);
+            s[0]->tree = s[2]->tree;
+            s[0]->scope_beg_line = s[1]->line;
+            s[0]->scope_end_line = s[3]->line;
+            break;
         case 53:
         case 85:
             build_ast(n[2]);
@@ -351,6 +360,8 @@ void build_ast(parse_tree_node* p) {
             for_node->varname = s[3]->lexeme;
             for_node->body = s[8]->tree;
             for_node->next = s[0]->next;
+            for_node->scope_beg_line = s[7]->line;
+            for_node->scope_beg_line = s[9]->line;
             s[0]->tree = for_node;
             break;
         }
@@ -361,6 +372,8 @@ void build_ast(parse_tree_node* p) {
             while_node->cond = s[3]->tree;
             while_node->body = s[6]->tree;
             while_node->next = s[0]->next;
+            while_node->scope_beg_line = s[5]->line;
+            while_node->scope_beg_line = s[7]->line;
             s[0]->tree = while_node;
             break;
         }

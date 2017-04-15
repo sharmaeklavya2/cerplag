@@ -47,6 +47,8 @@ typedef struct
         };
         int op;
     };
+    int scope_beg_line;
+    int scope_end_line;
 }Symbol;
 
 #endif  // H_SYMBOL_DEFS
