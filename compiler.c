@@ -339,7 +339,7 @@ void compile_node(pAstNode p) {
             compile_node(q->expr);
             valtype_t type1 = q->target->base.type, type2 = q->expr->base.type;
             int size1 = q->target->base.size, size2 = q->expr->base.size;
-            if((type1 != type2 || size1 != size2) && type2 != TYPE_ERROR) {
+            if((type1 != type2 || size1 != size2) && type2 != TYPE_ERROR && type1 != TYPE_ERROR) {
                 char tstr1[24], tstr2[24];
                 get_type_str(tstr1, type1, size1);
                 get_type_str(tstr2, type2, size2);
