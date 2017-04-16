@@ -5,10 +5,10 @@
 #include "ast_defs.h"
 
 typedef enum {
-#define X(a) ##a
+#define X(a) OPCODE_##a,
 #include "data/opcode.xmac"
 #undef X
-	NOP
+	OPCODE_NOP
 } opcode_t;
 
 //typedef int opcode_t;

@@ -18,19 +18,19 @@ int get_opcode(pAstNode ast_root) {
 	switch(ast_root->base.node_type) {
 		case ASTN_BOp:
 			if(ast_root->op == OP_PLUS)
-				return ADD;
+				return OPCODE_ADD;
 			else if(ast_root->op == OP_MINUS)
-				return SUB;
+				return OPCODE_SUB;
 			else if(ast_root->op == OP_MUL)
-				return MUL;
+				return OPCODE_MUL;
 			else if(ast_root->op == OP_DIV)
-				return DIV;
+				return OPCODE_DIV;
 			break;
 		case ASTN_UOp:
 			if(ast_root->op == OP_PLUS)
-				return PLUS;
+				return OPCODE_PLUS;
 			else if(ast_root->op == OP_MINUS)
-				return MINUS;
+				return OPCODE_MINUS;
 			break;
 	}
 
