@@ -2,6 +2,7 @@
 #define H_AST_DEFS
 
 #include <stdbool.h>
+#include "codegen.h"
 
 typedef enum {
 #define X(a, b) ASTN_##a,
@@ -35,6 +36,7 @@ typedef struct {
     valtype_t type;
     int size;
     int line, col;
+	q_list_t q_list;
 } BaseAstNode;
 
 typedef struct {BaseAstNode base;} AstNode;

@@ -6,6 +6,7 @@
 #include "ast.h"
 #include "ast_gen.h"
 #include "symbol_table.h"
+#include "codegen.h"
 #include "util/vptr_int_hmap.h"
 
 #define MODULE_DECLARED 1
@@ -529,6 +530,7 @@ void compile_node(pAstNode p) {
         default:
             complain_ast_node_type(__func__, p->base.node_type);
     }
+	gen_intermediate_code(&mySD,p);
 }
 
 void compile(ProgramNode* root) {
