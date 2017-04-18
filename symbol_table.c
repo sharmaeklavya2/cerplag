@@ -26,8 +26,8 @@ void pSTEntry_print_sub(pSTEntry p, FILE* fp) {
         sprintf(type_str, "%s", TYPE_STRS[p->addr->type]);
     else
         sprintf(type_str, "%s[%d]", TYPE_STRS[p->addr->type], p->addr->size);
-    int beg_line = get_scope_beg_line(p->addr->symbol_table->scope);
-    int end_line = get_scope_end_line(p->addr->symbol_table->scope);
+    int beg_line = p->addr->symbol_table->scope_beg_line;
+    int end_line = p->addr->symbol_table->scope_end_line;
     const char* func_name = p->func_name == NULL ? "driver" : p->func_name;
     fprintf(fp, "%-10s %-12s %-10s %3d to %3d %6d %6d %7d\n", p->lexeme, type_str, func_name, beg_line, end_line,
         p->addr->symbol_table->level, get_type_width(p->addr->type, p->addr->size), p->addr->offset);
@@ -50,6 +50,8 @@ void ST_init(pST pst, struct AstNode* scope, int level) {
     ST_hmap_init(&(pst->vmap), 10, false);
     AddrList_init(&(pst->addrs));
     pst->scope = scope;
+    pst->scope_beg_line = get_scope_beg_line(scope);
+    pst->scope_end_line = get_scope_end_line(scope);
     pst->level = level;
 }
 

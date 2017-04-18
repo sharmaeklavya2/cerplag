@@ -584,7 +584,7 @@ void compile_node(pAstNode p, const char* func_name) {
             break;
         case ASTN_FCall: {
             FCallNode* q = (FCallNode*)p;
-            if(q->name == ((ModuleNode*)(SD_get_subroot(&mySD)->scope))->name) {
+            if(q->name == func_name) {
                 print_error("compile", ERROR, 21, q->base.line, q->base.col, q->name, "RECURSE_CALL",
                     "Recursive calls are not allowed.");
             }

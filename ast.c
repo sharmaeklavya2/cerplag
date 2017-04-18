@@ -51,6 +51,9 @@ pAstNode get_next_ast_node(pAstNode p) {
 }
 
 int get_scope_beg_line(pAstNode p) {
+    if(p == NULL) {
+        return 0;
+    }
     switch(p->base.node_type) {
         case ASTN_Module: return ((ModuleNode*)p)->scope_beg_line;
         case ASTN_For: return ((ForNode*)p)->scope_beg_line;
@@ -63,6 +66,9 @@ int get_scope_beg_line(pAstNode p) {
 }
 
 int get_scope_end_line(pAstNode p) {
+    if(p == NULL) {
+        return 0;
+    }
     switch(p->base.node_type) {
         case ASTN_Module: return ((ModuleNode*)p)->scope_end_line;
         case ASTN_For: return ((ForNode*)p)->scope_end_line;

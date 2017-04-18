@@ -42,6 +42,7 @@ typedef struct SymbolTable {
     struct AddrList addrs;
     struct AstNode* scope;
     int level;  // depth of node in tree
+    int scope_beg_line, scope_end_line;
 } SymbolTable;
 
 typedef SymbolTable ST;
