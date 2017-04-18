@@ -6,9 +6,17 @@
 void irinstr_init(IRInstr* instr, op_t op);
 IRInstr* irinstr_new(op_t op);
 void irinstr_link(IRInstr* i1, IRInstr* i2);
+void irinstr_clear(IRInstr* instr);
+void irinstr_destroy(IRInstr* instr);
+void irinstr_destroy_list(IRInstr* n);
+void irinstr_print(IRInstr* n, FILE* fp);
 
 void ircode_init(IRCode* irc);
+void ircode_copy(IRCode* irc, IRCode* irc2);
 void ircode_combine(IRCode* irc, IRCode* p1, IRCode* p2);
-void ircode_add(IRCode* irc, IRInstr* instr);
+void ircode_prepend(IRCode* irc, IRInstr* instr);
+void ircode_append(IRCode* irc, IRInstr* instr);
+void ircode_clear(IRCode* irc);
+void ircode_print(IRCode* irc, FILE* fp);
 
 #endif  // H_IRCODE
