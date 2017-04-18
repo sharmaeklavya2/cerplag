@@ -36,12 +36,17 @@ void AddrList_add(AddrList* al, AddrNode* an) {
 }
 
 void AddrNode_print(const AddrNode* an, FILE* fp) {
-    fprintf(fp, "AddrNode(%d, %d:%d, %s %s", an->id, an->line, an->col, ADDR_TYPE_STRS[an->addr_type],
-        TYPE_STRS[an->type]);
-    if(an->size > 0) {
-        fprintf(fp, "[%d]", an->size);
+    if(an == NULL) {
+        fprintf(fp, "null");
     }
-    fprintf(fp, ", %d)", an->offset);
+    else {
+        fprintf(fp, "AddrNode(%d, %d:%d, %s %s", an->id, an->line, an->col, ADDR_TYPE_STRS[an->addr_type],
+            TYPE_STRS[an->type]);
+        if(an->size > 0) {
+            fprintf(fp, "[%d]", an->size);
+        }
+        fprintf(fp, ", %d)", an->offset);
+    }
 }
 
 void AddrList_print(const AddrList* al, FILE* fp) {
