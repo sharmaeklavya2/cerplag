@@ -193,7 +193,9 @@ void compare_lists_type(const char* func_name, bool is_output, IDListNode* actua
                 print_undecl_id_error(actual->varname, actual->base.line, actual->base.col);
             }
             else {
-                log_var_set(entry, actual->base.line, actual->base.col);
+                if(is_output) {
+                    log_var_set(entry, actual->base.line, actual->base.col);
+                }
                 int atype = entry->type;
                 int asize = entry->size;
                 if(!(atype == TYPE_ERROR || (atype == ftype && asize == fsize))) {
