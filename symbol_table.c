@@ -54,6 +54,12 @@ void pSTEntry_print_sub(pSTEntry p, FILE* fp) {
 #undef VTYPED
 #undef ITYPED
 
+void ST_init(pST pst, pAstNode scope, int level) {
+    ST_hmap_init(&(pst->vmap), 10, false);
+    pst->scope = scope;
+    pst->level = level;
+}
+
 void ST_print(pST p, FILE* fp)
 {ST_hmap_print(&(p->vmap), fp);}
 
@@ -86,9 +92,7 @@ void SD_init(pSD psd) {
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated ST %p\n", __func__, (void*)pst);
 #endif
-    ST_hmap_init(&(pst->vmap), 10, false);
-    pst->scope = NULL;
-    pst->level = 0;
+    ST_init(pst, NULL, 0);
     psd->root = psd->active = ST_tree_get_node(pst);
 }
 
@@ -144,9 +148,7 @@ void SD_add_scope(pSD psd, pAstNode scope) {
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated ST %p\n", __func__, (void*)pst);
 #endif
-    ST_hmap_init(&(pst->vmap), 10, false);
-    pst->scope = scope;
-    pst->level = (++psd->level);
+    ST_init(pst, scope, ++(psd->level));
     ST_tree_insert(psd->active, pst);
     psd->active = psd->active->last_child;
 }
