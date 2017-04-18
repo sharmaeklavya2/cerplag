@@ -2,23 +2,7 @@
 #include "symbol_table.h"
 #include "error.h"
 #include "ast.h"
-
-int get_type_width(valtype_t type, int size) {
-    if(size == 0) {
-        return TYPE_SIZES[type];
-    }
-    else {
-        return TYPE_SIZES[type] * size;
-    }
-}
-
-int get_aligned_offset(int offset, valtype_t type) {
-    int align_size = TYPE_ALIGNS[type];
-    int t = offset % align_size;
-    if(t != 0)
-        offset += (align_size - t);
-    return offset;
-}
+#include "type.h"
 
 void pSTEntry_destroy(pSTEntry p)
 {

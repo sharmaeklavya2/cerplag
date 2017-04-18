@@ -3,7 +3,6 @@
 
 #include "symbol_table_defs.h"
 
-int get_type_width(valtype_t type, int size);
 void pSTEntry_print(pSTEntry p, FILE* fp);
 void pSTEntry_print_sub(pSTEntry p, FILE* fp);
 

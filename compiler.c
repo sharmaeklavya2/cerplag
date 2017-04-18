@@ -7,6 +7,7 @@
 #include "ast_gen.h"
 #include "symbol_table.h"
 #include "util/vptr_int_hmap.h"
+#include "type.h"
 
 #define MODULE_DECLARED 1
 #define MODULE_DEFINED  2
@@ -104,13 +105,6 @@ void compile_node_chain(pAstNode p, const char* func_name) {
         compile_node(p, func_name);
         p = get_next_ast_node(p);
     }
-}
-
-static void get_type_str(char* str, valtype_t type, int size) {
-    if(size == 0)
-        sprintf(str, "%s", TYPE_STRS[type]);
-    else
-        sprintf(str, "%s[%d]", TYPE_STRS[type], size);
 }
 
 AddrNode* add_node_addr_to_SD(pAstNode node, addr_type_t addr_type) {

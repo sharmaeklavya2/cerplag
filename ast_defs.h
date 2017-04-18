@@ -2,6 +2,8 @@
 #define H_AST_DEFS
 
 #include <stdbool.h>
+#include "op.h"
+#include "type.h"
 
 typedef enum {
 #define X(a, b) ASTN_##a,
@@ -11,24 +13,6 @@ typedef enum {
 } astn_t;
 
 #define NUM_ASTN ASTN_LAST
-
-typedef enum {TYPE_ERROR, TYPE_INTEGER, TYPE_REAL, TYPE_BOOLEAN} valtype_t;
-#define TYPE_STRS_LIST {"error", "integer", "real", "boolean"}
-#define TYPE_SIZES_LIST {0, 2, 4, 1}
-
-typedef enum {
-    OP_PLUS, OP_MINUS,
-    OP_LT, OP_GT,
-    OP_LE, OP_GE,
-    OP_EQ, OP_NE,
-    OP_MUL, OP_DIV,
-    OP_AND, OP_OR,
-    OP_LAST
-} op_t;
-
-#define NUM_OP OP_LAST
-
-#define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "AND", "OR"}
 
 struct AddrNode;
 

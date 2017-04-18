@@ -9,11 +9,6 @@ char* ASTN_STRS[] = {
 #undef X
 };
 
-char* TYPE_STRS[] = TYPE_STRS_LIST;
-char* OP_STRS[] = OP_STRS_LIST;
-int TYPE_SIZES[] = TYPE_SIZES_LIST;
-int TYPE_ALIGNS[] = TYPE_SIZES_LIST;
-
 void complain_ast_node_type(const char* funcname, astn_t node_type) {
     if(node_type >= NUM_ASTN)
         fprintf(stderr, "%s: invalid node_type %d\n", funcname, node_type);
