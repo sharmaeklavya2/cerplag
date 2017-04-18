@@ -113,22 +113,35 @@ static void get_type_str(char* str, valtype_t type, int size) {
         sprintf(str, "%s[%d]", TYPE_STRS[type], size);
 }
 
-void add_node_to_SD(pAstNode node, const char* func_name) {
+AddrNode* add_node_addr_to_SD(pAstNode node, addr_type_t addr_type) {
+    AddrNode* anode = malloc(sizeof(AddrNode));
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Allocated AddrNode %p\n", __func__, (void*)anode);
+#endif
+    anode->next = NULL;
+    anode->symbol_table = (mySD.active)->value;
+    anode->id = 0;
+    anode->addr_type = addr_type;
+    anode->type = node->base.type;
+    anode->size = node->base.size;
+    anode->line = node->base.line;
+    anode->col = node->base.col;
+    anode->offset = 0;
+    SD_add_addr(&mySD, anode);
+    return anode;
+}
+
+void add_node_var_to_SD(pAstNode node, const char* func_name) {
     pSTEntry entry = malloc(sizeof(STEntry));
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated STEntry %p\n", __func__, (void*)entry);
 #endif
     entry->func_name = func_name;
-    entry->type = node->base.type;
-    entry->size = node->base.size;
-    entry->line = node->base.line;
-    entry->col = node->base.col;
     entry->use_line = 0;
     entry->use_col = 0;
-    entry->offset = 0;
     entry->readonly = false;
     entry->next = NULL;
-    entry->symbol_table = (mySD.active)->value;
+    entry->addr = NULL;
     if(node->base.node_type == ASTN_IDList) {
         entry->lexeme = ((IDListNode*)node)->varname;
     }
@@ -138,13 +151,15 @@ void add_node_to_SD(pAstNode node, const char* func_name) {
     else {
         entry->lexeme = NULL;
     }
-    if(!SD_add_entry(&mySD, entry)) {
+    int line = node->base.line, col = node->base.col;
+    if(!SD_add_entry(&mySD, entry, line, col)) {
         free(entry);
 #ifdef LOG_MEM
         fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
 #endif
     }
     else {
+        entry->addr = add_node_addr_to_SD(node, ADDR_VAR);
         if(first_entry == NULL) {
             first_entry = last_entry = entry;
         }
@@ -158,7 +173,7 @@ void add_node_to_SD(pAstNode node, const char* func_name) {
 void log_var_set(pSTEntry entry, int line, int col) {
     if(entry->readonly == true) {
         sprintf(msg, "Cannot modify read-only variable '%s' (declared at line %d, col %d).",
-            entry->lexeme, entry->line, entry->col);
+            entry->lexeme, entry->addr->line, entry->addr->col);
         print_error("type", ERROR, 50, line, col, entry->lexeme, "RDONLY_MOD", msg);
     }
     entry->use_line = line;
@@ -196,8 +211,8 @@ void compare_lists_type(const char* func_name, bool is_output, IDListNode* actua
                 if(is_output) {
                     log_var_set(entry, actual->base.line, actual->base.col);
                 }
-                int atype = entry->type;
-                int asize = entry->size;
+                int atype = entry->addr->type;
+                int asize = entry->addr->size;
                 if(!(atype == TYPE_ERROR || (atype == ftype && asize == fsize))) {
                     char fstr[24], astr[24];
                     get_type_str(astr, atype, asize);
@@ -207,6 +222,7 @@ void compare_lists_type(const char* func_name, bool is_output, IDListNode* actua
                     print_error("type", ERROR, 43, actual->base.line, actual->base.col, actual->varname,
                         "FCALL_TYPE_MISMATCH", msg);
                 }
+                actual->base.addr = entry->addr;
             }
             actual = actual->next;
             formal = formal->next;
@@ -227,6 +243,9 @@ void compile_node(pAstNode p, const char* func_name) {
             int size1 = q->arg1->base.size, size2 = q->arg2->base.size;
             if(size1 == 0 && size2 == 0) {
                 q->base.type = get_composite_type(q->op, type1, type2, q->base.line, q->base.col);
+                if(q->base.type != TYPE_ERROR) {
+                    q->base.addr = add_node_addr_to_SD(p, ADDR_TEMP);
+                }
             }
             else {
                 if(size1 > 0) {
@@ -250,6 +269,7 @@ void compile_node(pAstNode p, const char* func_name) {
             if(subsize == 0) {
                 if(subtype == TYPE_INTEGER || subtype == TYPE_REAL) {
                     q->base.type = subtype;
+                    q->base.addr = add_node_addr_to_SD(p, ADDR_TEMP);
                 }
                 else if(subtype == TYPE_ERROR) {
                     q->base.type = TYPE_ERROR;
@@ -278,14 +298,17 @@ void compile_node(pAstNode p, const char* func_name) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
                 q->base.type = TYPE_ERROR;
             }
-            else if(entry->size == 0) {
+            else if(entry->addr->size == 0) {
                 print_error("type", ERROR, 16, q->base.line, q->base.col, q->varname, "NONARR_DEREF",
                     "Dereference operator applied on a variable which is not an array.");
                 q->base.type = TYPE_ERROR;
             }
             else {
-                q->base.type = entry->type;
-                int size = entry->size;
+                q->base.type = entry->addr->type;
+                int size = entry->addr->size;
+                q->base.addr = add_node_addr_to_SD(p, ADDR_ARR);
+                q->base.addr->base_addr = entry->addr;
+                q->base.addr->index = q->index->base.addr;
                 if(q->index->base.node_type == ASTN_Var) {
                     int type = q->index->base.type;
                     if(!((type == TYPE_INTEGER || type == TYPE_ERROR) && q->index->base.size == 0)) {
@@ -298,7 +321,7 @@ void compile_node(pAstNode p, const char* func_name) {
                 else {
                     int val = ((NumNode*)(q->index))->val;
                     if(val <= 0 || val > size) {
-                        sprintf(msg, "Index of '%s' should be in the range 1 to %d.\n", q->varname, entry->size);
+                        sprintf(msg, "Index of '%s' should be in the range 1 to %d.\n", q->varname, entry->addr->size);
                         print_error("type", ERROR, 18, q->index->base.line, q->index->base.col, NULL, "OOB_INDEX", msg);
                     }
                 }
@@ -314,14 +337,30 @@ void compile_node(pAstNode p, const char* func_name) {
                 q->base.size = 0;
             }
             else {
-                q->base.type = entry->type;
-                q->base.size = entry->size;
+                q->base.type = entry->addr->type;
+                q->base.size = entry->addr->size;
+                q->base.addr = entry->addr;
             }
             break;
         }
-        case ASTN_Num:
-        case ASTN_RNum:
-        case ASTN_Bool:
+        case ASTN_Num: {
+            NumNode* q = (NumNode*)p;
+            q->base.addr = add_node_addr_to_SD(p, ADDR_CONST);
+            q->base.addr->imm.i = q->val;
+            break;
+        }
+        case ASTN_RNum: {
+            RNumNode* q = (RNumNode*)p;
+            q->base.addr = add_node_addr_to_SD(p, ADDR_CONST);
+            q->base.addr->imm.f = q->val;
+            break;
+        }
+        case ASTN_Bool: {
+            BoolNode* q = (BoolNode*)p;
+            q->base.addr = add_node_addr_to_SD(p, ADDR_CONST);
+            q->base.addr->imm.b = q->val;
+            break;
+        }
         case ASTN_Range:
             break;
         case ASTN_Module: {
@@ -338,12 +377,12 @@ void compile_node(pAstNode p, const char* func_name) {
             IDTypeListNode* node = NULL;
             node = q->iParamList;
             while(node != NULL) {
-                add_node_to_SD((pAstNode)node, func_name);
+                add_node_var_to_SD((pAstNode)node, func_name);
                 node = node->next;
             }
             node = q->oParamList;
             while(node != NULL) {
-                add_node_to_SD((pAstNode)node, func_name);
+                add_node_var_to_SD((pAstNode)node, func_name);
                 node = node->next;
             }
             compile_node_chain(q->body, func_name);
@@ -407,9 +446,9 @@ void compile_node(pAstNode p, const char* func_name) {
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
             }
-            else if(!(entry->type == TYPE_INTEGER && entry->size == 0)) {
+            else if(!(entry->addr->type == TYPE_INTEGER && entry->addr->size == 0)) {
                 char tstr[24];
-                get_type_str(tstr, entry->type, entry->size);
+                get_type_str(tstr, entry->addr->type, entry->addr->size);
                 sprintf(msg, "Type of loop variable '%s' should be '%s', not '%s'.",
                     q->varname, TYPE_STRS[TYPE_INTEGER], tstr);
                 print_error("type", ERROR, 24, q->base.line, q->base.col, NULL, "LOOPVAR_NOTINT", msg);
@@ -418,11 +457,12 @@ void compile_node(pAstNode p, const char* func_name) {
             int prev_line = 0, prev_col = 0;
             if(entry != NULL) {
                 prev_readonly = entry->readonly;
-                prev_line = entry->line;
-                prev_col = entry->col;
+                prev_line = entry->addr->line;
+                prev_col = entry->addr->col;
                 entry->readonly = true;
-                entry->line = q->base.line;
-                entry->col = q->base.col;
+                entry->addr->line = q->base.line;
+                entry->addr->col = q->base.col;
+                q->base.addr = entry->addr;
             }
             if(prev_readonly) {
                 pSTEntry entry = SD_get_entry(&mySD, q->varname);
@@ -435,8 +475,8 @@ void compile_node(pAstNode p, const char* func_name) {
             SD_remove_scope(&mySD);
             if(entry != NULL) {
                 entry->readonly = prev_readonly;
-                entry->line = prev_line;
-                entry->col = prev_col;
+                entry->addr->line = prev_line;
+                entry->addr->col = prev_col;
             }
             break;
         }
@@ -446,7 +486,7 @@ void compile_node(pAstNode p, const char* func_name) {
             while(node != NULL) {
                 node->base.type = q->base.type;
                 node->base.size = q->base.size;
-                add_node_to_SD((pAstNode)node, func_name);
+                add_node_var_to_SD((pAstNode)node, func_name);
                 node = node->next;
             }
             break;
@@ -489,15 +529,18 @@ void compile_node(pAstNode p, const char* func_name) {
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
             }
-            else if(entry->size > 0 || (entry->type != TYPE_INTEGER && entry->type != TYPE_BOOLEAN)) {
-                get_type_str(tstr2, entry->type, entry->size);
-                sprintf(msg, "Switch variable's type should be '%s' or '%s', not '%s'",
-                    TYPE_STRS[TYPE_INTEGER], TYPE_STRS[TYPE_BOOLEAN], tstr2);
-                print_error("type", ERROR, 25, q->base.line, q->base.col, q->varname, NULL, msg);
-            }
             else {
-                type = entry->type;
-                get_type_str(tstr, type, 0);
+                q->base.addr = entry->addr;
+                if(entry->addr->size > 0 || (entry->addr->type != TYPE_INTEGER && entry->addr->type != TYPE_BOOLEAN)) {
+                    get_type_str(tstr2, entry->addr->type, entry->addr->size);
+                    sprintf(msg, "Switch variable's type should be '%s' or '%s', not '%s'",
+                        TYPE_STRS[TYPE_INTEGER], TYPE_STRS[TYPE_BOOLEAN], tstr2);
+                    print_error("type", ERROR, 25, q->base.line, q->base.col, q->varname, NULL, msg);
+                }
+                else {
+                    type = entry->addr->type;
+                    get_type_str(tstr, type, 0);
+                }
             }
             CaseNode* node = q->cases;
             int count[2] = {0, 0};

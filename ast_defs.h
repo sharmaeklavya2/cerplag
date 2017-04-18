@@ -30,11 +30,14 @@ typedef enum {
 
 #define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "AND", "OR"}
 
+struct AddrNode;
+
 typedef struct {
     astn_t node_type;
     valtype_t type;
     int size;
     int line, col;
+    struct AddrNode* addr;
 } BaseAstNode;
 
 typedef struct {BaseAstNode base;} AstNode;
@@ -49,5 +52,7 @@ extern char* TYPE_STRS[];
 extern int TYPE_SIZES[];
 extern int TYPE_ALIGNS[];
 extern char* OP_STRS[];
+
+#include "addr.h"
 
 #endif  // H_AST_DEFS

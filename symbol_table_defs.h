@@ -7,20 +7,18 @@
 #include "util/int_stack.h"
 
 struct SymbolTable;
+struct AddrNode;
+struct AddrList;
 
 typedef struct STEntry {
+// Symbol Table Entry: an entry in the variable map
     const char* lexeme;
     const char* func_name;
-    valtype_t type; // type of variable
-    int size;       // size of variable if it is an array, 0 otherwise
-    int line;       // line number of definition
-    int col;        // col number of definition
     int use_line;   // line number of last use
     int use_col;    // col number of last use
-    int offset;     // offset in activation record
     bool readonly;
-    struct SymbolTable* symbol_table;
     struct STEntry* next;
+    struct AddrNode* addr;
 } STEntry;  // Symbol Table Entry
 
 typedef STEntry* pSTEntry;
@@ -39,6 +37,7 @@ typedef STEntry* pSTEntry;
 
 typedef struct SymbolTable {
     ST_hmap vmap;
+    struct AddrList addrs;
     pAstNode scope;
     int level;  // depth of node in tree
 } SymbolTable;
@@ -61,5 +60,7 @@ typedef struct SymbolDatabase {
 
 typedef SymbolDatabase SD;
 typedef SD* pSD;
+
+#include "addr_defs.h"
 
 #endif  // H_SYMBOL_TABLE_DEFS

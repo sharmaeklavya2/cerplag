@@ -12,6 +12,14 @@ int get_type_width(valtype_t type, int size) {
     }
 }
 
+int get_aligned_offset(int offset, valtype_t type) {
+    int align_size = TYPE_ALIGNS[type];
+    int t = offset % align_size;
+    if(t != 0)
+        offset += (align_size - t);
+    return offset;
+}
+
 void pSTEntry_destroy(pSTEntry p)
 {
 #ifdef LOG_MEM
@@ -22,23 +30,23 @@ void pSTEntry_destroy(pSTEntry p)
 
 void pSTEntry_print(pSTEntry p, FILE* fp)
 {
-    fprintf(fp, "STEntry(%s: %s", p->lexeme, TYPE_STRS[p->type]);
-    if(p->size > 0)
-        fprintf(fp, "[%d]", p->size);
-    fprintf(fp, ", %d:%d, %d)", p->line, p->col, p->offset);
+    fprintf(fp, "STEntry(%s: %s", p->lexeme, TYPE_STRS[p->addr->type]);
+    if(p->addr->size > 0)
+        fprintf(fp, "[%d]", p->addr->size);
+    fprintf(fp, ", %d:%d, %d)", p->addr->line, p->addr->col, p->addr->offset);
 }
 
 void pSTEntry_print_sub(pSTEntry p, FILE* fp) {
     char type_str[10] = "";
-    if(p->size == 0)
-        sprintf(type_str, "%s", TYPE_STRS[p->type]);
+    if(p->addr->size == 0)
+        sprintf(type_str, "%s", TYPE_STRS[p->addr->type]);
     else
-        sprintf(type_str, "%s[%d]", TYPE_STRS[p->type], p->size);
-    int beg_line = get_scope_beg_line(p->symbol_table->scope);
-    int end_line = get_scope_end_line(p->symbol_table->scope);
+        sprintf(type_str, "%s[%d]", TYPE_STRS[p->addr->type], p->addr->size);
+    int beg_line = get_scope_beg_line(p->addr->symbol_table->scope);
+    int end_line = get_scope_end_line(p->addr->symbol_table->scope);
     const char* func_name = p->func_name == NULL ? "driver" : p->func_name;
     fprintf(fp, "%-10s %-12s %-10s %3d to %3d %6d %6d %7d\n", p->lexeme, type_str, func_name, beg_line, end_line,
-        p->symbol_table->level, get_type_width(p->type, p->size), p->offset);
+        p->addr->symbol_table->level, get_type_width(p->addr->type, p->addr->size), p->addr->offset);
     //pSTEntry_print(p, fp);
 }
 
@@ -56,15 +64,24 @@ void pSTEntry_print_sub(pSTEntry p, FILE* fp) {
 
 void ST_init(pST pst, pAstNode scope, int level) {
     ST_hmap_init(&(pst->vmap), 10, false);
+    AddrList_init(&(pst->addrs));
     pst->scope = scope;
     pst->level = level;
 }
 
 void ST_print(pST p, FILE* fp)
-{ST_hmap_print(&(p->vmap), fp);}
+{
+    ST_hmap_print(&(p->vmap), fp);
+    AddrList_print(&(p->addrs), fp);
+}
 
 void ST_clear(pST p)
-{ST_hmap_clear(&(p->vmap));}
+{
+    ST_hmap_clear(&(p->vmap));
+    AddrList_clear(&(p->addrs));
+    p->scope = NULL;
+    p->level = 0;
+}
 
 void ST_destroy(pST p) {
 #ifdef LOG_MEM
@@ -96,7 +113,8 @@ void SD_init(pSD psd) {
     psd->root = psd->active = ST_tree_get_node(pst);
 }
 
-bool SD_add_entry(pSD psd, pSTEntry pentry) {
+bool SD_add_entry(pSD psd, pSTEntry pentry, int line, int col) {
+    // pentry->addr is not yet initialized
     if(psd->active == NULL) {
         fprintf(stderr, "%s: No SymbolTable present in stack.\n", __func__);
         return false;
@@ -107,20 +125,34 @@ bool SD_add_entry(pSD psd, pSTEntry pentry) {
     ST_hmap_node* node = ST_hmap_insert(&(pst->vmap), pentry->lexeme, pentry);
     if(pst->vmap.size == old_size) {
         char msg[80];
-        sprintf(msg, "Variable has already been declared at line %d col %d.", node->value->line, node->value->col);
-        print_error("compile", ERROR, 5, pentry->line, pentry->col, pentry->lexeme, "ALREADY_DECL", msg);
+        sprintf(msg, "Variable has already been declared at line %d col %d.", node->value->addr->line, node->value->addr->col);
+        print_error("compile", ERROR, 5, line, col, pentry->lexeme, "ALREADY_DECL", msg);
         return false;
     }
 
-    int offset = psd->offset;
-    int align_size = TYPE_ALIGNS[pentry->type];
-    int t = offset % align_size;
-    if(t != 0)
-        offset += t;
-    pentry->offset = offset;
+    return true;
+}
 
-    offset += get_type_width(pentry->type, pentry->size);
-    psd->offset = offset;
+bool SD_add_addr(pSD psd, AddrNode* an) {
+    if(psd->active == NULL) {
+        fprintf(stderr, "%s: No SymbolTable present in stack.\n", __func__);
+        return false;
+    }
+    pST pst = psd->active->value;
+
+    if(pst->addrs.last == NULL) {
+        an->id = 0;
+    }
+    else {
+        an->id = pst->addrs.last->id + 1;
+    }
+
+    AddrList_add(&(pst->addrs), an);
+
+    if(an->addr_type != ADDR_CONST) {
+        an->offset = get_aligned_offset(psd->offset, an->type);
+        psd->offset = an->offset + get_type_width(an->type, an->size);
+    }
     return true;
 }
 
