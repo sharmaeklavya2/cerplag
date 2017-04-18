@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "op.h"
 #include "type.h"
+#include "ircode.h"
 
 typedef enum {
 #define X(a, b) ASTN_##a,
@@ -22,9 +23,10 @@ typedef struct {
     int size;
     int line, col;
     struct AddrNode* addr;
+    struct IRCode ircode;
 } BaseAstNode;
 
-typedef struct {BaseAstNode base;} AstNode;
+typedef struct AstNode {BaseAstNode base;} AstNode;
 typedef AstNode* pAstNode;
 
 #define X(a, b) typedef struct a##Node {BaseAstNode base; b} a##Node;

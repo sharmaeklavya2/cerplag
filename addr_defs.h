@@ -1,7 +1,7 @@
 #ifndef H_ADDR_DEFS
 #define H_ADDR_DEFS
 
-#include "ast_defs.h"
+#include "type.h"
 
 struct SymbolTable;
 

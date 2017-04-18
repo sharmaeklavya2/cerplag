@@ -35,10 +35,12 @@ typedef STEntry* pSTEntry;
 #undef VTYPED
 #undef ITYPED
 
+struct AstNode;
+
 typedef struct SymbolTable {
     ST_hmap vmap;
     struct AddrList addrs;
-    pAstNode scope;
+    struct AstNode* scope;
     int level;  // depth of node in tree
 } SymbolTable;
 

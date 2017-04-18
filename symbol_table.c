@@ -46,7 +46,7 @@ void pSTEntry_print_sub(pSTEntry p, FILE* fp) {
 #undef VTYPED
 #undef ITYPED
 
-void ST_init(pST pst, pAstNode scope, int level) {
+void ST_init(pST pst, struct AstNode* scope, int level) {
     ST_hmap_init(&(pst->vmap), 10, false);
     AddrList_init(&(pst->addrs));
     pst->scope = scope;

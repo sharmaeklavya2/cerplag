@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ast_defs.h"
+#include "ast.h"
 
 char* ASTN_STRS[] = {
 #define X(a, b) #a"Node",
