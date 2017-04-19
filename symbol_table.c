@@ -52,12 +52,15 @@ void ST_init(pST pst, struct AstNode* scope, int level) {
     pst->scope = scope;
     pst->scope_beg_line = get_scope_beg_line(scope);
     pst->scope_end_line = get_scope_end_line(scope);
+    pst->beg_offset = pst->end_offset = pst->max_offset = 0;
     pst->level = level;
 }
 
 void ST_print(pST p, FILE* fp)
 {
+    fprintf(fp, "SymbolTable(off=%d:%d, maxoff=%d):\n", p->beg_offset, p->end_offset, p->max_offset);
     ST_hmap_print(&(p->vmap), fp);
+    fprintf(fp, "AddrList:\n");
     AddrList_print(&(p->addrs), fp);
 }
 
@@ -67,6 +70,7 @@ void ST_clear(pST p)
     AddrList_clear(&(p->addrs));
     p->scope = NULL;
     p->level = 0;
+    p->beg_offset = p->end_offset = p->max_offset = 0;
 }
 
 void ST_destroy(pST p) {
@@ -145,6 +149,9 @@ bool SD_add_addr(pSD psd, AddrNode* an) {
     if(an->addr_type != ADDR_CONST) {
         an->offset = get_aligned_offset(psd->offset, an->type);
         psd->offset = an->offset + get_type_width(an->type, an->size);
+        if((psd->offset) > (pst->max_offset)) {
+            pst->max_offset = psd->offset;
+        }
     }
     return true;
 }
@@ -179,9 +186,16 @@ void SD_add_scope(pSD psd, pAstNode scope) {
 }
 
 void SD_remove_scope(pSD psd) {
-    psd->active = psd->active->parent;
+    ST_tree_node* parent = psd->active->parent;
+    if(parent != NULL) {
+        int pmo = parent->value->max_offset;
+        int mo = psd->active->value->max_offset;
+        if(mo > pmo) {pmo = mo;}
+        parent->value->max_offset = pmo;
+    }
+    psd->active = parent;
     psd->level--;
-    if(psd->active->parent == NULL) {   // if root is active
+    if(parent->parent == NULL) {   // if now root is active
         psd->offset = 0;
     }
 }

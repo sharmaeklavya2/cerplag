@@ -43,6 +43,8 @@ typedef struct SymbolTable {
     struct AstNode* scope;
     int level;  // depth of node in tree
     int scope_beg_line, scope_end_line;
+    int beg_offset, end_offset; // beg and end offset for items in this ST
+    int max_offset; // max end offset for this ST or any child
 } SymbolTable;
 
 typedef SymbolTable ST;
