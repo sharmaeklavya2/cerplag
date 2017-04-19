@@ -14,7 +14,7 @@ extern const char* X86_OP_STRS[];
 
 #define X86_INDENT_STR "    "
 
-#define X86_ARG_SIZE 20
+#define X86_ARG_SIZE 30
 
 typedef struct X86Instr {
     x86_op_t opcode;

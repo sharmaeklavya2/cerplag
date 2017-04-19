@@ -16,12 +16,27 @@ void x86_instr_init(X86Instr* instr, x86_op_t opcode) {
     instr->opcode = opcode;
 }
 
+void x86_instr_init2(X86Instr* instr, x86_op_t opcode, const char* arg1, const char* arg2) {
+    x86_instr_init(instr, opcode);
+    if(arg1 != NULL) strcpy(instr->arg1, arg1);
+    if(arg2 != NULL) strcpy(instr->arg2, arg2);
+}
+
 X86Instr* x86_instr_new(x86_op_t opcode) {
     X86Instr* p = malloc(sizeof(X86Instr));
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated X86Instr %p\n", __func__, (void*)p);
 #endif
     x86_instr_init(p, opcode);
+    return p;
+}
+
+X86Instr* x86_instr_new2(x86_op_t opcode, const char* arg1, const char* arg2) {
+    X86Instr* p = malloc(sizeof(X86Instr));
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Allocated X86Instr %p\n", __func__, (void*)p);
+#endif
+    x86_instr_init2(p, opcode, arg1, arg2);
     return p;
 }
 
