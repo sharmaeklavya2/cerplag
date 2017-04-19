@@ -1,3 +1,5 @@
+/* Compiles AST to IRCode */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -8,6 +10,7 @@
 #include "symbol_table.h"
 #include "util/vptr_int_hmap.h"
 #include "type.h"
+#include "compiler.h"
 
 #define MODULE_DECLARED 1
 #define MODULE_DEFINED  2
