@@ -5,7 +5,6 @@ X(Var,      char* varname;)
 X(Num,      int val;)
 X(RNum,     double val;)
 X(Bool,     bool val;)
-X(Range,    int beg; int end;)
 X(IDList,   struct IDListNode* next; char* varname;)
 X(IDTypeList, struct IDTypeListNode* next; char* varname;)
 X(Module,   struct IDTypeListNode* iParamList; struct IDTypeListNode* oParamList; \

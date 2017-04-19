@@ -128,9 +128,6 @@ void print_ast(FILE* fp, pAstNode p, int indent) {
         case ASTN_Bool:
             fprintf(fp, "(%s)\n", (((BoolNode*)p)->val)?"true":"false");
             break;
-        case ASTN_Range:
-            fprintf(fp, "(%d, %d)\n", ((RangeNode*)p)->beg, ((RangeNode*)p)->end);
-            break;
 
         case ASTN_IDList:
             fprintf(fp, "(%s)\n", ((IDListNode*)p)->varname);

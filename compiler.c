@@ -469,8 +469,6 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
             q->base.addr->imm.b = q->val;
             break;
         }
-        case ASTN_Range:
-            break;
         case ASTN_Module: {
             ModuleNode* q = (ModuleNode*)p;
             if(q->name != NULL) {
