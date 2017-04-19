@@ -9,7 +9,7 @@
 
 #define USAGE_SIZE 512
 
-static char usage_template[] = "usage: %s (-l | -p | -a | -c) (infile | --) [-v] [-o outfile] OR %s infile outfile\n";
+static char usage_template[] = "usage: %s (-l | -p | -a | -t | -s | -i | -c) (infile | --) [-v] [-o outfile] OR %s infile outfile\n";
 static char usage[USAGE_SIZE];
 
 int cry_error()
@@ -48,6 +48,9 @@ int main(int argc, char* argv[])
             case 'l':
             case 'p':
             case 'a':
+            case 't':
+            case 's':
+            case 'i':
             case 'c':
                 type = ch;
                 if(i+1 < argc)
@@ -126,8 +129,14 @@ int main(int argc, char* argv[])
         parser_main(ifp, ofp, verbosity, print_tree);
     else if(type == 'a')
         ast_gen_main(ifp, ofp, verbosity);
+    else if(type == 't')
+        compiler_main(ifp, ofp, 0, verbosity);
+    else if(type == 's')
+        compiler_main(ifp, ofp, 1, verbosity);
+    else if(type == 'i')
+        compiler_main(ifp, ofp, 2, verbosity);
     else if(type == 'c')
-        compiler_main(ifp, ofp, verbosity);
+        compiler_main(ifp, ofp, 3, verbosity);
 
     if(ifp != stdin)
         fclose(ifp);

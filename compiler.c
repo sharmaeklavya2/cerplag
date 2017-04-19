@@ -11,6 +11,7 @@
 #include "util/vptr_int_hmap.h"
 #include "type.h"
 #include "compiler.h"
+#include "compile_x86.h"
 
 #define MODULE_DECLARED 1
 #define MODULE_DEFINED  2
@@ -40,6 +41,8 @@ vptr_int_hmap module_status;
 vptr_pMN_hmap module_node_map;
 
 static char msg[200];
+
+static bool ircode_gen = false;
 
 void print_type_error(op_t op, valtype_t type1, valtype_t type2, int line, int col) {
     sprintf(msg, "Operands are of the wrong type ('%s' and '%s') for operator '%s'.",
@@ -231,7 +234,7 @@ void destroy_code_chain(pAstNode p) {
 }
 
 void codegen(pAstNode p) {
-    if(error_count == 0) {
+    if(error_count == 0 && ircode_gen) {
         switch(p->base.node_type) {
             case ASTN_Module: {
                 ModuleNode* q = (ModuleNode*)p;
@@ -705,7 +708,11 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
     codegen(p);
 }
 
-void compile_program(ProgramNode* root, pSD psd, bool destroy_module_bodies) {
+void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_module_bodies) {
+    if(code_gen) {
+        ircode_gen = true;
+    }
+
     vptr_int_hmap_init(&module_status, 10, false);
     vptr_pMN_hmap_init(&module_node_map, 10, false);
 
@@ -780,7 +787,11 @@ void compile_program(ProgramNode* root, pSD psd, bool destroy_module_bodies) {
     vptr_pMN_hmap_clear(&module_node_map);
 }
 
-int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
+int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
+    /*  level=0 or 1: semantic check only
+        level=2: ircode_gen
+        level=3: x86_code_gen
+    */
     gsymb_t start_symb = init_parser();
 
     parse_tree_node* proot = build_parse_tree(ifp, start_symb);
@@ -807,7 +818,7 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
     }
     if(parse_errors == 0) {
         SD_init(&mySD);
-        compile_program(ast, &mySD, true);
+        compile_program(ast, &mySD, level>=2, true);
         if(print_sd) {
             SD_print(&mySD, stderr);
         }
@@ -816,7 +827,7 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
         }
         ModuleNode* node = ast->modules;
         while(node != NULL) {
-            if(error_count == 0) {
+            if(error_count == 0 && level == 2) {
                 fprintf(ofp, "Intermediate code for ");
                 if(node->name == NULL) {
                     fprintf(ofp, "driver:\n");
@@ -826,6 +837,14 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
                 }
                 ircode_print(&(node->base.ircode), ofp);
             }
+            node = node->next;
+        }
+
+        if(level == 3) {
+            compile_program_to_x86(ast, &mySD, ofp);
+        }
+        node = ast->modules;
+        while(node != NULL) {
             ircode_clear(&(node->base.ircode));
             node = node->next;
         }
