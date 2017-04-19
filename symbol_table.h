@@ -15,5 +15,6 @@ void SD_add_scope(pSD psd, struct AstNode* scope);
 void SD_remove_scope(pSD psd);
 void SD_clear(pSD psd);
 void SD_print(pSD psd, FILE* fp);
+void SD_print_sub(pSD psd, FILE* fp);
 
 #endif  // H_SYMBOL_TABLE

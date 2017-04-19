@@ -35,10 +35,6 @@ static void pMN_print(pMN p, FILE* fp)
 
 vptr_int_hmap module_status;
 vptr_pMN_hmap module_node_map;
-SD mySD;
-pSTEntry first_entry, last_entry;
-bool print_sd = false;
-bool print_entry_list = false;
 
 static char msg[200];
 
@@ -98,22 +94,22 @@ valtype_t get_composite_type(op_t op, valtype_t type1, valtype_t type2, int line
     return TYPE_ERROR;
 }
 
-void compile_node(pAstNode p, const char* func_name);
+void compile_node(pAstNode p, pSD psd, const char* func_name);
 
-void compile_node_chain(pAstNode p, const char* func_name) {
+void compile_node_chain(pAstNode p, pSD psd, const char* func_name) {
     while(p != NULL) {
-        compile_node(p, func_name);
+        compile_node(p, psd, func_name);
         p = get_next_ast_node(p);
     }
 }
 
-AddrNode* add_node_addr_to_SD(pAstNode node, addr_type_t addr_type) {
+AddrNode* add_node_addr_to_SD(pAstNode node, pSD psd, addr_type_t addr_type) {
     AddrNode* anode = malloc(sizeof(AddrNode));
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated AddrNode %p\n", __func__, (void*)anode);
 #endif
     anode->next = NULL;
-    anode->symbol_table = (mySD.active)->value;
+    anode->symbol_table = (psd->active)->value;
     anode->id = 0;
     anode->addr_type = addr_type;
     anode->type = node->base.type;
@@ -121,11 +117,11 @@ AddrNode* add_node_addr_to_SD(pAstNode node, addr_type_t addr_type) {
     anode->line = node->base.line;
     anode->col = node->base.col;
     anode->offset = 0;
-    SD_add_addr(&mySD, anode);
+    SD_add_addr(psd, anode);
     return anode;
 }
 
-void add_node_var_to_SD(pAstNode node, const char* func_name) {
+void add_node_var_to_SD(pAstNode node, pSD psd, const char* func_name) {
     pSTEntry entry = malloc(sizeof(STEntry));
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated STEntry %p\n", __func__, (void*)entry);
@@ -146,21 +142,14 @@ void add_node_var_to_SD(pAstNode node, const char* func_name) {
         entry->lexeme = NULL;
     }
     int line = node->base.line, col = node->base.col;
-    if(!SD_add_entry(&mySD, entry, line, col)) {
+    if(!SD_add_entry(psd, entry, line, col)) {
         free(entry);
 #ifdef LOG_MEM
         fprintf(stderr, "%s: Freed STEntry %p\n", __func__, (void*)entry);
 #endif
     }
     else {
-        entry->addr = add_node_addr_to_SD(node, ADDR_VAR);
-        if(first_entry == NULL) {
-            first_entry = last_entry = entry;
-        }
-        else {
-            last_entry->next = entry;
-            last_entry = entry;
-        }
+        entry->addr = add_node_addr_to_SD(node, psd, ADDR_VAR);
     }
 }
 
@@ -174,7 +163,7 @@ void log_var_set(pSTEntry entry, int line, int col) {
     entry->use_col = col;
 }
 
-void compare_lists_type(const char* func_name, bool is_output, IDListNode* actual, IDTypeListNode* formal) {
+void compare_lists_type(const char* func_name, pSD psd, bool is_output, IDListNode* actual, IDTypeListNode* formal) {
     const char* list_type = is_output? "output": "input";
     int acount=0, fcount=0;
     IDListNode* org_actual = actual;
@@ -197,7 +186,7 @@ void compare_lists_type(const char* func_name, bool is_output, IDListNode* actua
         while(actual != NULL) {
             int ftype = formal->base.type;
             int fsize = formal->base.size;
-            pSTEntry entry = SD_get_entry(&mySD, actual->varname);
+            pSTEntry entry = SD_get_entry(psd, actual->varname);
             if(entry == NULL) {
                 print_undecl_id_error(actual->varname, actual->base.line, actual->base.col);
             }
@@ -262,6 +251,7 @@ void codegen(pAstNode p) {
             break;
         }
         case ASTN_Decl:
+        case ASTN_Deref:
             break;
         case ASTN_BOp: {
             BOpNode* q = (BOpNode*)p;
@@ -316,21 +306,21 @@ void codegen(pAstNode p) {
     */
 }
 
-void compile_node(pAstNode p, const char* func_name) {
+void compile_node(pAstNode p, pSD psd, const char* func_name) {
     if(p == NULL) return;
     //fprintf(stderr, "%s(%s)\n", __func__, ASTN_STRS[p->base.node_type]);
     switch(p->base.node_type) {
         case ASTN_BOp: {
             BOpNode* q = (BOpNode*)p;
-            compile_node(q->arg1, func_name);
-            compile_node(q->arg2, func_name);
+            compile_node(q->arg1, psd, func_name);
+            compile_node(q->arg2, psd, func_name);
             valtype_t type1 = q->arg1->base.type, type2 = q->arg2->base.type;
             q->base.size = 0;
             int size1 = q->arg1->base.size, size2 = q->arg2->base.size;
             if(size1 == 0 && size2 == 0) {
                 q->base.type = get_composite_type(q->op, type1, type2, q->base.line, q->base.col);
                 if(q->base.type != TYPE_ERROR) {
-                    q->base.addr = add_node_addr_to_SD(p, ADDR_TEMP);
+                    q->base.addr = add_node_addr_to_SD(p, psd, ADDR_TEMP);
                 }
             }
             else {
@@ -348,14 +338,14 @@ void compile_node(pAstNode p, const char* func_name) {
         }
         case ASTN_UOp: {
             UOpNode* q = (UOpNode*)p;
-            compile_node(q->arg, func_name);
+            compile_node(q->arg, psd, func_name);
             valtype_t subtype = q->arg->base.type;
             q->base.size = 0;
             int subsize = q->arg->base.size;
             if(subsize == 0) {
                 if(subtype == TYPE_INTEGER || subtype == TYPE_REAL) {
                     q->base.type = subtype;
-                    q->base.addr = add_node_addr_to_SD(p, ADDR_TEMP);
+                    q->base.addr = add_node_addr_to_SD(p, psd, ADDR_TEMP);
                 }
                 else if(subtype == TYPE_ERROR) {
                     q->base.type = TYPE_ERROR;
@@ -377,9 +367,9 @@ void compile_node(pAstNode p, const char* func_name) {
         }
         case ASTN_Deref: {
             DerefNode* q = (DerefNode*)p;
-            compile_node(q->index, func_name);
+            compile_node(q->index, psd, func_name);
             q->base.size = 0;
-            pSTEntry entry = SD_get_entry(&mySD, q->varname);
+            pSTEntry entry = SD_get_entry(psd, q->varname);
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
                 q->base.type = TYPE_ERROR;
@@ -392,7 +382,7 @@ void compile_node(pAstNode p, const char* func_name) {
             else {
                 q->base.type = entry->addr->type;
                 int size = entry->addr->size;
-                q->base.addr = add_node_addr_to_SD(p, ADDR_ARR);
+                q->base.addr = add_node_addr_to_SD(p, psd, ADDR_ARR);
                 q->base.addr->base_addr = entry->addr;
                 q->base.addr->index = q->index->base.addr;
                 if(q->index->base.node_type == ASTN_Var) {
@@ -416,7 +406,7 @@ void compile_node(pAstNode p, const char* func_name) {
         }
         case ASTN_Var: {
             VarNode* q = (VarNode*)p;
-            pSTEntry entry = SD_get_entry(&mySD, q->varname);
+            pSTEntry entry = SD_get_entry(psd, q->varname);
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
                 q->base.type = TYPE_ERROR;
@@ -431,19 +421,19 @@ void compile_node(pAstNode p, const char* func_name) {
         }
         case ASTN_Num: {
             NumNode* q = (NumNode*)p;
-            q->base.addr = add_node_addr_to_SD(p, ADDR_CONST);
+            q->base.addr = add_node_addr_to_SD(p, psd, ADDR_CONST);
             q->base.addr->imm.i = q->val;
             break;
         }
         case ASTN_RNum: {
             RNumNode* q = (RNumNode*)p;
-            q->base.addr = add_node_addr_to_SD(p, ADDR_CONST);
+            q->base.addr = add_node_addr_to_SD(p, psd, ADDR_CONST);
             q->base.addr->imm.f = q->val;
             break;
         }
         case ASTN_Bool: {
             BoolNode* q = (BoolNode*)p;
-            q->base.addr = add_node_addr_to_SD(p, ADDR_CONST);
+            q->base.addr = add_node_addr_to_SD(p, psd, ADDR_CONST);
             q->base.addr->imm.b = q->val;
             break;
         }
@@ -463,18 +453,18 @@ void compile_node(pAstNode p, const char* func_name) {
             IDTypeListNode* node = NULL;
             node = q->iParamList;
             while(node != NULL) {
-                add_node_var_to_SD((pAstNode)node, func_name);
+                add_node_var_to_SD((pAstNode)node, psd, func_name);
                 node = node->next;
             }
             node = q->oParamList;
             while(node != NULL) {
-                add_node_var_to_SD((pAstNode)node, func_name);
+                add_node_var_to_SD((pAstNode)node, psd, func_name);
                 node = node->next;
             }
-            compile_node_chain(q->body, func_name);
+            compile_node_chain(q->body, psd, func_name);
             node = q->oParamList;
             while(node != NULL) {
-                pSTEntry entry = SD_get_entry(&mySD, node->varname);
+                pSTEntry entry = SD_get_entry(psd, node->varname);
                 if(entry->use_line == 0) {
                     print_error("compile", ERROR, 52, node->base.line, node->base.col, node->varname,
                         "UNSET_OUTPUT_PARAM", "Output parameter has not been set.");
@@ -485,8 +475,8 @@ void compile_node(pAstNode p, const char* func_name) {
         }
         case ASTN_Assn: {
             AssnNode* q = (AssnNode*)p;
-            compile_node(q->target, func_name);
-            compile_node(q->expr, func_name);
+            compile_node(q->target, psd, func_name);
+            compile_node(q->expr, psd, func_name);
             valtype_t type1 = q->target->base.type, type2 = q->expr->base.type;
             int size1 = q->target->base.size, size2 = q->expr->base.size;
             if((type1 != type2 || size1 != size2) && type2 != TYPE_ERROR && type1 != TYPE_ERROR) {
@@ -503,7 +493,7 @@ void compile_node(pAstNode p, const char* func_name) {
             else if(q->target->base.node_type == ASTN_Var) {
                 varname = ((VarNode*)(q->target))->varname;
             }
-            pSTEntry entry = SD_get_entry(&mySD, varname);
+            pSTEntry entry = SD_get_entry(psd, varname);
             if(entry != NULL) {
                 log_var_set(entry, q->target->base.line, q->target->base.col);
             }
@@ -511,7 +501,7 @@ void compile_node(pAstNode p, const char* func_name) {
         }
         case ASTN_While: {
             WhileNode* q = (WhileNode*)p;
-            compile_node(q->cond, func_name);
+            compile_node(q->cond, psd, func_name);
             int type = q->cond->base.type;
             int size = q->cond->base.size;
             int cond_type = q->cond->base.type;
@@ -521,14 +511,14 @@ void compile_node(pAstNode p, const char* func_name) {
                 sprintf(msg, "While loop's condition has type '%s' instead of '%s'.", tstr, TYPE_STRS[TYPE_BOOLEAN]);
                 print_error("type", ERROR, 20, q->cond->base.line, q->cond->base.col, NULL, "NONBOOL_COND", msg);
             }
-            SD_add_scope(&mySD, p);
-            compile_node_chain(q->body, func_name);
-            SD_remove_scope(&mySD);
+            SD_add_scope(psd, p);
+            compile_node_chain(q->body, psd, func_name);
+            SD_remove_scope(psd);
             break;
         }
         case ASTN_For: {
             ForNode* q = (ForNode*)p;
-            pSTEntry entry = SD_get_entry(&mySD, q->varname);
+            pSTEntry entry = SD_get_entry(psd, q->varname);
             if(entry == NULL) {
                 print_undecl_id_error(q->varname, q->base.line, q->base.col);
             }
@@ -551,14 +541,14 @@ void compile_node(pAstNode p, const char* func_name) {
                 q->base.addr = entry->addr;
             }
             if(prev_readonly) {
-                pSTEntry entry = SD_get_entry(&mySD, q->varname);
+                pSTEntry entry = SD_get_entry(psd, q->varname);
                 if(entry != NULL) {
                     log_var_set(entry, q->base.line, q->base.col);
                 }
             }
-            SD_add_scope(&mySD, p);
-            compile_node_chain(((ForNode*)p)->body, func_name);
-            SD_remove_scope(&mySD);
+            SD_add_scope(psd, p);
+            compile_node_chain(((ForNode*)p)->body, psd, func_name);
+            SD_remove_scope(psd);
             if(entry != NULL) {
                 entry->readonly = prev_readonly;
                 entry->addr->line = prev_line;
@@ -572,7 +562,7 @@ void compile_node(pAstNode p, const char* func_name) {
             while(node != NULL) {
                 node->base.type = q->base.type;
                 node->base.size = q->base.size;
-                add_node_var_to_SD((pAstNode)node, func_name);
+                add_node_var_to_SD((pAstNode)node, psd, func_name);
                 node = node->next;
             }
             break;
@@ -580,7 +570,7 @@ void compile_node(pAstNode p, const char* func_name) {
         case ASTN_Input:
             break;
         case ASTN_Output:
-            compile_node(((OutputNode*)p)->var, func_name);
+            compile_node(((OutputNode*)p)->var, psd, func_name);
             break;
         case ASTN_FCall: {
             FCallNode* q = (FCallNode*)p;
@@ -600,16 +590,16 @@ void compile_node(pAstNode p, const char* func_name) {
                     print_error("compile", ERROR, 22, q->base.line, q->base.col, q->name, "UNDEF_MODULE",
                         "Module must be defined or declared before using it.");
                 }
-                compare_lists_type(q->name, false, q->iParamList, module_node->iParamList);
+                compare_lists_type(q->name, psd, false, q->iParamList, module_node->iParamList);
                 if(q->oParamList != NULL) {
-                    compare_lists_type(q->name, true, q->oParamList, module_node->oParamList);
+                    compare_lists_type(q->name, psd, true, q->oParamList, module_node->oParamList);
                 }
             }
             break;
         }
         case ASTN_Switch: {
             SwitchNode* q = (SwitchNode*)p;
-            pSTEntry entry = SD_get_entry(&mySD, q->varname);
+            pSTEntry entry = SD_get_entry(psd, q->varname);
             int type = TYPE_ERROR;
             char tstr[24] = "ERROR", tstr2[24];
             if(entry == NULL) {
@@ -630,9 +620,9 @@ void compile_node(pAstNode p, const char* func_name) {
             }
             CaseNode* node = q->cases;
             int count[2] = {0, 0};
-            SD_add_scope(&mySD, p);
+            SD_add_scope(psd, p);
             while(node != NULL) {
-                compile_node(node->val, func_name);
+                compile_node(node->val, psd, func_name);
                 int type2 = node->val->base.type;
                 int size2 = node->val->base.size;
                 if(size2 > 0 || (type2 != type && type != TYPE_ERROR)) {
@@ -653,7 +643,7 @@ void compile_node(pAstNode p, const char* func_name) {
                         fprintf(stderr, "Assert failure in boolean switch.\n");
                     }
                 }
-                compile_node_chain((pAstNode)(node->stmts), func_name);
+                compile_node_chain((pAstNode)(node->stmts), psd, func_name);
                 node = node->next;
             }
             if(type == TYPE_BOOLEAN) {
@@ -671,13 +661,13 @@ void compile_node(pAstNode p, const char* func_name) {
                     print_error("type", ERROR, 27, q->defaultcase->base.line, q->defaultcase->base.col,
                         NULL, NULL, "Default case is not allowed when switch variable is boolean.");
                 }
-                compile_node_chain((pAstNode)(q->defaultcase->stmts), func_name);
+                compile_node_chain((pAstNode)(q->defaultcase->stmts), psd, func_name);
             }
             else if(type == TYPE_INTEGER) {
                 print_error("type", ERROR, 28, q->base.line, q->base.col, NULL, NULL,
                     "Default case is mandatory when switch variable is an integer.");
             }
-            SD_remove_scope(&mySD);
+            SD_remove_scope(psd);
             break;
         }
         default:
@@ -686,12 +676,10 @@ void compile_node(pAstNode p, const char* func_name) {
     codegen(p);
 }
 
-void compile(ProgramNode* root) {
+void compile_program(ProgramNode* root, pSD psd, bool destroy_module_bodies) {
     vptr_int_hmap_init(&module_status, 10, false);
     vptr_pMN_hmap_init(&module_node_map, 10, false);
-    SD_init(&mySD);
 
-    first_entry = last_entry = NULL;
     IDListNode* decl_node = NULL;
     ModuleNode* module_node = NULL;
 
@@ -723,12 +711,13 @@ void compile(ProgramNode* root) {
 
     module_node = root->modules;
     while(module_node != NULL) {
-        SD_add_scope(&mySD, (pAstNode)module_node);
-        compile_node((pAstNode)module_node, module_node->name);
-        SD_remove_scope(&mySD);
-        fprintf(stderr, "Intermediate code for module %s:\n", module_node->name);
-        ircode_print(&(module_node->base.ircode), stderr);
-        ircode_clear(&(module_node->base.ircode));
+        SD_add_scope(psd, (pAstNode)module_node);
+        compile_node((pAstNode)module_node, psd, module_node->name);
+        SD_remove_scope(psd);
+        if(destroy_module_bodies) {
+            destroy_ast(module_node->body);
+        }
+        module_node->body = NULL;
         module_node = module_node->next;
     }
 
@@ -758,19 +747,8 @@ void compile(ProgramNode* root) {
         module_node = module_node->next;
     }
 
-    if(print_sd) {
-        SD_print(&mySD, stderr);
-    }
-    if(print_entry_list) {
-        fprintf(stderr, "%-10s %-12s %-10s %-10s %6s %6s %7s\n", "lexeme", "type", "scope", "lines", "level", "width", "offset");
-        for(pSTEntry node = first_entry; node != NULL; node = node->next) {
-            pSTEntry_print_sub(node, stderr);
-        }
-    }
-
     vptr_int_hmap_clear(&module_status);
     vptr_pMN_hmap_clear(&module_node_map);
-    SD_clear(&mySD);
 }
 
 int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
@@ -779,6 +757,7 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
     parse_tree_node* proot = build_parse_tree(ifp, start_symb);
     int parse_errors = error_count;
     ProgramNode* ast = NULL;
+    SD mySD;
 
     if(parse_errors == 0) {
         build_ast(proot);
@@ -791,13 +770,36 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
     parse_tree_destroy(proot);
     destroy_parser(false);
 
+    bool print_sd = false;
+    bool print_entry_list = false;
     if(verbosity > 0) {
         print_sd = true;
         print_entry_list = true;
     }
     if(parse_errors == 0) {
-        compile(ast);
+        SD_init(&mySD);
+        compile_program(ast, &mySD, true);
+        if(print_sd) {
+            SD_print(&mySD, stderr);
+        }
+        if(print_entry_list) {
+            SD_print_sub(&mySD, stderr);
+        }
+        ModuleNode* node = ast->modules;
+        while(node != NULL) {
+            fprintf(ofp, "Intermediate code for ");
+            if(node->name == NULL) {
+                fprintf(ofp, "driver:\n");
+            }
+            else {
+                fprintf(ofp, "module %s:\n", node->name);
+            }
+            ircode_print(&(node->base.ircode), ofp);
+            ircode_clear(&(node->base.ircode));
+            node = node->next;
+        }
         destroy_ast((pAstNode)ast);
+        SD_clear(&mySD);
     }
 
     pch_int_hmap_clear(&intern_table);

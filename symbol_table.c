@@ -97,6 +97,7 @@ void SD_init(pSD psd) {
 #endif
     ST_init(pst, NULL, 0);
     psd->root = psd->active = ST_tree_get_node(pst);
+    psd->first_entry = psd->last_entry = NULL;
 }
 
 bool SD_add_entry(pSD psd, pSTEntry pentry, int line, int col) {
@@ -116,6 +117,13 @@ bool SD_add_entry(pSD psd, pSTEntry pentry, int line, int col) {
         return false;
     }
 
+    if(psd->first_entry == NULL) {
+        psd->first_entry = psd->last_entry = pentry;
+    }
+    else {
+        psd->last_entry->next = pentry;
+        psd->last_entry = pentry;
+    }
     return true;
 }
 
@@ -187,8 +195,16 @@ void SD_clear(pSD psd) {
     psd->root = psd->active = NULL;
     psd->level = 0;
     psd->offset = 0;
+    psd->first_entry = psd->last_entry = NULL;
 }
 
 void SD_print(pSD psd, FILE* fp) {
     ST_tree_print(psd->root->first_child, fp);
+}
+void SD_print_sub(pSD psd, FILE* fp) {
+    fprintf(stderr, "%-10s %-12s %-10s %-10s %6s %6s %7s\n",
+        "lexeme", "type", "scope", "lines", "level", "width", "offset");
+    for(pSTEntry node = psd->first_entry; node != NULL; node = node->next) {
+        pSTEntry_print_sub(node, stderr);
+    }
 }

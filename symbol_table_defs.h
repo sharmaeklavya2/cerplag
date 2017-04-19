@@ -59,6 +59,7 @@ typedef struct SymbolDatabase {
     ST_tree_node* active;
     int level;  // depth of the active node
     int offset;
+    pSTEntry first_entry, last_entry;
 }SymbolDatabase;
 
 typedef SymbolDatabase SD;
