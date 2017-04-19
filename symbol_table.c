@@ -84,7 +84,6 @@ void ST_destroy(pST p) {
 #undef TYPE
 
 void SD_init(pSD psd) {
-    ST_tree_destroy(psd->root);
     psd->level = 0;
     psd->offset = 0;
 #ifdef LOG_MEM
