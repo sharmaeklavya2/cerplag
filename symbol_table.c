@@ -212,7 +212,7 @@ void SD_clear(pSD psd) {
 }
 
 void SD_print(pSD psd, FILE* fp) {
-    ST_tree_print(psd->root->first_child, fp);
+    ST_tree_print(psd->root, fp);
 }
 void SD_print_sub(pSD psd, FILE* fp) {
     fprintf(stderr, "%-10s %-12s %-10s %-10s %6s %6s %7s\n",
