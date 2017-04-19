@@ -12,10 +12,17 @@ typedef struct IRInstr {
     struct IRInstr *prev, *next;
 } IRInstr;
 
-typedef struct IRCode {
-    struct IRInstr *first, *last;
-    int size;
-} IRCode;
+typedef IRInstr* pIRInstr;
+
+#define TYPE pIRInstr
+#define TYPED(x) irinstr_##x
+#define CLASS IRCode
+#define CLASSED(x) ircode_##x
+#include "util/llist.gen.h"
+#undef TYPE
+#undef TYPED
+#undef CLASS
+#undef CLASSED
 
 #include "addr.h"
 

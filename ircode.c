@@ -67,71 +67,12 @@ void irinstr_print(IRInstr* n, FILE* fp) {
     fprintf(fp, ")");
 }
 
-void ircode_init(IRCode* irc) {
-    irc->first = NULL;
-    irc->last = NULL;
-    irc->size = 0;
-}
-
-void ircode_copy(IRCode* irc, IRCode* irc2) {
-    irc->first = irc2->first;
-    irc->last = irc2->last;
-    irc->size = irc2->size;
-}
-
-void ircode_combine(IRCode* irc, IRCode* p1, IRCode* p2) {
-    irc->size = p1->size + p2->size;
-    if(p1->first == NULL) {
-        irc->first = p2->first;
-        irc->last = p2->last;
-    }
-    else if(p2->first == NULL) {
-        irc->first = p1->first;
-        irc->last = p1->last;
-    }
-    else {
-        irinstr_link(p1->last, p2->first);
-        irc->first = p1->first;
-        irc->last = p2->last;
-    }
-}
-
-void ircode_prepend(IRCode* irc, IRInstr* instr) {
-    (irc->size)++;
-    if(irc->first == NULL) {
-        irc->first = irc->last = instr;
-        irc->size = 1;
-    }
-    else {
-        irinstr_link(instr, irc->first);
-        irc->first = instr;
-    }
-}
-
-void ircode_append(IRCode* irc, IRInstr* instr) {
-    (irc->size)++;
-    if(irc->first == NULL) {
-        irc->first = irc->last = instr;
-        irc->size = 1;
-    }
-    else {
-        irinstr_link(irc->last, instr);
-        irc->last = instr;
-    }
-}
-
-void ircode_clear(IRCode* irc) {
-    irinstr_destroy_list(irc->first);
-    irc->first = irc->last = NULL;
-    irc->size = 0;
-}
-
-void ircode_print(IRCode* irc, FILE* fp) {
-    int i;
-    IRInstr* node = irc->first;
-    for(i=0; i<(irc->size); ++i) {
-        irinstr_print(node, fp);
-        fprintf(fp, "\n");
-        node = node->next;
-    }
-}
+#define TYPE pIRInstr
+#define TYPED(x) irinstr_##x
+#define CLASS IRCode
+#define CLASSED(x) ircode_##x
+#include "util/llist.gen.c"
+#undef TYPE
+#undef TYPED
+#undef CLASS
+#undef CLASSED
