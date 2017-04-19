@@ -213,92 +213,118 @@ void compare_lists_type(const char* func_name, pSD psd, bool is_output, IDListNo
     }
 }
 
+void codegen_chain(pAstNode p, IRCode* irc) {
+    while(p != NULL) {
+        ircode_combine(irc, irc, &(p->base.ircode));
+        p = get_next_ast_node(p);
+    }
+}
+
+void destroy_code_chain(pAstNode p) {
+    while(p != NULL) {
+        ircode_clear(&(p->base.ircode));
+        p = get_next_ast_node(p);
+    }
+}
+
 void codegen(pAstNode p) {
-    switch(p->base.node_type) {
-        case ASTN_Module: {
-            ModuleNode* q = (ModuleNode*)p;
-            pAstNode node = q->body;
-            while(node != NULL) {
-                if(error_count == 0) {
-                    ircode_combine(&(q->base.ircode), &(q->base.ircode), &(node->base.ircode));
-                }
-                else {
-                    ircode_clear(&(node->base.ircode));
-                }
-                node = get_next_ast_node(node);
+    if(error_count == 0) {
+        switch(p->base.node_type) {
+            case ASTN_Module: {
+                ModuleNode* q = (ModuleNode*)p;
+                codegen_chain(q->body, &(q->base.ircode));
+                break;
             }
-            break;
-        }
 
-        case ASTN_Var:
-        case ASTN_Num:
-        case ASTN_RNum:
-        case ASTN_Bool:
-            break;
+            case ASTN_Var:
+            case ASTN_Num:
+            case ASTN_RNum:
+            case ASTN_Bool:
+                break;
+            case ASTN_Decl:
+            case ASTN_Deref:
+                break;
 
-        case ASTN_Assn: {
-            AssnNode* q = (AssnNode*)p;
-            if(error_count == 0) {
+            case ASTN_Assn: {
+                AssnNode* q = (AssnNode*)p;
                 ircode_copy(&(q->base.ircode), &(q->expr->base.ircode));
                 IRInstr* instr = irinstr_new(OP_MOV);
                 instr->res = q->target->base.addr;
                 instr->arg1 = q->expr->base.addr;
                 ircode_append(&(q->base.ircode), instr);
+                break;
             }
-            else {
-                ircode_clear(&(q->expr->base.ircode));
-            }
-            break;
-        }
-        case ASTN_Decl:
-        case ASTN_Deref:
-            break;
-        case ASTN_BOp: {
-            BOpNode* q = (BOpNode*)p;
-            if(error_count == 0) {
+            case ASTN_BOp: {
+                // TODO: implement short circuiting for boolean operators
+                BOpNode* q = (BOpNode*)p;
                 ircode_combine(&(q->base.ircode), &(q->arg1->base.ircode), &(q->arg2->base.ircode));
                 IRInstr* instr = irinstr_new(q->op);
                 instr->res = q->base.addr;
                 instr->arg1 = q->arg1->base.addr;
                 instr->arg2 = q->arg2->base.addr;
                 ircode_append(&(q->base.ircode), instr);
+                break;
             }
-            else {
-                ircode_clear(&(q->arg1->base.ircode));
-                ircode_clear(&(q->arg2->base.ircode));
-            }
-            break;
+
+            default:
+                complain_ast_node_type(__func__, p->base.node_type);
+                print_error("codegen", ERROR, -1, p->base.line, p->base.col, ASTN_STRS[p->base.node_type],
+                    "CODEGEN_NOT_IMPL", "Code generation has not been implemented for this type of node.");
         }
-
-        /*
-        case ASTN_UOp:
-            break;
-        case ASTN_Deref:
-            break;
-
-        case ASTN_While:
-            break;
-
-        case ASTN_For:
-            break;
-
-        case ASTN_Input:
-            break;
-
-        case ASTN_Output:
-            break;
-
-        case ASTN_FCall:
-            break;
-
-        case ASTN_Switch:
-            break;
-
-        case ASTN_Case:
-            break;
-*/
-        default:
-            complain_ast_node_type(__func__, p->base.node_type);
+    }
+    if(error_count > 0) {
+        switch(p->base.node_type) {
+            case ASTN_BOp:
+                ircode_clear(&(((BOpNode*)p)->arg1->base.ircode));
+                ircode_clear(&(((BOpNode*)p)->arg2->base.ircode));
+                break;
+            case ASTN_UOp:
+                ircode_clear(&(((UOpNode*)p)->arg->base.ircode));
+                break;
+            case ASTN_Deref:
+                ircode_clear(&(((DerefNode*)p)->index->base.ircode));
+                break;
+            case ASTN_Module:
+                destroy_code_chain(((ModuleNode*)p)->body);
+                break;
+            case ASTN_Assn:
+                ircode_clear(&(((AssnNode*)p)->target->base.ircode));
+                ircode_clear(&(((AssnNode*)p)->expr->base.ircode));
+                break;
+            case ASTN_While:
+                ircode_clear(&(((WhileNode*)p)->cond->base.ircode));
+                ircode_clear(&(((WhileNode*)p)->body->base.ircode));
+                break;
+            case ASTN_For:
+                ircode_clear(&(((ForNode*)p)->body->base.ircode));
+                break;
+            case ASTN_Decl:
+                destroy_code_chain((pAstNode)(((DeclNode*)p)->idList));
+                break;
+            case ASTN_Output:
+                ircode_clear(&(((OutputNode*)p)->var->base.ircode));
+                break;
+            case ASTN_FCall:
+                destroy_code_chain((pAstNode)(((FCallNode*)p)->iParamList));
+                destroy_code_chain((pAstNode)(((FCallNode*)p)->oParamList));
+                break;
+            case ASTN_Switch: {
+                SwitchNode* q = (SwitchNode*)p;
+                if(q->defaultcase != NULL) {
+                    ircode_clear(&(q->defaultcase->val->base.ircode));
+                    destroy_code_chain(q->defaultcase->stmts);
+                }
+                CaseNode* node = q->cases;
+                while(node != NULL) {
+                    destroy_code_chain(node->stmts);
+                    ircode_clear(&(node->val->base.ircode));
+                    node = node->next;
+                }
+                break;
+            }
+            default:
+                break;
+        }
     }
     /*
     fprintf(stderr, "codegen on node(%s, %d:%d):\n", ASTN_STRS[p->base.node_type], p->base.line, p->base.col);
@@ -787,14 +813,16 @@ int compiler_main(FILE* ifp, FILE* ofp, int verbosity) {
         }
         ModuleNode* node = ast->modules;
         while(node != NULL) {
-            fprintf(ofp, "Intermediate code for ");
-            if(node->name == NULL) {
-                fprintf(ofp, "driver:\n");
+            if(error_count == 0) {
+                fprintf(ofp, "Intermediate code for ");
+                if(node->name == NULL) {
+                    fprintf(ofp, "driver:\n");
+                }
+                else {
+                    fprintf(ofp, "module %s:\n", node->name);
+                }
+                ircode_print(&(node->base.ircode), ofp);
             }
-            else {
-                fprintf(ofp, "module %s:\n", node->name);
-            }
-            ircode_print(&(node->base.ircode), ofp);
             ircode_clear(&(node->base.ircode));
             node = node->next;
         }
