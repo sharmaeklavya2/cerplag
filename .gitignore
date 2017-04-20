@@ -4,6 +4,8 @@ __pycache__/
 /readme.html
 *exe
 *.out
+/out.*
+/compiler
 
 # Trash
 *~
@@ -16,5 +18,5 @@ Desktop.ini
 info/grammar.txt
 data/parse_table.txt
 todo.txt
-secret.txt
+secret.*
 secret/
