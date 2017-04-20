@@ -12,6 +12,7 @@ void CLASSED(combine)(CLASS* node, CLASS* p1, CLASS* p2);
 
 void CLASSED(prepend)(CLASS*, TYPE);
 void CLASSED(append)(CLASS*, TYPE);
+void CLASSED(remove)(CLASS*, TYPE);
 void CLASSED(clear)(CLASS*);
 
 void CLASSED(print)(CLASS* node, FILE* fp);

@@ -733,6 +733,19 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
     codegen(p);
 }
 
+void optimize_ircode(IRCode* code) {
+    IRInstr* instr = code->first;
+    IRInstr* instr2 = NULL;
+    for(; instr != NULL; instr = instr2) {
+        instr2 = instr->next;
+        while(instr2 != NULL && instr->res != NULL && instr->res->addr_type == ADDR_TEMP && instr2->op == OP_MOV) {
+            instr->res = instr2->res;
+            instr2 = instr2->next;
+            ircode_remove(code, instr->next);
+        }
+    }
+}
+
 void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_module_bodies) {
     if(code_gen) {
         ircode_gen = true;
@@ -778,6 +791,7 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
         if(destroy_module_bodies) {
             destroy_ast(module_node->body);
         }
+        optimize_ircode(&(module_node->base.ircode));
         module_node->body = NULL;
         module_node = module_node->next;
     }
@@ -810,9 +824,6 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
 
     vptr_int_hmap_clear(&module_status);
     vptr_pMN_hmap_clear(&module_node_map);
-}
-
-void optimize_ircode(IRCode* code) {
 }
 
 int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {

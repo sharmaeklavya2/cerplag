@@ -55,6 +55,38 @@ void CLASSED(append)(CLASS* plist, TYPE instr) {
     }
 }
 
+void CLASSED(remove)(CLASS* plist, TYPE elem) {
+    (plist->size)--;
+    // first manipulate pointers of list
+    if(plist->first == NULL) {
+        fprintf(stderr, "Cannot remove from empty linked-list.\n");
+        plist->first = plist->last = elem;
+        plist->size = 0;
+    }
+    else if(plist->first == elem) {
+        if(plist->last == elem) {
+            plist->first = plist->last = NULL;
+        }
+        else {
+            plist->first = plist->first->next;
+        }
+    }
+    else if(plist->last == elem) {
+        plist->last = plist->last->prev;
+    }
+    // now detach elem
+    TYPE prev = elem->prev;
+    TYPE next = elem->next;
+    elem->prev = elem->next = NULL;
+    if(next != NULL) {
+        next->prev = prev;
+    }
+    if(prev != NULL) {
+        prev->next = next;
+    }
+    TYPED(destroy)(elem);
+}
+
 void CLASSED(clear)(CLASS* plist) {
     TYPED(destroy_list)(plist->first);
     plist->first = plist->last = NULL;
