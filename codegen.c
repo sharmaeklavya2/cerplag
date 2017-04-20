@@ -73,12 +73,29 @@ void codegen(pAstNode p) {
                 ircode_append(&(q->base.ircode), irinstr_new2(OP_INPUT, q->base.addr, NULL, NULL));
                 break;
             }
+            case ASTN_For: {
+                ForNode* q = (ForNode*)p;
+                ircode_append(&(q->base.ircode), irinstr_new2(OP_MOV, q->base.addr, q->beg_addr, NULL));
+                IRInstr* beg_instr = irinstr_new3(OP_LABEL, label_counter++);
+                IRInstr* end_instr = irinstr_new3(OP_LABEL, label_counter++);
+                IRInstr* break_instr = irinstr_new4(OP_JG, NULL, q->base.addr,
+                    q->end_addr, end_instr->label);
+                IRInstr* loop_instr = irinstr_new3(OP_JUMP, beg_instr->label);
+
+                ircode_append(&(q->base.ircode), beg_instr);
+                ircode_append(&(q->base.ircode), break_instr);
+                codegen_chain(q->body, &(q->base.ircode));
+                ircode_append(&(q->base.ircode), irinstr_new2(OP_INC, q->base.addr, NULL, NULL));
+                ircode_append(&(q->base.ircode), loop_instr);
+                ircode_append(&(q->base.ircode), end_instr);
+                break;
+            }
             case ASTN_While: {
                 WhileNode* q = (WhileNode*)p;
                 IRInstr* beg_instr = irinstr_new3(OP_LABEL, label_counter++);
                 IRInstr* end_instr = irinstr_new3(OP_LABEL, label_counter++);
                 IRInstr* break_instr = irinstr_new4(OP_JUMP0, NULL, q->cond->base.addr, NULL, end_instr->label);
-                IRInstr* loop_instr = irinstr_new3(OP_JUMP0, beg_instr->label);
+                IRInstr* loop_instr = irinstr_new3(OP_JUMP, beg_instr->label);
 
                 ircode_append(&(q->base.ircode), beg_instr);
                 ircode_combine(&(q->base.ircode), &(q->base.ircode), &(q->cond->base.ircode));

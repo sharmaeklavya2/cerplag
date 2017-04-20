@@ -181,6 +181,18 @@ x86_op_t get_opcode(op_t op) {
     }
 }
 
+x86_op_t get_branch_opcode(op_t op) {
+    switch(op) {
+        case OP_JUMP: return X86_OP_jmp;
+        case OP_JUMP0: return X86_OP_jz;
+        case OP_JUMP1: return X86_OP_jnz;
+        case OP_JG: return X86_OP_jg;
+        case OP_LABEL: return X86_OP_label;
+        default:
+            return -1;
+    }
+}
+
 void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
     if(!check_arg(inode->arg1)) return;
     if(!check_arg(inode->arg2)) return;
@@ -204,6 +216,9 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
         }
+        case OP_INC:
+            op_apply(ocode, X86_OP_inc, inode->res);
+            break;
         case OP_MUL:
             op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
             op_apply(ocode, X86_OP_imul, inode->arg2);
@@ -257,20 +272,27 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
         }
 
         case OP_LABEL:
+        case OP_JUMP:
         case OP_JUMP0:
         case OP_JUMP1:
+        case OP_JG: {
             snprintf(temp_str, TEMP_STR_SIZE, "L%d", inode->label);
-            x86_op_t opcode = (inode->op == OP_LABEL) ? X86_OP_label : X86_OP_jmp;
+            x86_op_t opcode = get_branch_opcode(inode->op);
             if(inode->arg1 != NULL) {
-                opcode = (inode->op == OP_JUMP0) ? X86_OP_jz : X86_OP_jnz;
                 load_index_if_needed(ocode, inode->arg1, "si");
                 X86Instr* onode = x86_instr_new(X86_OP_cmp);
                 addr_to_x86_arg(inode->arg1, onode->arg1, true, "rsi");
-                strcpy(onode->arg2, "0");
+                if(inode->arg2 != NULL) {
+                    snprintf(onode->arg2, X86_ARG_SIZE, "%d", inode->arg2->imm.i);
+                }
+                else {
+                    strcpy(onode->arg2, "0");
+                }
                 x86_code_append(ocode, onode);
             }
             x86_code_append(ocode, x86_instr_new2(opcode, temp_str, NULL));
             break;
+        }
         default:
             break;
     }

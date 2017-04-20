@@ -355,6 +355,7 @@ void build_ast(parse_tree_node* p) {
             break;
         }
         case 65: {
+            build_ast(n[5]);
             build_ast(n[8]);
             ForNode* for_node = (ForNode*)get_ast_node(ASTN_For);
             for_node->beg = s[5]->beg;

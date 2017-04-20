@@ -12,7 +12,8 @@ X(Module,   struct IDTypeListNode* iParamList; struct IDTypeListNode* oParamList
 X(Program,  struct IDListNode* decls; struct ModuleNode* modules; struct ModuleNode* driver;)
 X(Assn,     pAstNode next; pAstNode target; pAstNode expr;)
 X(While,    pAstNode next; pAstNode cond; pAstNode body; int scope_beg_line; int scope_end_line;)
-X(For,      pAstNode next; int beg; int end; char* varname; pAstNode body; int scope_beg_line; int scope_end_line;)
+X(For,      pAstNode next; int beg; int end; char* varname; struct AddrNode* beg_addr; \
+    struct AddrNode* end_addr; pAstNode body; int scope_beg_line; int scope_end_line;)
 X(Decl,     pAstNode next; struct IDList* idList;)
 X(Input,    pAstNode next; char* varname;)
 X(Output,   pAstNode next; pAstNode var;)

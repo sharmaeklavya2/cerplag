@@ -1,0 +1,8 @@
+<<<driver program>>>
+start
+    declare i: integer;
+    for(i in 5..8)
+    start
+        print(i);
+    end
+end

@@ -451,7 +451,12 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                 entry->readonly = true;
                 entry->addr->line = q->base.line;
                 entry->addr->col = q->base.col;
+                q->base.type = entry->addr->type;
                 q->base.addr = entry->addr;
+                q->beg_addr = add_node_addr_to_SD(p, psd, ADDR_CONST);
+                q->beg_addr->imm.i = q->beg;
+                q->end_addr = add_node_addr_to_SD(p, psd, ADDR_CONST);
+                q->end_addr->imm.i = q->end;
             }
             if(prev_readonly) {
                 pSTEntry entry = SD_get_entry(psd, q->varname);
