@@ -11,12 +11,42 @@
 #include "type.h"
 #include "error.h"
 
-void optimize_x86_code(X86Code* code) {
+//-lib-inclusion------------------------------------------------------------------
+
+const char* ASM_LIB_FILES[] = {
+    "data/common.asm",
+    "data/print_integer.asm",
+    "data/print_boolean.asm",
+    "data/print_integer_array.asm",
+    "data/print_boolean_array.asm",
+    "data/read_integer_array.asm",
+    "data/read_boolean_array.asm",
+};
+
+bool include_lib_files[] = {true, false, false, false, false, false, false};
+
+void enable_output(valtype_t type, int size) {
+    include_lib_files[0] = true;
+    int index = 1;
+    if(size > 0) {
+        index += 2;
+    }
+    if(type == TYPE_BOOLEAN) {
+        index++;
+    }
+    include_lib_files[index] = true;
 }
 
-void compile_x86_error(const char* msg) {
-    fprintf(stderr, "x86 compile error: %s", msg);
+void enable_input(valtype_t type) {
+    include_lib_files[0] = true;
+    int index = 5;
+    if(type == TYPE_BOOLEAN) {
+        index++;
+    }
+    include_lib_files[index] = true;
 }
+
+//--------------------------------------------------------------------------------
 
 const char DATA_REG[] = "rbx";
 
@@ -24,6 +54,13 @@ const char DATA_REG[] = "rbx";
 char temp_str[TEMP_STR_SIZE];
 
 char std_regs[4][4][10];
+
+void optimize_x86_code(X86Code* code) {
+}
+
+void compile_x86_error(const char* msg) {
+    fprintf(stderr, "x86 compile error: %s", msg);
+}
 
 void addr_to_x86_arg(const AddrNode* an, char* dest, const char* index_reg) {
     if(an == NULL) {
@@ -109,6 +146,7 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             break;
         case OP_OUTPUT: {
             int size = inode->arg1->size;
+            enable_output(inode->arg1->type, size);
             if(size == 0) {
                 op_addr_to_reg(ocode, X86_OP_mov, 3, inode->arg1);
                 snprintf(temp_str, TEMP_STR_SIZE, "print_%s", TYPE_STRS[inode->arg1->type]);
@@ -126,6 +164,7 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
         case OP_INPUT: {
             int size = inode->res->size;
             if(size == 0) size = 1;
+            enable_input(inode->res->type);
             op_addr_to_reg(ocode, X86_OP_lea, 3, inode->res);
             snprintf(temp_str, TEMP_STR_SIZE, "%d", size);
             x86_code_append(ocode, x86_instr_new2(X86_OP_mov, "rdx", temp_str));
@@ -147,30 +186,15 @@ void compile_code_to_x86(const IRCode* icode, X86Code* ocode) {
 
 const char PROLOGUE_STR[] =
     X86_INDENT_STR "global main\n"
-    X86_INDENT_STR "extern printf\n"
-    X86_INDENT_STR "extern putchar\n"
-    X86_INDENT_STR "extern scanf\n"
-    X86_INDENT_STR "extern getchar\n";
-
-const char EPILOGUE_STR[] =
     "section .bss\n"
     "data:\n"
-    X86_INDENT_STR "resb %d\n";
+    X86_INDENT_STR "resb %d\n\n"
+    "section .text\n";
 
 void compile_program_to_x86(ProgramNode* program_node, pSD psd, FILE* ofp) {
     int data_size = psd->root->value->max_offset;
 
-    fprintf(ofp, PROLOGUE_STR);
-    // read lib and output it
-    FILE* libfp = fopen("data/lib.asm", "r");
-    setvbuf(libfp, NULL, _IOFBF, BUFSIZ);   // fully buffer file
-    if (libfp) {
-        int c;
-        while ((c = fgetc(libfp)) != EOF)
-            fputc(c, ofp);
-        fclose(libfp);
-    }
-    fprintf(ofp, "section .text\n");
+    fprintf(ofp, PROLOGUE_STR, data_size);
 
     strcpy(std_regs[0][TYPE_INTEGER], "ax");
     strcpy(std_regs[0][TYPE_BOOLEAN], "al");
@@ -207,5 +231,20 @@ void compile_program_to_x86(ProgramNode* program_node, pSD psd, FILE* ofp) {
         x86_code_clear(&x86_code);
     }
 
-    fprintf(ofp, EPILOGUE_STR, data_size);
+    // read libs and output them
+    int num_libs = sizeof(include_lib_files) / sizeof(bool);
+    int i;
+    for(i=0; i<num_libs; ++i) {
+        if(include_lib_files[i]) {
+            fputc('\n', ofp);
+            FILE* libfp = fopen(ASM_LIB_FILES[i], "r");
+            setvbuf(libfp, NULL, _IOFBF, BUFSIZ);   // fully buffer file
+            if (libfp) {
+                int c;
+                while ((c = fgetc(libfp)) != EOF)
+                    fputc(c, ofp);
+                fclose(libfp);
+            }
+        }
+    }
 }
