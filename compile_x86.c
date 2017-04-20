@@ -107,16 +107,32 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             op_addr_to_reg(ocode, X86_OP_add, 0, inode->arg2);
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
-        case OP_OUTPUT:
-            op_addr_to_reg(ocode, X86_OP_mov, 3, inode->arg1);
-            snprintf(temp_str, TEMP_STR_SIZE, "print_%s", TYPE_STRS[inode->arg1->type]);
-            x86_code_append(ocode, x86_instr_new2(X86_OP_call, temp_str, NULL));
+        case OP_OUTPUT: {
+            int size = inode->arg1->size;
+            if(size == 0) {
+                op_addr_to_reg(ocode, X86_OP_mov, 3, inode->arg1);
+                snprintf(temp_str, TEMP_STR_SIZE, "print_%s", TYPE_STRS[inode->arg1->type]);
+                x86_code_append(ocode, x86_instr_new2(X86_OP_call, temp_str, NULL));
+            }
+            else {
+                op_addr_to_reg(ocode, X86_OP_lea, 3, inode->arg1);
+                snprintf(temp_str, TEMP_STR_SIZE, "%d", size);
+                x86_code_append(ocode, x86_instr_new2(X86_OP_mov, "rdx", temp_str));
+                snprintf(temp_str, TEMP_STR_SIZE, "print_%s_array", TYPE_STRS[inode->arg1->type]);
+                x86_code_append(ocode, x86_instr_new2(X86_OP_call, temp_str, NULL));
+            }
             break;
-        case OP_INPUT:
+        }
+        case OP_INPUT: {
+            int size = inode->res->size;
+            if(size == 0) size = 1;
             op_addr_to_reg(ocode, X86_OP_lea, 3, inode->res);
-            snprintf(temp_str, TEMP_STR_SIZE, "read_%s", TYPE_STRS[inode->res->type]);
+            snprintf(temp_str, TEMP_STR_SIZE, "%d", size);
+            x86_code_append(ocode, x86_instr_new2(X86_OP_mov, "rdx", temp_str));
+            snprintf(temp_str, TEMP_STR_SIZE, "read_%s_array", TYPE_STRS[inode->res->type]);
             x86_code_append(ocode, x86_instr_new2(X86_OP_call, temp_str, NULL));
             break;
+        }
         default:
             break;
     }
