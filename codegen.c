@@ -63,16 +63,12 @@ void codegen(pAstNode p) {
             }
             case ASTN_Output: {
                 OutputNode* q = (OutputNode*)p;
-                IRInstr* instr = irinstr_new(OP_OUTPUT);
-                instr->arg1 = q->var->base.addr;
-                ircode_append(&(q->base.ircode), instr);
+                ircode_append(&(q->base.ircode), irinstr_new2(OP_OUTPUT, NULL, q->var->base.addr, NULL));
                 break;
             }
             case ASTN_Input: {
                 InputNode* q = (InputNode*)p;
-                IRInstr* instr = irinstr_new(OP_INPUT);
-                instr->res = q->base.addr;
-                ircode_append(&(q->base.ircode), instr);
+                ircode_append(&(q->base.ircode), irinstr_new2(OP_INPUT, q->base.addr, NULL, NULL));
                 break;
             }
             default:
