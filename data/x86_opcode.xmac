@@ -2,6 +2,7 @@ X(mov)
 X(lea)
 X(add)
 X(sub)
+X(imul)
 X(xor)
 
 X(label)

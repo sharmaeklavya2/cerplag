@@ -54,6 +54,7 @@ const char DATA_REG[] = "rbx";
 char temp_str[TEMP_STR_SIZE];
 
 char std_regs[4][4][10];
+char std_size_name[4][10];
 
 void optimize_x86_code(X86Code* code) {
 }
@@ -62,7 +63,7 @@ void compile_x86_error(const char* msg) {
     fprintf(stderr, "x86 compile error: %s", msg);
 }
 
-void addr_to_x86_arg(const AddrNode* an, char* dest, const char* index_reg) {
+void addr_to_x86_arg(const AddrNode* an, char* dest, bool add_size, const char* index_reg) {
     if(an == NULL) {
         dest[0] = '\0';
         return;
@@ -70,7 +71,13 @@ void addr_to_x86_arg(const AddrNode* an, char* dest, const char* index_reg) {
     switch(an->addr_type) {
         case ADDR_VAR:
         case ADDR_TEMP:
-            snprintf(dest, X86_ARG_SIZE, "[%s + %d]", DATA_REG, an->offset);
+            if(add_size) {
+                snprintf(dest, X86_ARG_SIZE, "%s [%s + %d]", std_size_name[an->type],
+                    DATA_REG, an->offset);
+            }
+            else {
+                snprintf(dest, X86_ARG_SIZE, "[%s + %d]", DATA_REG, an->offset);
+            }
             break;
         case ADDR_CONST:
             if(an->type == TYPE_INTEGER) {
@@ -88,10 +95,21 @@ void addr_to_x86_arg(const AddrNode* an, char* dest, const char* index_reg) {
             int base_addr = an->base_addr->offset;
             if(an->index->addr_type == ADDR_CONST) {
                 int i = an->index->imm.i;
-                snprintf(dest, X86_ARG_SIZE, "[%s + %d]", DATA_REG, base_addr + size * (i-1));
+                if(add_size) {
+                    snprintf(dest, X86_ARG_SIZE, "%s [%s + %d]", std_size_name[an->type],
+                        DATA_REG, base_addr + size * (i-1));
+                }
+                else {
+                    snprintf(dest, X86_ARG_SIZE, "[%s + %d]", DATA_REG, base_addr + size * (i-1));
+                }
+            }
+            else if(add_size) {
+                snprintf(dest, X86_ARG_SIZE, "%s [%s + %s*%d + %d]", std_size_name[an->type],
+                    DATA_REG, index_reg, size, base_addr - size);
             }
             else {
-                snprintf(dest, X86_ARG_SIZE, "[%s + %s*%d + %d]", DATA_REG, index_reg, size, base_addr - size);
+                snprintf(dest, X86_ARG_SIZE, "[%s + %s*%d + %d]", DATA_REG, index_reg,
+                    size, base_addr - size);
             }
             break;
         }
@@ -110,14 +128,21 @@ void load_index_if_needed(X86Code* ocode, const AddrNode* an, const char* index_
 void op_addr_to_reg(X86Code* ocode, x86_op_t opcode, int regno, const AddrNode* an) {
     X86Instr* onode = x86_instr_new2(opcode, std_regs[regno][an->type], NULL);
     load_index_if_needed(ocode, an, "rsi");
-    addr_to_x86_arg(an, onode->arg2, "rsi");
+    addr_to_x86_arg(an, onode->arg2, false, "rsi");
     x86_code_append(ocode, onode);
 }
 
 void op_reg_to_addr(X86Code* ocode, x86_op_t opcode, const AddrNode* an, int regno) {
     X86Instr* onode = x86_instr_new2(opcode, NULL, std_regs[regno][an->type]);
     load_index_if_needed(ocode, an, "rdi");
-    addr_to_x86_arg(an, onode->arg1, "rdi");
+    addr_to_x86_arg(an, onode->arg1, false, "rdi");
+    x86_code_append(ocode, onode);
+}
+
+void op_apply(X86Code* ocode, x86_op_t opcode, const AddrNode* an) {
+    X86Instr* onode = x86_instr_new(opcode);
+    load_index_if_needed(ocode, an, "rsi");
+    addr_to_x86_arg(an, onode->arg1, true, "rsi");
     x86_code_append(ocode, onode);
 }
 
@@ -140,9 +165,18 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
         case OP_PLUS:
+        case OP_MINUS: {
+            x86_op_t opcode = (inode->op == OP_PLUS) ? X86_OP_add : X86_OP_sub;
             op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
-            op_addr_to_reg(ocode, X86_OP_add, 0, inode->arg2);
+            op_addr_to_reg(ocode, opcode, 0, inode->arg2);
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
+            break;
+        }
+        case OP_MUL:
+            op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
+            op_apply(ocode, X86_OP_imul, inode->arg2);
+            op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
+        case OP_DIV:
             break;
         case OP_OUTPUT: {
             int size = inode->arg1->size;
@@ -196,7 +230,7 @@ void compile_program_to_x86(ProgramNode* program_node, pSD psd, FILE* ofp) {
 
     fprintf(ofp, PROLOGUE_STR, data_size);
 
-    strcpy(std_regs[0][TYPE_INTEGER], "ax");
+    strcpy(std_regs[0][TYPE_INTEGER], "ax");    // std_regs[0] must be "ax" for multiply to work
     strcpy(std_regs[0][TYPE_BOOLEAN], "al");
     strcpy(std_regs[0][TYPE_REAL], "xmm0");
     strcpy(std_regs[1][TYPE_INTEGER], "rax");
@@ -208,6 +242,9 @@ void compile_program_to_x86(ProgramNode* program_node, pSD psd, FILE* ofp) {
     strcpy(std_regs[3][TYPE_INTEGER], "rcx");
     strcpy(std_regs[3][TYPE_BOOLEAN], "rcx");
     strcpy(std_regs[3][TYPE_REAL], "rcx");
+    strcpy(std_size_name[TYPE_INTEGER], "word");
+    strcpy(std_size_name[TYPE_BOOLEAN], "byte");
+    strcpy(std_size_name[TYPE_REAL], "dword");
 
     X86Code x86_code;
     x86_code_init(&x86_code);
