@@ -1,3 +1,6 @@
+section .bss
+temp_integer:
+    resb 8
 section .data
 print_integer_format:
     db "%hd", 10, 0
@@ -7,40 +10,56 @@ read_integer_format:
     db "%hd", 0
 read_float_format:
     db "%f", 0
+read_string_format:
+    db "%s", 0
 
 section .text
 print_integer:
+    push rbx
+    push rbx ; push twice to match 16-byte alignment requirement
     mov rdi, print_integer_format
     xor rsi, rsi
     mov si, cx
     xor rax, rax
     call printf
+    pop rbx
+    pop rbx
     ret
 print_boolean:
+    push rbx
+    push rbx ; push twice to match 16-byte alignment requirement
     mov rdi, '0'
-    add dl, cl
+    and rcx, 0x0000000000000ff
+    add rdi, rcx
     xor rax, rax
     call putchar
-    ret
-print_float:
+    mov rdi, 10
+    xor rax, rax
+    call putchar
+    pop rbx
+    pop rbx
     ret
 
 read_integer:
+    push rbx
+    push rbx ; push twice to match 16-byte alignment requirement
     mov rdi, read_integer_format
     mov rsi, rcx
     xor rax, rax
     call scanf
+    pop rbx
+    pop rbx
     ret
 read_boolean:
+    push rbx
     push rcx
-    call getchar
-    pop rcx
-    sub rax, '0'
-    mov [rcx], rax
-    ret
-read_float:
-    mov rdi, read_float_format
-    mov rsi, rcx
+    mov rdi, read_integer_format
+    mov rsi, temp_integer
     xor rax, rax
     call scanf
+    pop rcx
+    pop rbx
+    mov ax, [temp_integer]
+    cmp ax, 0
+    setne byte [rcx]
     ret

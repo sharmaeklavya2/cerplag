@@ -1,0 +1,18 @@
+<<<driver program>>>
+start
+    declare a: integer;
+    declare a2: integer;
+    declare b: boolean;
+    declare c: boolean;
+    declare d: integer;
+    get_value(a);
+    get_value(a2);
+    get_value(b);
+    get_value(c);
+    get_value(d);
+    print(a);
+    print(a2);
+    print(b);
+    print(c);
+    print(d);
+end

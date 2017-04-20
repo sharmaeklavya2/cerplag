@@ -9,6 +9,7 @@
 #include "ast.h"
 #include "x86.h"
 #include "type.h"
+#include "error.h"
 
 void optimize_x86_code(X86Code* code) {
 }
@@ -24,7 +25,7 @@ char temp_str[TEMP_STR_SIZE];
 
 char std_regs[4][4][10];
 
-void addr_to_x86_arg(AddrNode* an, char* dest, const char* index_reg) {
+void addr_to_x86_arg(const AddrNode* an, char* dest, const char* index_reg) {
     if(an == NULL) {
         dest[0] = '\0';
         return;
@@ -60,7 +61,7 @@ void addr_to_x86_arg(AddrNode* an, char* dest, const char* index_reg) {
     }
 }
 
-void load_index_if_needed(X86Code* ocode, AddrNode* an, const char* index_reg) {
+void load_index_if_needed(X86Code* ocode, const AddrNode* an, const char* index_reg) {
     if(an->addr_type == ADDR_ARR && an->index->addr_type == ADDR_VAR) {
         X86Instr* onode = x86_instr_new(X86_OP_mov);
         x86_code_append(ocode, onode);
@@ -69,21 +70,33 @@ void load_index_if_needed(X86Code* ocode, AddrNode* an, const char* index_reg) {
     }
 }
 
-void op_addr_to_reg(X86Code* ocode, x86_op_t opcode, int regno, AddrNode* an) {
+void op_addr_to_reg(X86Code* ocode, x86_op_t opcode, int regno, const AddrNode* an) {
     X86Instr* onode = x86_instr_new2(opcode, std_regs[regno][an->type], NULL);
     load_index_if_needed(ocode, an, "rsi");
     addr_to_x86_arg(an, onode->arg2, "rsi");
     x86_code_append(ocode, onode);
 }
 
-void op_reg_to_addr(X86Code* ocode, x86_op_t opcode, AddrNode* an, int regno) {
+void op_reg_to_addr(X86Code* ocode, x86_op_t opcode, const AddrNode* an, int regno) {
     X86Instr* onode = x86_instr_new2(opcode, NULL, std_regs[regno][an->type]);
     load_index_if_needed(ocode, an, "rdi");
     addr_to_x86_arg(an, onode->arg1, "rdi");
     x86_code_append(ocode, onode);
 }
 
-void compile_instr_to_x86(IRInstr* inode, X86Code* ocode) {
+bool check_arg(const AddrNode* an) {
+    if(an != NULL && an->type != TYPE_INTEGER && an->type != TYPE_BOOLEAN) {
+        print_error("x86_codegen", ERROR, -1, an->line, an->col, TYPE_STRS[an->type],
+            "BAD_TYPE", "Bad type of argument");
+        return false;
+    }
+    return true;
+}
+
+void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
+    if(!check_arg(inode->arg1)) return;
+    if(!check_arg(inode->arg2)) return;
+    if(!check_arg(inode->res)) return;
     switch(inode->op) {
         case OP_MOV:
             op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
@@ -109,7 +122,7 @@ void compile_instr_to_x86(IRInstr* inode, X86Code* ocode) {
     }
 }
 
-void compile_code_to_x86(IRCode* icode, X86Code* ocode) {
+void compile_code_to_x86(const IRCode* icode, X86Code* ocode) {
     IRInstr* inode = icode->first;
     for(; inode != NULL; inode = inode->next) {
         compile_instr_to_x86(inode, ocode);
@@ -145,13 +158,13 @@ void compile_program_to_x86(ProgramNode* program_node, pSD psd, FILE* ofp) {
 
     strcpy(std_regs[0][TYPE_INTEGER], "ax");
     strcpy(std_regs[0][TYPE_BOOLEAN], "al");
-    strcpy(std_regs[0][TYPE_REAL], "ax");
+    strcpy(std_regs[0][TYPE_REAL], "xmm0");
     strcpy(std_regs[1][TYPE_INTEGER], "rax");
     strcpy(std_regs[1][TYPE_BOOLEAN], "rax");
     strcpy(std_regs[1][TYPE_REAL], "rax");
     strcpy(std_regs[2][TYPE_INTEGER], "cx");
     strcpy(std_regs[2][TYPE_BOOLEAN], "cl");
-    strcpy(std_regs[2][TYPE_REAL], "cx");
+    strcpy(std_regs[2][TYPE_REAL], "xmm1");
     strcpy(std_regs[3][TYPE_INTEGER], "rcx");
     strcpy(std_regs[3][TYPE_BOOLEAN], "rcx");
     strcpy(std_regs[3][TYPE_REAL], "rcx");
