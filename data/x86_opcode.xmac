@@ -8,6 +8,7 @@ X(xor)
 X(cmp)
 X(and)
 X(or)
+X(cwd)
 
 X(sete)
 X(setne)
