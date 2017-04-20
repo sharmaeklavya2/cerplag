@@ -5,8 +5,13 @@
 
 void irinstr_init(IRInstr* instr, op_t op);
 void irinstr_init2(IRInstr* instr, op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2);
+void irinstr_init3(IRInstr* instr, op_t op, int label);
+void irinstr_init4(IRInstr* instr, op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2, int label);
 IRInstr* irinstr_new(op_t op);
 IRInstr* irinstr_new2(op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2);
+IRInstr* irinstr_new3(op_t op, int label);
+IRInstr* irinstr_new4(op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2, int label);
+
 void irinstr_link(IRInstr* i1, IRInstr* i2);
 void irinstr_clear(IRInstr* instr);
 void irinstr_destroy(IRInstr* instr);

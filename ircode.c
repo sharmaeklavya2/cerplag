@@ -20,6 +20,16 @@ void irinstr_init2(IRInstr* instr, op_t op, AddrNode* res, AddrNode* arg1, AddrN
     instr->res = res;
 }
 
+void irinstr_init3(IRInstr* instr, op_t op, int label) {
+    irinstr_init(instr, op);
+    instr->label = label;
+}
+
+void irinstr_init4(IRInstr* instr, op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2, int label) {
+    irinstr_init2(instr, op, res, arg1, arg2);
+    instr->label = label;
+}
+
 IRInstr* irinstr_new(op_t op) {
     IRInstr* p = malloc(sizeof(IRInstr));
 #ifdef LOG_MEM
@@ -35,6 +45,24 @@ IRInstr* irinstr_new2(op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2) {
     fprintf(stderr, "%s: Allocated IRInstr %p\n", __func__, (void*)p);
 #endif
     irinstr_init2(p, op, res, arg1, arg2);
+    return p;
+}
+
+IRInstr* irinstr_new3(op_t op, int label) {
+    IRInstr* p = malloc(sizeof(IRInstr));
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Allocated IRInstr %p\n", __func__, (void*)p);
+#endif
+    irinstr_init3(p, op, label);
+    return p;
+}
+
+IRInstr* irinstr_new4(op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2, int label) {
+    IRInstr* p = malloc(sizeof(IRInstr));
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Allocated IRInstr %p\n", __func__, (void*)p);
+#endif
+    irinstr_init4(p, op, res, arg1, arg2, label);
     return p;
 }
 
