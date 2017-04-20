@@ -6,6 +6,7 @@ __pycache__/
 /*.out
 /out.*
 /compiler
+/tests/output_files/
 
 # Trash
 *~

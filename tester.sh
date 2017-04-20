@@ -9,6 +9,7 @@ do
 		outputfile="tests/output_files/"${outputfile%.in}".out"
 		correctfile=${inputfile##*/}
 		correctfile="tests/correct_outputs/"${correctfile%.in}".out"
+		mkdir -p "tests/output_files"
 		./erplag_run.sh $arg < $inputfile > $outputfile
 		diff -s $outputfile $correctfile
 	done
