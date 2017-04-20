@@ -41,21 +41,16 @@ void codegen(pAstNode p) {
             case ASTN_Assn: {
                 AssnNode* q = (AssnNode*)p;
                 ircode_copy(&(q->base.ircode), &(q->expr->base.ircode));
-                IRInstr* instr = irinstr_new(OP_MOV);
-                instr->res = q->target->base.addr;
-                instr->arg1 = q->expr->base.addr;
-                ircode_append(&(q->base.ircode), instr);
+                ircode_append(&(q->base.ircode), irinstr_new2(OP_MOV, q->target->base.addr,
+                    q->expr->base.addr, NULL));
                 break;
             }
             case ASTN_BOp: {
                 // TODO: implement short circuiting for boolean operators
                 BOpNode* q = (BOpNode*)p;
                 ircode_combine(&(q->base.ircode), &(q->arg1->base.ircode), &(q->arg2->base.ircode));
-                IRInstr* instr = irinstr_new(q->op);
-                instr->res = q->base.addr;
-                instr->arg1 = q->arg1->base.addr;
-                instr->arg2 = q->arg2->base.addr;
-                ircode_append(&(q->base.ircode), instr);
+                ircode_append(&(q->base.ircode), irinstr_new2(q->op, q->base.addr,
+                    q->arg1->base.addr, q->arg2->base.addr));
                 break;
             }
 

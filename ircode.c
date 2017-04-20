@@ -12,12 +12,28 @@ void irinstr_init(IRInstr* instr, op_t op) {
     instr->next = NULL;
 }
 
+void irinstr_init2(IRInstr* instr, op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2) {
+    irinstr_init(instr, op);
+    instr->arg1 = arg1;
+    instr->arg2 = arg2;
+    instr->res = res;
+}
+
 IRInstr* irinstr_new(op_t op) {
     IRInstr* p = malloc(sizeof(IRInstr));
 #ifdef LOG_MEM
     fprintf(stderr, "%s: Allocated IRInstr %p\n", __func__, (void*)p);
 #endif
     irinstr_init(p, op);
+    return p;
+}
+
+IRInstr* irinstr_new2(op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2) {
+    IRInstr* p = malloc(sizeof(IRInstr));
+#ifdef LOG_MEM
+    fprintf(stderr, "%s: Allocated IRInstr %p\n", __func__, (void*)p);
+#endif
+    irinstr_init2(p, op, res, arg1, arg2);
     return p;
 }
 
