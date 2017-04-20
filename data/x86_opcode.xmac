@@ -19,5 +19,8 @@ X(setge)
 
 X(label)
 X(ret)
+X(jnz)
+X(jz)
+X(jmp)
 X(call)
 X(syscall)

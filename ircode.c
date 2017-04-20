@@ -79,7 +79,12 @@ void irinstr_destroy_list(IRInstr* n) {
 void irinstr_print(IRInstr* n, FILE* fp) {
     fprintf(fp, "Instr(op=%s", OP_STRS[n->op]);
     if(n->op == OP_JUMP0 || n->op == OP_JUMP1 || n->op == OP_LABEL) {
-        fprintf(fp, ", %d)", n->label);
+        fprintf(fp, ", label=%d", n->label);
+        if(n->arg1 != NULL) {
+            fprintf(fp, ",\n\targ1=");
+            AddrNode_print(n->arg1, fp);
+        }
+        fprintf(fp, ")");
     }
     else {
         fprintf(fp, ",\n\tres=");

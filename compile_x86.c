@@ -255,6 +255,22 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             x86_code_append(ocode, x86_instr_new2(X86_OP_call, temp_str, NULL));
             break;
         }
+
+        case OP_LABEL:
+        case OP_JUMP0:
+        case OP_JUMP1:
+            snprintf(temp_str, TEMP_STR_SIZE, "L%d", inode->label);
+            x86_op_t opcode = (inode->op == OP_LABEL) ? X86_OP_label : X86_OP_jmp;
+            if(inode->arg1 != NULL) {
+                opcode = (inode->op == OP_JUMP0) ? X86_OP_jz : X86_OP_jnz;
+                load_index_if_needed(ocode, inode->arg1, "si");
+                X86Instr* onode = x86_instr_new(X86_OP_cmp);
+                addr_to_x86_arg(inode->arg1, onode->arg1, true, "rsi");
+                strcpy(onode->arg2, "0");
+                x86_code_append(ocode, onode);
+            }
+            x86_code_append(ocode, x86_instr_new2(opcode, temp_str, NULL));
+            break;
         default:
             break;
     }

@@ -6,6 +6,8 @@
 
 bool allow_codegen = true;
 
+int label_counter = 1;
+
 void codegen_chain(pAstNode p, IRCode* irc) {
     while(p != NULL) {
         ircode_combine(irc, irc, &(p->base.ircode));
@@ -69,6 +71,28 @@ void codegen(pAstNode p) {
             case ASTN_Input: {
                 InputNode* q = (InputNode*)p;
                 ircode_append(&(q->base.ircode), irinstr_new2(OP_INPUT, q->base.addr, NULL, NULL));
+                break;
+            }
+            case ASTN_While: {
+                WhileNode* q = (WhileNode*)p;
+                IRInstr* beg_instr = irinstr_new(OP_LABEL);
+                beg_instr->label = label_counter++;
+                IRInstr* end_instr = irinstr_new(OP_LABEL);
+                end_instr->label = label_counter++;
+                IRInstr* break_instr = irinstr_new2(OP_JUMP0, NULL, q->cond->base.addr, NULL);
+                break_instr->label = end_instr->label;
+                IRInstr* loop_instr = irinstr_new2(OP_JUMP0, NULL, NULL, NULL);
+                loop_instr->label = beg_instr->label;
+                ircode_append(&(q->base.ircode), beg_instr);
+                ircode_combine(&(q->base.ircode), &(q->base.ircode), &(q->cond->base.ircode));
+                ircode_append(&(q->base.ircode), break_instr);
+                pAstNode p2 = q->body;
+                while(p2 != NULL) {
+                    ircode_combine(&(q->base.ircode), &(q->base.ircode), &(p2->base.ircode));
+                    p2 = get_next_ast_node(p2);
+                }
+                ircode_append(&(q->base.ircode), loop_instr);
+                ircode_append(&(q->base.ircode), end_instr);
                 break;
             }
             default:
