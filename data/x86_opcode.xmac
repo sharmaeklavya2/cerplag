@@ -1,4 +1,5 @@
 X(mov)
+X(lea)
 X(add)
 X(sub)
 X(xor)

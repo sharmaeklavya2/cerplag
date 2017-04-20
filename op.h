@@ -9,12 +9,14 @@ typedef enum {
     OP_MUL, OP_DIV,
     OP_AND, OP_OR,
     OP_MOV, OP_UMINUS,
+    OP_OUTPUT, OP_INPUT,
     OP_LAST
 } op_t;
 
 #define NUM_OP OP_LAST
 
-#define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "AND", "OR", "mov", "uminus"}
+#define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "AND", "OR", \
+    "mov", "uminus", "output", "input"}
 
 extern char* OP_STRS[];
 
