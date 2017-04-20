@@ -135,8 +135,21 @@ void op_addr_to_reg(X86Code* ocode, x86_op_t opcode, int regno, const AddrNode* 
 void op_reg_to_addr(X86Code* ocode, x86_op_t opcode, const AddrNode* an, int regno) {
     X86Instr* onode = x86_instr_new2(opcode, NULL, std_regs[regno][an->type]);
     load_index_if_needed(ocode, an, "di");
-    addr_to_x86_arg(an, onode->arg1, false, "di");
+    addr_to_x86_arg(an, onode->arg1, false, "rdi");
     x86_code_append(ocode, onode);
+}
+
+void op_addr_to_addr(X86Code* ocode, x86_op_t opcode, const AddrNode* an1, const AddrNode* an2) {
+    if(an1->addr_type == ADDR_CONST || an2->addr_type == ADDR_CONST) {
+        X86Instr* onode = x86_instr_new2(opcode, NULL, NULL);
+        load_index_if_needed(ocode, an1, "si");
+        load_index_if_needed(ocode, an2, "di");
+        addr_to_x86_arg(an1, onode->arg1, true, "rsi");
+        addr_to_x86_arg(an2, onode->arg2, true, "rdi");
+        x86_code_append(ocode, onode);
+    }
+    op_addr_to_reg(ocode, X86_OP_mov, 0, an2);
+    op_reg_to_addr(ocode, opcode, an1, 0);
 }
 
 void op_apply(X86Code* ocode, x86_op_t opcode, const AddrNode* an) {
@@ -199,8 +212,7 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
     if(!check_arg(inode->res)) return;
     switch(inode->op) {
         case OP_MOV:
-            op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
-            op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
+            op_addr_to_addr(ocode, X86_OP_mov, inode->res, inode->arg1);
             break;
         case OP_PLUS:
         case OP_MINUS:
@@ -237,11 +249,9 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
         case OP_LE:
         case OP_GT:
         case OP_GE:
-            op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
-            op_addr_to_reg(ocode, X86_OP_cmp, 0, inode->arg2);
+            op_addr_to_addr(ocode, X86_OP_cmp, inode->arg1, inode->arg2);
             op_apply(ocode, get_setcode(inode->op), inode->res);
             break;
-
         case OP_OUTPUT: {
             int size = inode->arg1->size;
             enable_output(inode->arg1->type, size);
