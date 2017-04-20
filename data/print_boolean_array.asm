@@ -37,4 +37,6 @@ print_boolean_end:
     call putchar
     pop rbx
     pop rbx
+    xor rsi, rsi
+    xor rdi, rdi
     ret

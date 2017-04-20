@@ -22,4 +22,6 @@ read_boolean_beg:
     jnz read_boolean_beg
     pop rbx
     pop rbx
+    xor rsi, rsi
+    xor rdi, rdi
     ret

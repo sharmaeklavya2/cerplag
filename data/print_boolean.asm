@@ -15,4 +15,6 @@ selected:
     call printf
     pop rbx
     pop rbx
+    xor rsi, rsi
+    xor rdi, rdi
     ret

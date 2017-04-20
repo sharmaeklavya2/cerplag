@@ -127,21 +127,21 @@ void load_index_if_needed(X86Code* ocode, const AddrNode* an, const char* index_
 
 void op_addr_to_reg(X86Code* ocode, x86_op_t opcode, int regno, const AddrNode* an) {
     X86Instr* onode = x86_instr_new2(opcode, std_regs[regno][an->type], NULL);
-    load_index_if_needed(ocode, an, "rsi");
+    load_index_if_needed(ocode, an, "si");
     addr_to_x86_arg(an, onode->arg2, false, "rsi");
     x86_code_append(ocode, onode);
 }
 
 void op_reg_to_addr(X86Code* ocode, x86_op_t opcode, const AddrNode* an, int regno) {
     X86Instr* onode = x86_instr_new2(opcode, NULL, std_regs[regno][an->type]);
-    load_index_if_needed(ocode, an, "rdi");
-    addr_to_x86_arg(an, onode->arg1, false, "rdi");
+    load_index_if_needed(ocode, an, "di");
+    addr_to_x86_arg(an, onode->arg1, false, "di");
     x86_code_append(ocode, onode);
 }
 
 void op_apply(X86Code* ocode, x86_op_t opcode, const AddrNode* an) {
     X86Instr* onode = x86_instr_new(opcode);
-    load_index_if_needed(ocode, an, "rsi");
+    load_index_if_needed(ocode, an, "si");
     addr_to_x86_arg(an, onode->arg1, true, "rsi");
     x86_code_append(ocode, onode);
 }
@@ -307,6 +307,8 @@ void compile_program_to_x86(ProgramNode* program_node, pSD psd, FILE* ofp) {
         }
 
         x86_code_append(&x86_code, x86_instr_new2(X86_OP_mov, DATA_REG, "data"));
+        x86_code_append(&x86_code, x86_instr_new2(X86_OP_xor, "rsi", "rsi"));
+        x86_code_append(&x86_code, x86_instr_new2(X86_OP_xor, "rdi", "rdi"));
         compile_code_to_x86(&(module_node->base.ircode), &x86_code);
         if(module_node->name == NULL) {
             x86_code_append(&x86_code, x86_instr_new2(X86_OP_mov, "rax", "0"));

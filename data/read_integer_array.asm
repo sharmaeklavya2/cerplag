@@ -19,4 +19,6 @@ read_integer_beg:
     jnz read_integer_beg
     pop rbx
     pop rbx
+    xor rsi, rsi
+    xor rdi, rdi
     ret
