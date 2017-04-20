@@ -10,6 +10,7 @@ void irinstr_init(IRInstr* instr, op_t op) {
     instr->res = NULL;
     instr->prev = NULL;
     instr->next = NULL;
+    instr->label = 0;
 }
 
 void irinstr_init2(IRInstr* instr, op_t op, AddrNode* res, AddrNode* arg1, AddrNode* arg2) {
@@ -77,13 +78,18 @@ void irinstr_destroy_list(IRInstr* n) {
 
 void irinstr_print(IRInstr* n, FILE* fp) {
     fprintf(fp, "Instr(op=%s", OP_STRS[n->op]);
-    fprintf(fp, ",\n\tres=");
-    AddrNode_print(n->res, fp);
-    fprintf(fp, ",\n\targ1=");
-    AddrNode_print(n->arg1, fp);
-    fprintf(fp, ",\n\targ2=");
-    AddrNode_print(n->arg2, fp);
-    fprintf(fp, ")");
+    if(n->op == OP_JUMP0 || n->op == OP_JUMP1 || n->op == OP_LABEL) {
+        fprintf(fp, ", %d)", n->label);
+    }
+    else {
+        fprintf(fp, ",\n\tres=");
+        AddrNode_print(n->res, fp);
+        fprintf(fp, ",\n\targ1=");
+        AddrNode_print(n->arg1, fp);
+        fprintf(fp, ",\n\targ2=");
+        AddrNode_print(n->arg2, fp);
+        fprintf(fp, ")");
+    }
 }
 
 #define TYPE pIRInstr
