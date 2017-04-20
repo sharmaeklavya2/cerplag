@@ -3,7 +3,7 @@
 __pycache__/
 /readme.html
 *exe
-*.out
+/*.out
 /out.*
 /compiler
 
