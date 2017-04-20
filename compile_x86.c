@@ -172,6 +172,12 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
         }
+        case OP_UMINUS: {
+            x86_code_append(ocode, x86_instr_new2(X86_OP_xor, "rax", "rax"));
+            op_addr_to_reg(ocode, X86_OP_sub, 0, inode->arg1);
+            op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
+            break;
+        }
         case OP_MUL:
             op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
             op_apply(ocode, X86_OP_imul, inode->arg2);

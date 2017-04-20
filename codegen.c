@@ -54,6 +54,13 @@ void codegen(pAstNode p) {
                 break;
             }
 
+            case ASTN_UOp: {
+                UOpNode* q = (UOpNode*)p;
+                ircode_copy(&(q->base.ircode), &(q->arg->base.ircode));
+                ircode_append(&(q->base.ircode), irinstr_new2(OP_UMINUS, q->base.addr,
+                    q->arg->base.addr, NULL));
+                break;
+            }
             case ASTN_Output: {
                 OutputNode* q = (OutputNode*)p;
                 IRInstr* instr = irinstr_new(OP_OUTPUT);
