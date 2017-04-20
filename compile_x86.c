@@ -168,6 +168,19 @@ x86_op_t get_setcode(op_t op) {
     }
 }
 
+x86_op_t get_opcode(op_t op) {
+    switch(op) {
+        case OP_PLUS: return X86_OP_add;
+        case OP_MINUS: return X86_OP_sub;
+        case OP_MUL: return X86_OP_imul;
+        case OP_DIV: return X86_OP_idiv;
+        case OP_AND: return X86_OP_and;
+        case OP_OR: return X86_OP_or;
+        default:
+            return -1;
+    }
+}
+
 void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
     if(!check_arg(inode->arg1)) return;
     if(!check_arg(inode->arg2)) return;
@@ -178,13 +191,13 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
         case OP_PLUS:
-        case OP_MINUS: {
-            x86_op_t opcode = (inode->op == OP_PLUS) ? X86_OP_add : X86_OP_sub;
+        case OP_MINUS:
+        case OP_AND:
+        case OP_OR:
             op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
-            op_addr_to_reg(ocode, opcode, 0, inode->arg2);
+            op_addr_to_reg(ocode, get_opcode(inode->op), 0, inode->arg2);
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
-        }
         case OP_UMINUS: {
             x86_code_append(ocode, x86_instr_new2(X86_OP_xor, "rax", "rax"));
             op_addr_to_reg(ocode, X86_OP_sub, 0, inode->arg1);

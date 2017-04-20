@@ -6,6 +6,8 @@ X(imul)
 X(idiv)
 X(xor)
 X(cmp)
+X(and)
+X(or)
 
 X(sete)
 X(setne)
