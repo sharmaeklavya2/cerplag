@@ -46,7 +46,7 @@ void irinstr_destroy(IRInstr* instr) {
     irinstr_clear(instr);
     free(instr);
 #ifdef LOG_MEM
-    fprintf(stderr, "%s: Destroyed IRInstr %p\n", __func__, (void*)p);
+    fprintf(stderr, "%s: Destroyed IRInstr %p\n", __func__, (void*)instr);
 #endif
 }
 

@@ -65,7 +65,7 @@ void x86_instr_destroy(X86Instr* instr) {
     x86_instr_clear(instr);
     free(instr);
 #ifdef LOG_MEM
-    fprintf(stderr, "%s: Destroyed X86Instr %p\n", __func__, (void*)p);
+    fprintf(stderr, "%s: Destroyed X86Instr %p\n", __func__, (void*)instr);
 #endif
 }
 
