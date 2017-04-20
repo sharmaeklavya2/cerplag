@@ -11,6 +11,7 @@
 #include "util/vptr_int_hmap.h"
 #include "type.h"
 #include "compiler.h"
+#include "codegen.h"
 #include "compile_x86.h"
 
 #define MODULE_DECLARED 1
@@ -41,8 +42,6 @@ vptr_int_hmap module_status;
 vptr_pMN_hmap module_node_map;
 
 static char msg[200];
-
-static bool ircode_gen = false;
 
 void print_type_error(op_t op, valtype_t type1, valtype_t type2, int line, int col) {
     sprintf(msg, "Operands are of the wrong type ('%s' and '%s') for operator '%s'.",
@@ -217,139 +216,6 @@ void compare_lists_type(const char* func_name, pSD psd, bool is_output, IDListNo
             formal = formal->next;
         }
     }
-}
-
-void codegen_chain(pAstNode p, IRCode* irc) {
-    while(p != NULL) {
-        ircode_combine(irc, irc, &(p->base.ircode));
-        p = get_next_ast_node(p);
-    }
-}
-
-void destroy_code_chain(pAstNode p) {
-    while(p != NULL) {
-        ircode_clear(&(p->base.ircode));
-        p = get_next_ast_node(p);
-    }
-}
-
-void codegen(pAstNode p) {
-    if(error_count == 0 && ircode_gen) {
-        switch(p->base.node_type) {
-            case ASTN_Module: {
-                ModuleNode* q = (ModuleNode*)p;
-                codegen_chain(q->body, &(q->base.ircode));
-                break;
-            }
-
-            case ASTN_Var:
-            case ASTN_Num:
-            case ASTN_RNum:
-            case ASTN_Bool:
-                break;
-            case ASTN_Decl:
-            case ASTN_Deref:
-                break;
-
-            case ASTN_Assn: {
-                AssnNode* q = (AssnNode*)p;
-                ircode_copy(&(q->base.ircode), &(q->expr->base.ircode));
-                IRInstr* instr = irinstr_new(OP_MOV);
-                instr->res = q->target->base.addr;
-                instr->arg1 = q->expr->base.addr;
-                ircode_append(&(q->base.ircode), instr);
-                break;
-            }
-            case ASTN_BOp: {
-                // TODO: implement short circuiting for boolean operators
-                BOpNode* q = (BOpNode*)p;
-                ircode_combine(&(q->base.ircode), &(q->arg1->base.ircode), &(q->arg2->base.ircode));
-                IRInstr* instr = irinstr_new(q->op);
-                instr->res = q->base.addr;
-                instr->arg1 = q->arg1->base.addr;
-                instr->arg2 = q->arg2->base.addr;
-                ircode_append(&(q->base.ircode), instr);
-                break;
-            }
-
-            case ASTN_Output: {
-                OutputNode* q = (OutputNode*)p;
-                IRInstr* instr = irinstr_new(OP_OUTPUT);
-                instr->arg1 = q->var->base.addr;
-                ircode_append(&(q->base.ircode), instr);
-                break;
-            }
-            case ASTN_Input: {
-                InputNode* q = (InputNode*)p;
-                IRInstr* instr = irinstr_new(OP_INPUT);
-                instr->res = q->base.addr;
-                ircode_append(&(q->base.ircode), instr);
-                break;
-            }
-            default:
-                complain_ast_node_type(__func__, p->base.node_type);
-                print_error("codegen", ERROR, -1, p->base.line, p->base.col, ASTN_STRS[p->base.node_type],
-                    "CODEGEN_NOT_IMPL", "Code generation has not been implemented for this type of node.");
-        }
-    }
-    if(error_count > 0) {
-        switch(p->base.node_type) {
-            case ASTN_BOp:
-                ircode_clear(&(((BOpNode*)p)->arg1->base.ircode));
-                ircode_clear(&(((BOpNode*)p)->arg2->base.ircode));
-                break;
-            case ASTN_UOp:
-                ircode_clear(&(((UOpNode*)p)->arg->base.ircode));
-                break;
-            case ASTN_Deref:
-                ircode_clear(&(((DerefNode*)p)->index->base.ircode));
-                break;
-            case ASTN_Module:
-                destroy_code_chain(((ModuleNode*)p)->body);
-                break;
-            case ASTN_Assn:
-                ircode_clear(&(((AssnNode*)p)->target->base.ircode));
-                ircode_clear(&(((AssnNode*)p)->expr->base.ircode));
-                break;
-            case ASTN_While:
-                ircode_clear(&(((WhileNode*)p)->cond->base.ircode));
-                ircode_clear(&(((WhileNode*)p)->body->base.ircode));
-                break;
-            case ASTN_For:
-                ircode_clear(&(((ForNode*)p)->body->base.ircode));
-                break;
-            case ASTN_Decl:
-                destroy_code_chain((pAstNode)(((DeclNode*)p)->idList));
-                break;
-            case ASTN_Output:
-                ircode_clear(&(((OutputNode*)p)->var->base.ircode));
-                break;
-            case ASTN_FCall:
-                destroy_code_chain((pAstNode)(((FCallNode*)p)->iParamList));
-                destroy_code_chain((pAstNode)(((FCallNode*)p)->oParamList));
-                break;
-            case ASTN_Switch: {
-                SwitchNode* q = (SwitchNode*)p;
-                if(q->defaultcase != NULL) {
-                    ircode_clear(&(q->defaultcase->val->base.ircode));
-                    destroy_code_chain(q->defaultcase->stmts);
-                }
-                CaseNode* node = q->cases;
-                while(node != NULL) {
-                    destroy_code_chain(node->stmts);
-                    ircode_clear(&(node->val->base.ircode));
-                    node = node->next;
-                }
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    /*
-    fprintf(stderr, "codegen on node(%s, %d:%d):\n", ASTN_STRS[p->base.node_type], p->base.line, p->base.col);
-    ircode_print(&(p->base.ircode), stderr);
-    */
 }
 
 void compile_node(pAstNode p, pSD psd, const char* func_name) {
@@ -733,22 +599,9 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
     codegen(p);
 }
 
-void optimize_ircode(IRCode* code) {
-    IRInstr* instr = code->first;
-    IRInstr* instr2 = NULL;
-    for(; instr != NULL; instr = instr2) {
-        instr2 = instr->next;
-        while(instr2 != NULL && instr->res != NULL && instr->res->addr_type == ADDR_TEMP && instr2->op == OP_MOV) {
-            instr->res = instr2->res;
-            instr2 = instr2->next;
-            ircode_remove(code, instr->next);
-        }
-    }
-}
-
 void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_module_bodies) {
     if(code_gen) {
-        ircode_gen = true;
+        allow_codegen = true;
     }
 
     vptr_int_hmap_init(&module_status, 10, false);
@@ -828,7 +681,7 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
 
 int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
     /*  level=0 or 1: semantic check only
-        level=2: ircode_gen
+        level=2: allow_codegen
         level=3: x86_code_gen
     */
     gsymb_t start_symb = init_parser();
