@@ -10,6 +10,7 @@ typedef struct IRInstr {
     op_t op;
     struct AddrNode *arg1, *arg2, *res;
     struct IRInstr *prev, *next;
+    int label;
 } IRInstr;
 
 typedef IRInstr* pIRInstr;

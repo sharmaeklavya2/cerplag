@@ -64,17 +64,20 @@ valtype_t get_composite_type(op_t op, valtype_t type1, valtype_t type2, int line
         case OP_PLUS:
         case OP_MINUS:
         case OP_MUL:
+        case OP_DIV:
             if(type1 == TYPE_INTEGER || type1 == TYPE_REAL)
                 return type1;
             else
                 print_type_error(op, type1, type2, line, col);
             break;
+        /*
         case OP_DIV:
             if(type1 == TYPE_INTEGER || type1 == TYPE_REAL)
                 return TYPE_REAL;
             else
                 print_type_error(op, type1, type2, line, col);
             break;
+        */
         case OP_GT:
         case OP_LT:
         case OP_GE:
