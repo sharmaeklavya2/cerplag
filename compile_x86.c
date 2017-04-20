@@ -231,7 +231,7 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             int size = inode->arg1->size;
             enable_output(inode->arg1->type, size);
             if(size == 0) {
-                op_addr_to_reg(ocode, X86_OP_mov, 3, inode->arg1);
+                op_addr_to_reg(ocode, X86_OP_mov, 2, inode->arg1);
                 snprintf(temp_str, TEMP_STR_SIZE, "print_%s", TYPE_STRS[inode->arg1->type]);
                 x86_code_append(ocode, x86_instr_new2(X86_OP_call, temp_str, NULL));
             }
