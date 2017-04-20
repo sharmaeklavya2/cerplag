@@ -176,7 +176,12 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
             op_apply(ocode, X86_OP_imul, inode->arg2);
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
+            break;
         case OP_DIV:
+            op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
+            x86_code_append(ocode, x86_instr_new2(X86_OP_xor, "rdx", "rdx"));
+            op_apply(ocode, X86_OP_idiv, inode->arg2);
+            op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
         case OP_OUTPUT: {
             int size = inode->arg1->size;

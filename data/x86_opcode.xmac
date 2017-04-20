@@ -3,6 +3,7 @@ X(lea)
 X(add)
 X(sub)
 X(imul)
+X(idiv)
 X(xor)
 
 X(label)
