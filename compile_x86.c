@@ -8,9 +8,7 @@
 #include "addr.h"
 #include "ast.h"
 #include "x86.h"
-
-void optimize_ircode(IRCode* code) {
-}
+#include "type.h"
 
 void optimize_x86_code(X86Code* code) {
 }
@@ -19,25 +17,93 @@ void compile_x86_error(const char* msg) {
     fprintf(stderr, "x86 compile error: %s", msg);
 }
 
-void addr_to_x86_arg(AddrNode* an, char* dest) {
+const char DATA_REG[] = "rbx";
+
+#define TEMP_STR_SIZE 50
+char temp_str[TEMP_STR_SIZE];
+
+char std_regs[4][4][10];
+
+void addr_to_x86_arg(AddrNode* an, char* dest, const char* index_reg) {
+    if(an == NULL) {
+        dest[0] = '\0';
+        return;
+    }
     switch(an->addr_type) {
         case ADDR_VAR:
-            snprintf(dest, X86_ARG_SIZE, "data");
-            break;
         case ADDR_TEMP:
-        case ADDR_CONST:
-        case ADDR_ARR:
+            snprintf(dest, X86_ARG_SIZE, "[%s + %d]", DATA_REG, an->offset);
             break;
+        case ADDR_CONST:
+            if(an->type == TYPE_INTEGER) {
+                snprintf(dest, X86_ARG_SIZE, "%d", an->imm.i);
+            }
+            else if(an->type == TYPE_REAL) {
+                snprintf(dest, X86_ARG_SIZE, "%lf", an->imm.f);
+            }
+            else {
+                snprintf(dest, X86_ARG_SIZE, "%c", (an->imm.b)?'1':'0');
+            }
+            break;
+        case ADDR_ARR: {
+            int size = TYPE_SIZES[an->type];
+            int base_addr = an->base_addr->offset;
+            if(an->index->addr_type == ADDR_CONST) {
+                int i = an->index->imm.i;
+                snprintf(dest, X86_ARG_SIZE, "[%s + %d]", DATA_REG, base_addr + size * (i-1));
+            }
+            else {
+                snprintf(dest, X86_ARG_SIZE, "[%s + %s*%d + %d]", DATA_REG, index_reg, size, base_addr - size);
+            }
+            break;
+        }
     }
+}
+
+void load_index_if_needed(X86Code* ocode, AddrNode* an, const char* index_reg) {
+    if(an->addr_type == ADDR_ARR && an->index->addr_type == ADDR_VAR) {
+        X86Instr* onode = x86_instr_new(X86_OP_mov);
+        x86_code_append(ocode, onode);
+        strcpy(onode->arg1, index_reg);
+        snprintf(onode->arg2, X86_ARG_SIZE, "[%s + %d]", DATA_REG, an->index->offset);
+    }
+}
+
+void op_addr_to_reg(X86Code* ocode, x86_op_t opcode, int regno, AddrNode* an) {
+    X86Instr* onode = x86_instr_new2(opcode, std_regs[regno][an->type], NULL);
+    load_index_if_needed(ocode, an, "rsi");
+    addr_to_x86_arg(an, onode->arg2, "rsi");
+    x86_code_append(ocode, onode);
+}
+
+void op_reg_to_addr(X86Code* ocode, x86_op_t opcode, AddrNode* an, int regno) {
+    X86Instr* onode = x86_instr_new2(opcode, NULL, std_regs[regno][an->type]);
+    load_index_if_needed(ocode, an, "rdi");
+    addr_to_x86_arg(an, onode->arg1, "rdi");
+    x86_code_append(ocode, onode);
 }
 
 void compile_instr_to_x86(IRInstr* inode, X86Code* ocode) {
     switch(inode->op) {
         case OP_MOV:
-            x86_code_append(ocode, x86_instr_new(X86_OP_mov));
+            op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
+            op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
         case OP_PLUS:
-            x86_code_append(ocode, x86_instr_new(X86_OP_add));
+            op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
+            op_addr_to_reg(ocode, X86_OP_add, 0, inode->arg2);
+            op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
+            break;
+        case OP_OUTPUT:
+            op_addr_to_reg(ocode, X86_OP_mov, 3, inode->arg1);
+            snprintf(temp_str, TEMP_STR_SIZE, "print_%s", TYPE_STRS[inode->arg1->type]);
+            x86_code_append(ocode, x86_instr_new2(X86_OP_call, temp_str, NULL));
+            break;
+        case OP_INPUT:
+            op_addr_to_reg(ocode, X86_OP_lea, 3, inode->res);
+            snprintf(temp_str, TEMP_STR_SIZE, "read_%s", TYPE_STRS[inode->res->type]);
+            x86_code_append(ocode, x86_instr_new2(X86_OP_call, temp_str, NULL));
+            break;
         default:
             break;
     }
@@ -53,8 +119,9 @@ void compile_code_to_x86(IRCode* icode, X86Code* ocode) {
 const char PROLOGUE_STR[] =
     X86_INDENT_STR "global main\n"
     X86_INDENT_STR "extern printf\n"
+    X86_INDENT_STR "extern putchar\n"
     X86_INDENT_STR "extern scanf\n"
-    "section .text\n";
+    X86_INDENT_STR "extern getchar\n";
 
 const char EPILOGUE_STR[] =
     "section .bss\n"
@@ -63,13 +130,36 @@ const char EPILOGUE_STR[] =
 
 void compile_program_to_x86(ProgramNode* program_node, pSD psd, FILE* ofp) {
     int data_size = psd->root->value->max_offset;
+
     fprintf(ofp, PROLOGUE_STR);
+    // read lib and output it
+    FILE* libfp = fopen("data/lib.asm", "r");
+    setvbuf(libfp, NULL, _IOFBF, BUFSIZ);   // fully buffer file
+    if (libfp) {
+        int c;
+        while ((c = fgetc(libfp)) != EOF)
+            fputc(c, ofp);
+        fclose(libfp);
+    }
+    fprintf(ofp, "section .text\n");
+
+    strcpy(std_regs[0][TYPE_INTEGER], "ax");
+    strcpy(std_regs[0][TYPE_BOOLEAN], "al");
+    strcpy(std_regs[0][TYPE_REAL], "ax");
+    strcpy(std_regs[1][TYPE_INTEGER], "rax");
+    strcpy(std_regs[1][TYPE_BOOLEAN], "rax");
+    strcpy(std_regs[1][TYPE_REAL], "rax");
+    strcpy(std_regs[2][TYPE_INTEGER], "cx");
+    strcpy(std_regs[2][TYPE_BOOLEAN], "cl");
+    strcpy(std_regs[2][TYPE_REAL], "cx");
+    strcpy(std_regs[3][TYPE_INTEGER], "rcx");
+    strcpy(std_regs[3][TYPE_BOOLEAN], "rcx");
+    strcpy(std_regs[3][TYPE_REAL], "rcx");
 
     X86Code x86_code;
     x86_code_init(&x86_code);
     ModuleNode* module_node = program_node->modules;
     for(; module_node != NULL; module_node = module_node->next) {
-        optimize_ircode(&(module_node->base.ircode));
         if(module_node->name == NULL) {
             fprintf(ofp, "main:\n");
         }
@@ -77,7 +167,11 @@ void compile_program_to_x86(ProgramNode* program_node, pSD psd, FILE* ofp) {
             fprintf(ofp, "module_%s:\n", module_node->name);
         }
 
+        x86_code_append(&x86_code, x86_instr_new2(X86_OP_mov, DATA_REG, "data"));
         compile_code_to_x86(&(module_node->base.ircode), &x86_code);
+        if(module_node->name == NULL) {
+            x86_code_append(&x86_code, x86_instr_new2(X86_OP_mov, "rax", "0"));
+        }
         x86_code_append(&x86_code, x86_instr_new(X86_OP_ret));
         optimize_x86_code(&x86_code);
         x86_code_print(&x86_code, ofp);

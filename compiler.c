@@ -272,6 +272,20 @@ void codegen(pAstNode p) {
                 break;
             }
 
+            case ASTN_Output: {
+                OutputNode* q = (OutputNode*)p;
+                IRInstr* instr = irinstr_new(OP_OUTPUT);
+                instr->arg1 = q->var->base.addr;
+                ircode_append(&(q->base.ircode), instr);
+                break;
+            }
+            case ASTN_Input: {
+                InputNode* q = (InputNode*)p;
+                IRInstr* instr = irinstr_new(OP_INPUT);
+                instr->res = q->base.addr;
+                ircode_append(&(q->base.ircode), instr);
+                break;
+            }
             default:
                 complain_ast_node_type(__func__, p->base.node_type);
                 print_error("codegen", ERROR, -1, p->base.line, p->base.col, ASTN_STRS[p->base.node_type],
@@ -597,8 +611,21 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
             }
             break;
         }
-        case ASTN_Input:
+        case ASTN_Input: {
+            InputNode* q = (InputNode*)p;
+            pSTEntry entry = SD_get_entry(psd, q->varname);
+            if(entry == NULL) {
+                print_undecl_id_error(q->varname, q->base.line, q->base.col);
+                q->base.type = TYPE_ERROR;
+                q->base.size = 0;
+            }
+            else {
+                q->base.type = entry->addr->type;
+                q->base.size = entry->addr->size;
+                q->base.addr = entry->addr;
+            }
             break;
+        }
         case ASTN_Output:
             compile_node(((OutputNode*)p)->var, psd, func_name);
             break;
@@ -785,6 +812,9 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
     vptr_pMN_hmap_clear(&module_node_map);
 }
 
+void optimize_ircode(IRCode* code) {
+}
+
 int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
     /*  level=0 or 1: semantic check only
         level=2: ircode_gen
@@ -838,7 +868,7 @@ int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
             node = node->next;
         }
 
-        if(level == 3) {
+        if(error_count == 0 && level == 3) {
             compile_program_to_x86(ast, &mySD, ofp);
         }
         node = ast->modules;
