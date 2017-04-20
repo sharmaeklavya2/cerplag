@@ -15,4 +15,18 @@ start
     print(c);
     c := - a;
     print(c);
+    c := - a;
+    declare d: boolean;
+    d := a == b;
+    print(d);
+    d := a != b;
+    print(d);
+    d := a < b;
+    print(d);
+    d := a <= b;
+    print(d);
+    d := a > b;
+    print(d);
+    d := a >= b;
+    print(d);
 end

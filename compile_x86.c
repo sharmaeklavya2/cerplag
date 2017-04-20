@@ -155,6 +155,19 @@ bool check_arg(const AddrNode* an) {
     return true;
 }
 
+x86_op_t get_setcode(op_t op) {
+    switch(op) {
+        case OP_EQ: return X86_OP_sete;
+        case OP_NE: return X86_OP_setne;
+        case OP_LT: return X86_OP_setl;
+        case OP_LE: return X86_OP_setle;
+        case OP_GT: return X86_OP_setg;
+        case OP_GE: return X86_OP_setge;
+        default:
+            return -1;
+    }
+}
+
 void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
     if(!check_arg(inode->arg1)) return;
     if(!check_arg(inode->arg2)) return;
@@ -189,6 +202,18 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             op_apply(ocode, X86_OP_idiv, inode->arg2);
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
+
+        case OP_EQ:
+        case OP_NE:
+        case OP_LT:
+        case OP_LE:
+        case OP_GT:
+        case OP_GE:
+            op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
+            op_addr_to_reg(ocode, X86_OP_cmp, 0, inode->arg2);
+            op_apply(ocode, get_setcode(inode->op), inode->res);
+            break;
+
         case OP_OUTPUT: {
             int size = inode->arg1->size;
             enable_output(inode->arg1->type, size);
