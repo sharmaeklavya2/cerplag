@@ -3,6 +3,8 @@
 #include <string.h>
 #include "lexer.h"
 #include "parser.h"
+#include "ast_gen.h"
+#include "compiler.h"
 
 #define USAGE_SIZE 512
 
@@ -41,31 +43,33 @@ int main(int argc, char* argv[])
         }
     }
 
-    fprintf(stderr, "The FIRST and FOLLOW sets have been automated.\n");
-    fprintf(stderr, "Lexical Analyzed module completed.\n");
-    fprintf(stderr, "Syntax Analysis module completed.\n");
-    fprintf(stderr, "All modules compile and run withour errors.\n");
-    fprintf(stderr, "Modules work on all testcases.\n");
-    fprintf(stderr, "Parse Tree was constructed successfully.\n");
-    fprintf(stderr, "\n");
+    fprintf(stderr, "Level 4: Symbol table, Type checking, Semantic rules, Assembly code generation.\n");
 
-    fprintf(stderr, "Enter 1 to print the source code without comments.\n");
-    fprintf(stderr, "Enter 2 to print all tokens along with corresonding line numbers and lexemes.\n");
-    fprintf(stderr, "Enter 3 to parse the source code.\n");
-    fprintf(stderr, "Enter 4 to create the parse tree and print it.\n");
+    fprintf(stderr, "Enter 1 to print token list.\n");
+    fprintf(stderr, "Enter 2 to print parse tree in pre-order traversal.\n");
+    fprintf(stderr, "Enter 3 to print AST in pre-order traversal.\n");
+    fprintf(stderr, "Enter 4 to display compression percent.\n");
+    fprintf(stderr, "Enter 5 to display symbol table.\n");
+    fprintf(stderr, "Enter 6 to check code for semantic errors.\n");
+    fprintf(stderr, "Enter 7 to produce assembly code.\n");
     int choice;
     scanf("%d",&choice);
 
     switch(choice){
         case 1:
-            print_source_without_comments(ifp, ofp);
-            return 0;
+            return lexer_main(ifp, stdout, 0, print_token_sub);
         case 2:
-            return lexer_main(ifp, ofp, 0, print_token_sub);
+            return parser_main(ifp, stdout, 0, print_tree);
         case 3:
-            return parser_main(ifp, ofp, 0, dont_print_tree);
+            return ast_gen_main(ifp, stdout, 0);
         case 4:
-            return parser_main(ifp, ofp, 0, print_tree_sub);
+            return ast_gen_main(ifp, stdout, 1);
+        case 5:
+            return compiler_main(ifp, stdout, 1, 0);
+        case 6:
+            return compiler_main(ifp, stdout, 1, 0);
+        case 7:
+            return compiler_main(ifp, stdout, 3, 0);
         default:
             fprintf(stderr, "Invalid choice!\n");
             break;
