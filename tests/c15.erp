@@ -1,0 +1,16 @@
+** Test case c3.txt: Handles iterative statements**
+
+<<<driver program>>>
+start
+	declare x:integer; 
+	get_value(x);
+	declare sum, k:integer;
+	sum:=100;
+	for(k in 1..10)
+	start
+		sum:= sum + k*x;
+		print(sum);
+	end	
+	print(sum);
+end
+
