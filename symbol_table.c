@@ -116,7 +116,7 @@ bool SD_add_entry(pSD psd, pSTEntry pentry, int line, int col) {
     if(pst->vmap.size == old_size) {
         char msg[80];
         sprintf(msg, "Variable has already been declared at line %d col %d.", node->value->addr->line, node->value->addr->col);
-        print_error("compile", ERROR, 5, line, col, pentry->lexeme, "ALREADY_DECL", msg);
+        print_error("semantic", ERROR, -1, line, col, pentry->lexeme, "ALREADY_DECL", msg);
         return false;
     }
 

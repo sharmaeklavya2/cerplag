@@ -46,11 +46,11 @@ static char msg[200];
 void print_type_error(op_t op, valtype_t type1, valtype_t type2, int line, int col) {
     sprintf(msg, "Operands are of the wrong type ('%s' and '%s') for operator '%s'.",
         TYPE_STRS[type1], TYPE_STRS[type2], OP_STRS[op]);
-    print_error("type", ERROR, 10, line, col, NULL, NULL, msg);
+    print_error("type", ERROR, -1, line, col, NULL, "BAD_TYPE_FOR_OP", msg);
 }
 
 void print_undecl_id_error(const char* varname, int line, int col) {
-    print_error("compile", ERROR, 11, line, col, varname, "UNDECL_ID", "Undeclared identifier");
+    print_error("semantic", ERROR, -1, line, col, varname, "UNDECL_ID", "Undeclared identifier");
 }
 
 valtype_t get_composite_type(op_t op, valtype_t type1, valtype_t type2, int line, int col) {
@@ -165,7 +165,7 @@ void log_var_set(pSTEntry entry, int line, int col) {
     if(entry->readonly == true) {
         sprintf(msg, "Cannot modify read-only variable '%s' (declared at line %d, col %d).",
             entry->lexeme, entry->addr->line, entry->addr->col);
-        print_error("type", ERROR, 50, line, col, entry->lexeme, "RDONLY_MOD", msg);
+        print_error("type", ERROR, -1, line, col, entry->lexeme, "RDONLY_MOD", msg);
     }
     entry->use_line = line;
     entry->use_col = col;
@@ -182,12 +182,12 @@ void compare_lists_type(const char* func_name, pSD psd, bool is_output, IDListNo
     formal = org_formal;
     if(acount < fcount) {
         sprintf(msg, "Too few %s parameters to function.", list_type);
-        print_error("type", ERROR, 41, actual->base.line, actual->base.col, func_name,
+        print_error("type", ERROR, -1, actual->base.line, actual->base.col, func_name,
             "FEW_ARGS", msg);
     }
     else if(acount > fcount) {
         sprintf(msg, "Too many %s parameters to function.", list_type);
-        print_error("type", ERROR, 42, actual->base.line, actual->base.col, func_name,
+        print_error("type", ERROR, -1, actual->base.line, actual->base.col, func_name,
             "MANY_ARGS", msg);
     }
     else {
@@ -210,7 +210,7 @@ void compare_lists_type(const char* func_name, pSD psd, bool is_output, IDListNo
                     get_type_str(fstr, ftype, fsize);
                     sprintf(msg, "Actual %s parameter has type '%s', but formal %s parameter has type '%s'.",
                         list_type, astr, list_type, fstr);
-                    print_error("type", ERROR, 43, actual->base.line, actual->base.col, actual->varname,
+                    print_error("type", ERROR, -1, actual->base.line, actual->base.col, actual->varname,
                         "FCALL_TYPE_MISMATCH", msg);
                 }
                 actual->base.addr = entry->addr;
@@ -240,12 +240,12 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
             }
             else {
                 if(size1 > 0) {
-                    print_error("type", ERROR, 12, q->arg1->base.line, q->arg1->base.col,
-                        OP_STRS[q->op], NULL, "Left operand cannot be an array.");
+                    print_error("type", ERROR, -1, q->arg1->base.line, q->arg1->base.col,
+                        OP_STRS[q->op], "LOP_ARRAY", "Left operand cannot be an array.");
                 }
                 if(size2 > 0) {
-                    print_error("type", ERROR, 13, q->arg2->base.line, q->arg2->base.col,
-                        OP_STRS[q->op], NULL, "Right operand cannot be an array.");
+                    print_error("type", ERROR, -1, q->arg2->base.line, q->arg2->base.col,
+                        OP_STRS[q->op], "ROP_ARRAY", "Right operand cannot be an array.");
                 }
                 q->base.type = TYPE_ERROR;
             }
@@ -269,13 +269,13 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                     q->base.type = TYPE_ERROR;
                     sprintf(msg, "Operand's type should be '%s' or '%s', not '%s'.",
                         TYPE_STRS[TYPE_INTEGER], TYPE_STRS[TYPE_REAL], TYPE_STRS[subtype]);
-                    print_error("type", ERROR, 14, q->arg->base.line, q->arg->base.col,
-                        OP_STRS[q->op], NULL, msg);
+                    print_error("type", ERROR, -1, q->arg->base.line, q->arg->base.col,
+                        OP_STRS[q->op], "UOP_BAD_TYPE", msg);
                 }
             }
             else {
-                print_error("type", ERROR, 15, q->arg->base.line, q->arg->base.col,
-                    OP_STRS[q->op], NULL, "Operand cannot be an array.");
+                print_error("type", ERROR, -1, q->arg->base.line, q->arg->base.col,
+                    OP_STRS[q->op], "UOP_ARRAY", "Operand cannot be an array.");
                 q->base.type = TYPE_ERROR;
             }
             break;
@@ -290,7 +290,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                 q->base.type = TYPE_ERROR;
             }
             else if(entry->addr->size == 0) {
-                print_error("type", ERROR, 16, q->base.line, q->base.col, q->varname, "NONARR_DEREF",
+                print_error("type", ERROR, -1, q->base.line, q->base.col, q->varname, "NONARR_DEREF",
                     "Dereference operator applied on a variable which is not an array.");
                 q->base.type = TYPE_ERROR;
             }
@@ -306,14 +306,14 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                         char tstr[20];
                         get_type_str(tstr, q->index->base.type, q->index->base.size);
                         sprintf(msg, "Array index should be an integer, not '%s'.", tstr);
-                        print_error("type", ERROR, 17, q->base.line, q->base.col, q->varname, "NONINT_INDEX", msg);
+                        print_error("type", ERROR, -1, q->base.line, q->base.col, q->varname, "NONINT_INDEX", msg);
                     }
                 }
                 else {
                     int val = ((NumNode*)(q->index))->val;
                     if(val <= 0 || val > size) {
-                        sprintf(msg, "Index of '%s' should be in the range 1 to %d.\n", q->varname, entry->addr->size);
-                        print_error("type", ERROR, 18, q->index->base.line, q->index->base.col, NULL, "OOB_INDEX", msg);
+                        sprintf(msg, "Index of '%s' should be in the range 1 to %d.", q->varname, entry->addr->size);
+                        print_error("type", ERROR, -1, q->index->base.line, q->index->base.col, NULL, "OOB_INDEX", msg);
                     }
                 }
             }
@@ -359,7 +359,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                 hmap_node->value |= MODULE_DEFINED;
                 int status = hmap_node->value;
                 if((status & MODULE_DECLARED) && (~status & MODULE_USED)) {
-                    print_error("compile", WARNING, 6, q->base.line, q->base.col, q->name,
+                    print_error("semantic", WARNING, 6, q->base.line, q->base.col, q->name,
                         "NEEDLESS_DECLARE", "Module has been declared but not used before defining it.");
                 }
             }
@@ -379,7 +379,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
             while(node != NULL) {
                 pSTEntry entry = SD_get_entry(psd, node->varname);
                 if(entry->use_line == 0) {
-                    print_error("compile", ERROR, 52, node->base.line, node->base.col, node->varname,
+                    print_error("semantic", ERROR, -1, node->base.line, node->base.col, node->varname,
                         "UNSET_OUTPUT_PARAM", "Output parameter has not been set.");
                 }
                 node = node->next;
@@ -397,7 +397,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                 get_type_str(tstr1, type1, size1);
                 get_type_str(tstr2, type2, size2);
                 sprintf(msg, "Type of target is '%s', but type of expression is '%s'.", tstr1, tstr2);
-                print_error("type", ERROR, 19, q->base.line, q->base.col, NULL, NULL, msg);
+                print_error("type", ERROR, -1, q->base.line, q->base.col, NULL, "ASSN_TYPE_MISMATCH", msg);
             }
             const char* varname = NULL;
             if(q->target->base.node_type == ASTN_Deref) {
@@ -422,7 +422,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                 char tstr[24];
                 get_type_str(tstr, type, size);
                 sprintf(msg, "While loop's condition has type '%s' instead of '%s'.", tstr, TYPE_STRS[TYPE_BOOLEAN]);
-                print_error("type", ERROR, 20, q->cond->base.line, q->cond->base.col, NULL, "NONBOOL_COND", msg);
+                print_error("type", ERROR, -1, q->cond->base.line, q->cond->base.col, NULL, "NONBOOL_COND", msg);
             }
             SD_add_scope(psd, p);
             compile_node_chain(q->body, psd, func_name);
@@ -440,7 +440,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                 get_type_str(tstr, entry->addr->type, entry->addr->size);
                 sprintf(msg, "Type of loop variable '%s' should be '%s', not '%s'.",
                     q->varname, TYPE_STRS[TYPE_INTEGER], tstr);
-                print_error("type", ERROR, 24, q->base.line, q->base.col, NULL, "LOOPVAR_NOTINT", msg);
+                print_error("type", ERROR, -1, q->base.line, q->base.col, NULL, "LOOPVAR_NOTINT", msg);
             }
             bool prev_readonly = false;
             int prev_line = 0, prev_col = 0;
@@ -506,7 +506,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
         case ASTN_FCall: {
             FCallNode* q = (FCallNode*)p;
             if(q->name == func_name) {
-                print_error("compile", ERROR, 21, q->base.line, q->base.col, q->name, "RECURSE_CALL",
+                print_error("semantic", ERROR, -1, q->base.line, q->base.col, q->name, "RECURSE_CALL",
                     "Recursive calls are not allowed.");
             }
             vptr_pMN_hmap_node* hmap_node = vptr_pMN_hmap_query(&module_node_map, q->name);
@@ -518,7 +518,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                 vptr_int_hmap_node* hmap_node = vptr_int_hmap_insert(&module_status, q->name, 0);
                 hmap_node->value |= MODULE_USED;
                 if(!((hmap_node->value & MODULE_DEFINED) || (hmap_node->value & MODULE_DECLARED))) {
-                    print_error("compile", ERROR, 22, q->base.line, q->base.col, q->name, "UNDEF_MODULE",
+                    print_error("semantic", ERROR, -1, q->base.line, q->base.col, q->name, "UNDEF_MODULE",
                         "Module must be defined or declared before using it.");
                 }
                 compare_lists_type(q->name, psd, false, q->iParamList, module_node->iParamList);
@@ -542,7 +542,7 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                     get_type_str(tstr2, entry->addr->type, entry->addr->size);
                     sprintf(msg, "Switch variable's type should be '%s' or '%s', not '%s'",
                         TYPE_STRS[TYPE_INTEGER], TYPE_STRS[TYPE_BOOLEAN], tstr2);
-                    print_error("type", ERROR, 25, q->base.line, q->base.col, q->varname, NULL, msg);
+                    print_error("type", ERROR, -1, q->base.line, q->base.col, q->varname, "SWITCH_BAD_TYPE", msg);
                 }
                 else {
                     type = entry->addr->type;
@@ -559,15 +559,15 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
                 if(size2 > 0 || (type2 != type && type != TYPE_ERROR)) {
                     get_type_str(tstr2, type2, size2);
                     sprintf(msg, "Switch variable has type '%s', but case variable has type '%s'.", tstr, tstr2);
-                    print_error("type", ERROR, 26, node->val->base.line, node->val->base.col, NULL, NULL, msg);
+                    print_error("type", ERROR, -1, node->val->base.line, node->val->base.col, NULL, "SWITCH_TYPE_MISMATCH", msg);
                 }
                 else if(type == TYPE_BOOLEAN) {
                     if(node->val->base.node_type == ASTN_Bool) {
                         bool val = ((BoolNode*)(node->val))->val;
                         count[val & 1]++;
                         if(count[val & 1] > 1) {
-                            print_error("type", ERROR, 27, node->val->base.line, node->val->base.col,
-                                NULL, NULL, "Duplicate value in switch statement.");
+                            print_error("type", ERROR, -1, node->val->base.line, node->val->base.col,
+                                NULL, "SWITCH_DUP", "Duplicate value in switch statement.");
                         }
                     }
                     else {
@@ -579,23 +579,23 @@ void compile_node(pAstNode p, pSD psd, const char* func_name) {
             }
             if(type == TYPE_BOOLEAN) {
                 if(count[0] == 0) {
-                    print_error("type", ERROR, 28, p->base.line, p->base.col,
-                        NULL, NULL, "The case 'false' hasn't been handled.");
+                    print_error("type", ERROR, -1, p->base.line, p->base.col,
+                        NULL, "SWITCH_NOFALSE", "The case 'false' hasn't been handled.");
                 }
                 if(count[1] == 0) {
-                    print_error("type", ERROR, 28, p->base.line, p->base.col,
-                        NULL, NULL, "The case 'true' hasn't been handled.");
+                    print_error("type", ERROR, -1, p->base.line, p->base.col,
+                        NULL, "SWITCH_NOTRUE", "The case 'true' hasn't been handled.");
                 }
             }
             if(q->defaultcase != NULL) {
                 if(type == TYPE_BOOLEAN) {
-                    print_error("type", ERROR, 27, q->defaultcase->base.line, q->defaultcase->base.col,
-                        NULL, NULL, "Default case is not allowed when switch variable is boolean.");
+                    print_error("type", ERROR, -1, q->defaultcase->base.line, q->defaultcase->base.col,
+                        NULL, "SWITCH_BOOLDEFAULT", "Default case is not allowed when switch variable is boolean.");
                 }
                 compile_node_chain((pAstNode)(q->defaultcase->stmts), psd, func_name);
             }
             else if(type == TYPE_INTEGER) {
-                print_error("type", ERROR, 28, q->base.line, q->base.col, NULL, NULL,
+                print_error("type", ERROR, -1, q->base.line, q->base.col, NULL, "SWITCH_INT_DEFAULT",
                     "Default case is mandatory when switch variable is an integer.");
             }
             SD_remove_scope(psd);
@@ -624,7 +624,7 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
         vptr_int_hmap_insert(&module_status, decl_node->varname, MODULE_DECLARED);
         if(module_status.size == old_size) {
             sprintf(msg, "Module '%s' has already been declared.", decl_node->varname);
-            print_error("compile", ERROR, 1, decl_node->base.line, decl_node->base.col, NULL, "MODULE_REDECL", msg);
+            print_error("semantic", ERROR, -1, decl_node->base.line, decl_node->base.col, NULL, "MODULE_REDECL", msg);
         }
         decl_node = decl_node->next;
     }
@@ -638,7 +638,7 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
             if(module_node_map.size == old_size) {
                 sprintf(msg, "Module '%s' has already been defined on line %d col %d.",
                     module_node->name, n2->base.line, n2->base.col);
-                print_error("compile", ERROR, 2, module_node->base.line, module_node->base.col, NULL, "MODULE_REDEF", msg);
+                print_error("semantic", ERROR, -1, module_node->base.line, module_node->base.col, NULL, "MODULE_REDEF", msg);
             }
         }
         module_node = module_node->next;
@@ -666,7 +666,7 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
         if((status & MODULE_DECLARED) && (~status & MODULE_DEFINED)) {
             // module is declared but not defined
             sprintf(msg, "Module '%s' has been declared but not defined.", decl_node->varname);
-            print_error("compile", ERROR, 3, decl_node->base.line, decl_node->base.col, NULL, "MODULE_NOTDECL", msg);
+            print_error("semantic", ERROR, -1, decl_node->base.line, decl_node->base.col, NULL, "MODULE_NOTDECL", msg);
         }
         decl_node = decl_node->next;
     }
@@ -677,7 +677,7 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
             int status = vptr_int_hmap_get(&module_status, module_node->name);
             if(~status & MODULE_USED) {
                 sprintf(msg, "Module '%s' has not been used.", module_node->name);
-                print_error("compile", WARNING, 4, module_node->base.line, module_node->base.col, NULL, "MODULE_NOTUSED", msg);
+                print_error("semantic", WARNING, 4, module_node->base.line, module_node->base.col, NULL, "MODULE_NOTUSED", msg);
             }
         }
         module_node = module_node->next;
