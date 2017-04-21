@@ -19,7 +19,7 @@ typedef IRInstr* pIRInstr;
 #define TYPED(x) irinstr_##x
 #define CLASS IRCode
 #define CLASSED(x) ircode_##x
-#include "util/llist.gen.h"
+#include "llist.gen.h"
 #undef TYPE
 #undef TYPED
 #undef CLASS

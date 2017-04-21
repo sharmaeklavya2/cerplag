@@ -1,15 +1,15 @@
 #ifndef H_SYMBOL_DEFS
 #define H_SYMBOL_DEFS
 
-#include "util/pch_int_hmap.h"
+#include "pch_int_hmap.h"
 
 typedef enum
 {
 #define X(a, b) GS_##a,
-#include "data/tok.xmac"
+#include "tok.xmac"
 #undef X
 #define X(a) GS_##a,
-#include "data/nonterms.xmac"
+#include "nonterms.xmac"
 #undef X
     GS_LAST
 }gsymb_t;

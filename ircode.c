@@ -129,7 +129,7 @@ void irinstr_print(IRInstr* n, FILE* fp) {
 #define TYPED(x) irinstr_##x
 #define CLASS IRCode
 #define CLASSED(x) ircode_##x
-#include "util/llist.gen.c"
+#include "llist.gen.c"
 #undef TYPE
 #undef TYPED
 #undef CLASS

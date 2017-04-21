@@ -6,7 +6,7 @@
 #include "error.h"
 #include "lexer_defs.h"
 #include "assert.h"
-#include "util/pch_int_hmap.h"
+#include "pch_int_hmap.h"
 
 #define INPUT_BUFSIZE 100
 #define OUTPUT_BUFSIZE 100
@@ -16,36 +16,36 @@
 
 #define X(a, b, c) b,
 const char* ERRORS1[] = {
-#include "data/lerr.xmac"
+#include "lerr.xmac"
 };  // Error codes
 #undef X
 
 #define X(a, b, c) c,
 const char* ERRORS2[] = {
-#include "data/lerr.xmac"
+#include "lerr.xmac"
 };  // Error info
 #undef X
 
 #define X(a, b) "T_"#a,
 char* TOK_STRS[] = {
-#include "data/tok.xmac"
+#include "tok.xmac"
 };
 #undef X
 #define X(a, b) b,
 char* TOK_STRS2[] = {
-#include "data/tok.xmac"
+#include "tok.xmac"
 };
 #undef X
 
 #define X(a) #a,
 char* CCLASS_STRS[] = {
-#include "data/cclass.xmac"
+#include "cclass.xmac"
 };
 char* ACTION_STRS[] = {
-#include "data/action.xmac"
+#include "action.xmac"
 };
 char* STATE_STRS[] = {
-#include "data/state.xmac"
+#include "state.xmac"
 };
 #undef X
 
@@ -216,7 +216,7 @@ void precompute_token_hmap()
 {
     pch_int_hmap_init(&token_hmap, 100, false);
 #define X(t, k) pch_int_hmap_update(&token_hmap, k, T_##t);
-#include "data/tok.xmac"
+#include "tok.xmac"
 #undef X
 }
 

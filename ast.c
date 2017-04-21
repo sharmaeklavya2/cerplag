@@ -5,7 +5,7 @@
 
 char* ASTN_STRS[] = {
 #define X(a, b) #a"Node",
-#include "data/ast_nodes.xmac"
+#include "ast_nodes.xmac"
 #undef X
 };
 
@@ -25,7 +25,7 @@ pAstNode get_ast_node(astn_t node_type) {
 #define X(a, b) case ASTN_##a: p = malloc(sizeof(a##Node)); \
     memset(p, 0, sizeof(a##Node)); p->base.node_type = node_type; \
     ast_mem_allocd += sizeof(a##Node); break;
-#include "data/ast_nodes.xmac"
+#include "ast_nodes.xmac"
 #undef X
         default:
             complain_ast_node_type(__func__, node_type);

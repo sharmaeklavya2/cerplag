@@ -3,7 +3,7 @@
 
 typedef enum {
 #define X(a, b) OP_##a,
-#include "data/op.xmac"
+#include "op.xmac"
 #undef X
     OP_LAST
 } op_t;

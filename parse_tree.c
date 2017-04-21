@@ -11,7 +11,7 @@ void parse_print(parse x, FILE* fp)
 #define TYPE parse
 #define TYPED(x) parse_##x
 
-#include "util/tree.gen.c"
+#include "tree.gen.c"
 
 #undef TYPE
 #undef TYPED

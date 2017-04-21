@@ -5,12 +5,12 @@
 #include "error.h"
 #include "symbol_defs.h"
 #include "rule_defs.h"
-#include "util/pch_int_hmap.h"
+#include "pch_int_hmap.h"
 #include "lexer.h"
 #include "token.h"
-#include "util/int_stack.h"
+#include "int_stack.h"
 #include "parse_tree.h"
-#include "util/bitset.h"
+#include "bitset.h"
 
 #define NUM_NONTERMS NUM_GS - NUM_TOKENS
 
@@ -135,10 +135,10 @@ void init_gsymb_ht()
 {
     pch_int_hmap_init(&gsymb_ht, 150, false);
 #define X(a, b) pch_int_hmap_update(&gsymb_ht, #a, GS_##a);
-#include "data/tok.xmac"
+#include "tok.xmac"
 #undef X
 #define X(a) pch_int_hmap_update(&gsymb_ht, #a, GS_##a);
-#include "data/nonterms.xmac"
+#include "nonterms.xmac"
 #undef X
 }
 
@@ -235,7 +235,7 @@ gsymb_t init_parser()
     init_gsymb_ht();
     pch_int_hmap_init(&intern_table, 50, true);
     char str[100];
-    FILE* gfp = fopen("data/grammar.txt", "r");
+    FILE* gfp = fopen("grammar.txt", "r");
     fscanf(gfp, "%s", str);
     gsymb_t start_symb = get_gsymb_id(str);
     //fprintf(stderr, "start_symbol = %s\n", GS_STRS[start_symb]);
@@ -256,7 +256,7 @@ gsymb_t init_parser()
             pt[i][j] = -1;
 
     bool is_ll1 = make_parse_table();
-    //char pt_fname[] = "data/parse_table.txt";
+    //char pt_fname[] = "parse_table.txt";
     //read_parse_table(pt_fname);
 
     if(!is_ll1)

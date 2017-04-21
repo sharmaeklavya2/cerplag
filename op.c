@@ -2,6 +2,6 @@
 
 char* OP_STRS[] = {
 #define X(a, b) b,
-#include "data/op.xmac"
+#include "op.xmac"
 #undef X
 };

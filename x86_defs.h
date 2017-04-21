@@ -3,7 +3,7 @@
 
 typedef enum {
 #define X(a) X86_OP_##a,
-#include "data/x86_opcode.xmac"
+#include "x86_opcode.xmac"
 #undef X
     X86_OP_LAST
 } x86_op_t;
@@ -29,7 +29,7 @@ typedef X86Instr* pX86Instr;
 #define TYPED(x) x86_instr_##x
 #define CLASS X86Code
 #define CLASSED(x) x86_code_##x
-#include "util/llist.gen.h"
+#include "llist.gen.h"
 #undef TYPE
 #undef TYPED
 #undef CLASS

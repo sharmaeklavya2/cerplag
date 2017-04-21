@@ -1,4 +1,4 @@
-utils = util/pch_int_hmap.c util/vptr_int_hmap.c util/pch.c util/vptr.c util/int_stack.c util/int.c
+utils = pch_int_hmap.c vptr_int_hmap.c pch.c vptr.c int_stack.c int.c
 sources = $(utils) lexer.c parser.c parse_tree.c ast.c symbol.c ast_gen.c error.c symbol_table.c compiler.c addr.c op.c type.c ircode.c x86.c compile_x86.c codegen.c
 output_file = compiler
 debug_flags = -g -Wall -Wpedantic -o $(output_file)

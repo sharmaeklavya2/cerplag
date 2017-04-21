@@ -8,7 +8,7 @@
 
 typedef enum {
 #define X(a, b) ASTN_##a,
-#include "data/ast_nodes.xmac"
+#include "ast_nodes.xmac"
 #undef X
     ASTN_LAST
 } astn_t;
@@ -30,7 +30,7 @@ typedef struct AstNode {BaseAstNode base;} AstNode;
 typedef AstNode* pAstNode;
 
 #define X(a, b) typedef struct a##Node {BaseAstNode base; b} a##Node;
-#include "data/ast_nodes.xmac"
+#include "ast_nodes.xmac"
 #undef X
 
 extern char* ASTN_STRS[];

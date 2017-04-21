@@ -8,7 +8,7 @@
 #include "ast.h"
 #include "ast_gen.h"
 #include "symbol_table.h"
-#include "util/vptr_int_hmap.h"
+#include "vptr_int_hmap.h"
 #include "type.h"
 #include "compiler.h"
 #include "codegen.h"
@@ -30,8 +30,8 @@ static void pMN_print(pMN p, FILE* fp)
 #define KTYPED(x) vptr_##x
 #define VTYPED(x) pMN_##x
 #define ITYPED(x) vptr_pMN_##x
-#include "util/hmap.gen.h"
-#include "util/hmap.gen.c"
+#include "hmap.gen.h"
+#include "hmap.gen.c"
 #undef KTYPE
 #undef VTYPE
 #undef KTYPED

@@ -3,10 +3,10 @@
 
 char* GS_STRS[] = {
 #define X(a, b) #a,
-#include "data/tok.xmac"
+#include "tok.xmac"
 #undef X
 #define X(a) #a,
-#include "data/nonterms.xmac"
+#include "nonterms.xmac"
 #undef X
 };
 

@@ -1,7 +1,7 @@
 #ifndef H_RULE_DEFS
 #define H_RULE_DEFS
 
-#include "util/bitset.h"
+#include "bitset.h"
 
 #define NUM_RULES 100
 

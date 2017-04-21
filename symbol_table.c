@@ -39,7 +39,7 @@ void pSTEntry_print_sub(pSTEntry p, FILE* fp) {
 #define KTYPED(x) vptr_##x
 #define VTYPED(x) pSTEntry_##x
 #define ITYPED(x) ST_##x
-#include "util/hmap.gen.c"
+#include "hmap.gen.c"
 #undef KTYPE
 #undef VTYPE
 #undef KTYPED
@@ -83,7 +83,7 @@ void ST_destroy(pST p) {
 
 #define TYPE pST
 #define TYPED(x) ST_##x
-#include "util/tree.gen.c"
+#include "tree.gen.c"
 #undef TYPED
 #undef TYPE
 

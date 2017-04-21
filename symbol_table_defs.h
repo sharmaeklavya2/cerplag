@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 #include "ast.h"
-#include "util/vptr.h"
-#include "util/int_stack.h"
+#include "vptr.h"
+#include "int_stack.h"
 
 struct SymbolTable;
 struct AddrNode;
@@ -28,7 +28,7 @@ typedef STEntry* pSTEntry;
 #define KTYPED(x) vptr_##x
 #define VTYPED(x) pSTEntry_##x
 #define ITYPED(x) ST_##x
-#include "util/hmap.gen.h"
+#include "hmap.gen.h"
 #undef KTYPE
 #undef VTYPE
 #undef KTYPED
@@ -52,7 +52,7 @@ typedef ST* pST;
 
 #define TYPE pST
 #define TYPED(x) ST_##x
-#include "util/tree.gen.h"
+#include "tree.gen.h"
 #undef TYPED
 #undef TYPE
 

@@ -14,13 +14,13 @@
 //-lib-inclusion------------------------------------------------------------------
 
 const char* ASM_LIB_FILES[] = {
-    "data/common.asm",
-    "data/print_integer.asm",
-    "data/print_boolean.asm",
-    "data/print_integer_array.asm",
-    "data/print_boolean_array.asm",
-    "data/read_integer_array.asm",
-    "data/read_boolean_array.asm",
+    "common.asm",
+    "print_integer.asm",
+    "print_boolean.asm",
+    "print_integer_array.asm",
+    "print_boolean_array.asm",
+    "read_integer_array.asm",
+    "read_boolean_array.asm",
 };
 
 bool include_lib_files[] = {true, false, false, false, false, false, false};

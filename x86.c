@@ -5,7 +5,7 @@
 
 const char* X86_OP_STRS[NUM_X86_OPS] = {
 #define X(a) #a,
-#include "data/x86_opcode.xmac"
+#include "x86_opcode.xmac"
 #undef X
 };
 
@@ -97,7 +97,7 @@ void x86_instr_print(X86Instr* n, FILE* fp) {
 #define TYPED(x) x86_instr_##x
 #define CLASS X86Code
 #define CLASSED(x) x86_code_##x
-#include "util/llist.gen.c"
+#include "llist.gen.c"
 #undef TYPE
 #undef TYPED
 #undef CLASS

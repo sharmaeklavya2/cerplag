@@ -6,7 +6,7 @@
 #define X(a) a,
 typedef enum
 {
-#include "data/cclass.xmac"
+#include "cclass.xmac"
     C_LAST
 }cclass_t;
 #undef X
@@ -16,7 +16,7 @@ typedef enum
 #define X(a) a,
 typedef enum
 {
-#include "data/state.xmac"
+#include "state.xmac"
     S_LAST
 }state_t;
 #undef X
@@ -26,7 +26,7 @@ typedef enum
 #define X(a) a,
 typedef enum
 {
-#include "data/action.xmac"
+#include "action.xmac"
     A_LAST
 }action_t;
 #undef X
@@ -36,7 +36,7 @@ typedef enum
 #define X(a, b, c) a,
 typedef enum
 {
-#include "data/lerr.xmac"
+#include "lerr.xmac"
     LERR_LAST
 }lerr_t;    // lexer error
 #undef X
