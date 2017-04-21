@@ -144,8 +144,6 @@ void codegen(pAstNode p) {
             }
             default:
                 complain_ast_node_type(__func__, p->base.node_type);
-                print_error("codegen", ERROR, -1, p->base.line, p->base.col, ASTN_STRS[p->base.node_type],
-                    "CODEGEN_NOT_IMPL", "Code generation has not been implemented for this type of node.");
         }
     }
     if(error_count > 0) {
