@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        type = 'p';
+        type = 'c';
         if(arg1 == NULL)
             return cry_error();
         ifname = arg1;
