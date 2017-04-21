@@ -105,6 +105,28 @@ void codegen(pAstNode p) {
                 ircode_append(&(q->base.ircode), end_instr);
                 break;
             }
+            case ASTN_Switch: {
+                SwitchNode* q = (SwitchNode*)p;
+                if(q->base.addr->type == TYPE_BOOLEAN) {
+                    CaseNode* node;
+                    pAstNode true_stmts=NULL, false_stmts=NULL;
+                    for(node = q->cases; node != NULL; node = node->next) {
+                        bool val = ((BoolNode*)(node->val))->val;
+                        if(val) true_stmts = node->stmts;
+                        else false_stmts = node->stmts;
+                    }
+                    IRInstr* label1 = irinstr_new3(OP_LABEL, label_counter++);
+                    IRInstr* label2 = irinstr_new3(OP_LABEL, label_counter++);
+                    ircode_append(&(q->base.ircode), irinstr_new4(OP_JUMP0,
+                        NULL, q->base.addr, NULL, label1->label));
+                    codegen_chain(true_stmts, &(q->base.ircode));
+                    ircode_append(&(q->base.ircode), irinstr_new3(OP_JUMP, label2->label));
+                    ircode_append(&(q->base.ircode), label1);
+                    codegen_chain(false_stmts, &(q->base.ircode));
+                    ircode_append(&(q->base.ircode), label2);
+                }
+                break;
+            }
             default:
                 complain_ast_node_type(__func__, p->base.node_type);
                 print_error("codegen", ERROR, -1, p->base.line, p->base.col, ASTN_STRS[p->base.node_type],
