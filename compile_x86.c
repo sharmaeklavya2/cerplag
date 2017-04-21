@@ -140,7 +140,7 @@ void op_reg_to_addr(X86Code* ocode, x86_op_t opcode, const AddrNode* an, int reg
 }
 
 void op_addr_to_addr(X86Code* ocode, x86_op_t opcode, const AddrNode* an1, const AddrNode* an2) {
-    if(an1->addr_type == ADDR_CONST || an2->addr_type == ADDR_CONST) {
+    if((an1->addr_type == ADDR_CONST) != (an2->addr_type == ADDR_CONST)) {
         X86Instr* onode = x86_instr_new2(opcode, NULL, NULL);
         load_index_if_needed(ocode, an1, "si");
         load_index_if_needed(ocode, an2, "di");
@@ -148,8 +148,10 @@ void op_addr_to_addr(X86Code* ocode, x86_op_t opcode, const AddrNode* an1, const
         addr_to_x86_arg(an2, onode->arg2, true, "rdi");
         x86_code_append(ocode, onode);
     }
-    op_addr_to_reg(ocode, X86_OP_mov, 0, an2);
-    op_reg_to_addr(ocode, opcode, an1, 0);
+    else {
+        op_addr_to_reg(ocode, X86_OP_mov, 0, an2);
+        op_reg_to_addr(ocode, opcode, an1, 0);
+    }
 }
 
 void op_apply(X86Code* ocode, x86_op_t opcode, const AddrNode* an) {

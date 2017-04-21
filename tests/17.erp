@@ -1,0 +1,8 @@
+<<<driver program>>>
+start
+    declare a: integer;
+    declare b: boolean;
+    a := 3 + 2;
+    b := true OR (10 / a == 2);
+    print(b);
+end
