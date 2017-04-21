@@ -236,13 +236,15 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
             break;
         case OP_MUL:
             op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
-            op_apply(ocode, X86_OP_imul, inode->arg2);
+            op_addr_to_reg(ocode, X86_OP_mov, 2, inode->arg2);
+            x86_code_append(ocode, x86_instr_new2(X86_OP_imul, std_regs[2][TYPE_INTEGER], NULL));
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
         case OP_DIV:
             op_addr_to_reg(ocode, X86_OP_mov, 0, inode->arg1);
             x86_code_append(ocode, x86_instr_new(X86_OP_cwd));
-            op_apply(ocode, X86_OP_idiv, inode->arg2);
+            op_addr_to_reg(ocode, X86_OP_mov, 2, inode->arg2);
+            x86_code_append(ocode, x86_instr_new2(X86_OP_idiv, std_regs[2][TYPE_INTEGER], NULL));
             op_reg_to_addr(ocode, X86_OP_mov, inode->res, 0);
             break;
 
