@@ -2,7 +2,7 @@
 for arg in "$@"
 do
 	sourcefile=${arg##*/}
-	basename=${sourcefile%.erp}
+	basename=${sourcefile%erp}
 	for inputfile in tests/input_files/$basename*
 	do
 		outputfile=${inputfile##*/}
