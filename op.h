@@ -10,7 +10,7 @@ typedef enum {
     OP_AND, OP_OR,
     OP_MOV, OP_UMINUS,
     OP_OUTPUT, OP_INPUT,
-    OP_JUMP, OP_JG,
+    OP_JUMP, OP_JG, OP_JNE,
     OP_JUMP0, OP_JUMP1,
     OP_LABEL, OP_INC,
     OP_LAST
@@ -19,7 +19,7 @@ typedef enum {
 #define NUM_OP OP_LAST
 
 #define OP_STRS_LIST {"+", "-", "<", ">", "<=", ">=", "==", "!=", "*", "/", "AND", "OR", \
-    "mov", "uminus", "output", "input", "jump", "jg", "jump0", "jump1", "label", "inc"}
+    "mov", "uminus", "output", "input", "jump", "jg", "jne", "jump0", "jump1", "label", "inc"}
 
 extern char* OP_STRS[];
 

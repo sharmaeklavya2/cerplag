@@ -1,0 +1,13 @@
+<<<driver program>>>
+start
+    declare n: integer;
+    get_value(n);
+    switch(n)
+    start
+        case 0: print(0); break;
+        case 1: print(1); break;
+        case 2: print(4); break;
+        case 3: print(9); break;
+        default: print(10); break;
+    end
+end

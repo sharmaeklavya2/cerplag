@@ -107,8 +107,8 @@ void codegen(pAstNode p) {
             }
             case ASTN_Switch: {
                 SwitchNode* q = (SwitchNode*)p;
+                CaseNode* node;
                 if(q->base.addr->type == TYPE_BOOLEAN) {
-                    CaseNode* node;
                     pAstNode true_stmts=NULL, false_stmts=NULL;
                     for(node = q->cases; node != NULL; node = node->next) {
                         bool val = ((BoolNode*)(node->val))->val;
@@ -124,6 +124,21 @@ void codegen(pAstNode p) {
                     ircode_append(&(q->base.ircode), label1);
                     codegen_chain(false_stmts, &(q->base.ircode));
                     ircode_append(&(q->base.ircode), label2);
+                }
+                else {
+                    IRInstr* exit_label = irinstr_new3(OP_LABEL, label_counter++);
+                    for(node = q->cases; node != NULL; node = node->next) {
+                        IRInstr* label = irinstr_new3(OP_LABEL, label_counter++);
+                        ircode_append(&(q->base.ircode), irinstr_new4(OP_JNE,
+                            NULL, q->base.addr, node->val->base.addr, label->label));
+                        codegen_chain(node->stmts, &(q->base.ircode));
+                        ircode_append(&(q->base.ircode), irinstr_new3(OP_JUMP, exit_label->label));
+                        ircode_append(&(q->base.ircode), irinstr_new3(OP_LABEL, label->label));
+                    }
+                    if(q->defaultcase != NULL) {
+                        codegen_chain(q->defaultcase->stmts, &(q->base.ircode));
+                    }
+                    ircode_append(&(q->base.ircode), irinstr_new3(OP_LABEL, exit_label->label));
                 }
                 break;
             }

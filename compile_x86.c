@@ -200,6 +200,7 @@ x86_op_t get_branch_opcode(op_t op) {
         case OP_JUMP0: return X86_OP_jz;
         case OP_JUMP1: return X86_OP_jnz;
         case OP_JG: return X86_OP_jg;
+        case OP_JNE: return X86_OP_jne;
         case OP_LABEL: return X86_OP_label;
         default:
             return -1;
@@ -285,6 +286,7 @@ void compile_instr_to_x86(const IRInstr* inode, X86Code* ocode) {
         case OP_JUMP:
         case OP_JUMP0:
         case OP_JUMP1:
+        case OP_JNE:
         case OP_JG: {
             snprintf(temp_str, TEMP_STR_SIZE, "L%d", inode->label);
             x86_op_t opcode = get_branch_opcode(inode->op);
