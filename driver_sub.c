@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "ast_gen.h"
 #include "compiler.h"
+#include "error.h"
 
 #define USAGE_SIZE 512
 
@@ -57,21 +58,40 @@ int main(int argc, char* argv[])
 
     switch(choice){
         case 1:
-            return lexer_main(ifp, stdout, 0, print_token_sub);
+            lexer_main(ifp, stdout, 0, print_token);
+            break;
         case 2:
-            return parser_main(ifp, stdout, 0, print_tree);
+            parser_main(ifp, stdout, 0, print_tree);
+            break;
         case 3:
-            return ast_gen_main(ifp, stdout, 0);
+            ast_gen_main(ifp, stdout, 0);
+            break;
         case 4:
-            return ast_gen_main(ifp, stdout, 1);
+            ast_gen_main(ifp, stdout, 1);
+            break;
         case 5:
-            return compiler_main(ifp, stdout, 1, 0);
+            compiler_main(ifp, stdout, 1, 0);
+            break;
         case 6:
-            return compiler_main(ifp, stdout, 1, 0);
+            compiler_main(ifp, stdout, 1, 0);
+            break;
         case 7:
-            return compiler_main(ifp, stdout, 3, 0);
+            compiler_main(ifp, ofp, 3, 0);
+            break;
         default:
             fprintf(stderr, "Invalid choice!\n");
             break;
     }
+
+    if(error_count > 0)
+        fprintf(stderr, "%d errors\n", error_count);
+    if(warning_count > 0)
+        fprintf(stderr, "%d warnings\n", warning_count);
+
+    if(ifp != stdin)
+        fclose(ifp);
+    if(ofp != stdout && ofp != stderr)
+        fclose(ofp);
+
+    return 0;
 }
