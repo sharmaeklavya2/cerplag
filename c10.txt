@@ -1,0 +1,14 @@
+<<<driver program>>>
+start
+    declare a: integer;
+    declare b: integer;
+    declare c: boolean;
+    get_value(a);
+    get_value(b);
+    c := a == b;
+    switch(c)
+    start
+        case true: print(1111); break;
+        case false: print(2222); break;
+    end
+end

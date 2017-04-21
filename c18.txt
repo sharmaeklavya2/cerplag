@@ -1,0 +1,18 @@
+<<<driver program>>>
+start
+    declare sum, sum2, i: integer;
+    sum := 0;
+    sum2 := 0;
+    for(i in 1..10)
+    start
+        sum2 := sum2 + i;
+        declare i: integer;
+        for(i in 1..5)
+        start
+            sum := sum + i;
+        end
+    end
+    print(sum);
+    print(sum2);
+end
+

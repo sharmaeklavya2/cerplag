@@ -1,0 +1,12 @@
+<<<driver program>>>
+start
+    declare n: integer;
+    declare i: integer;
+    get_value(n);
+    i := 1;
+    while(i <= n)
+    start
+        print(i);
+        i := i + 1;
+    end
+end

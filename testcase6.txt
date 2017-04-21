@@ -1,0 +1,10 @@
+** Using undeclared module **
+
+<<<driver program>>>
+start
+    use module f1 with parameters n;
+end
+
+<<module f1>>
+takes input [n: integer];
+start end

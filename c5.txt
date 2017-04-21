@@ -1,0 +1,32 @@
+<<<driver program>>>
+start
+    declare a: integer;
+    declare b: integer;
+    declare c: integer;
+    get_value(a);
+    get_value(b);
+    c := a + b;
+    print(c);
+    c := a - b;
+    print(c);
+    c := a * b;
+    print(c);
+    c := a / b;
+    print(c);
+    c := - a;
+    print(c);
+    c := - a;
+    declare d: boolean;
+    d := a == b;
+    print(d);
+    d := a != b;
+    print(d);
+    d := a < b;
+    print(d);
+    d := a <= b;
+    print(d);
+    d := a > b;
+    print(d);
+    d := a >= b;
+    print(d);
+end

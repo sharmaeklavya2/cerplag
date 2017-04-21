@@ -1,0 +1,14 @@
+<<<driver program>>>
+start
+    declare a: array[1..3] of integer;
+    declare i: integer;
+    declare x: integer;
+    get_value(x);
+    a[1] := x;
+    get_value(x);
+    a[2] := x;
+    get_value(x);
+    a[3] := x;
+    get_value(i);
+    print(a[i]);
+end

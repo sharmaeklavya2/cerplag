@@ -1,0 +1,12 @@
+<<<driver program>>>
+start
+    declare a: boolean;
+    declare b: boolean;
+    declare c: boolean;
+    get_value(a);
+    get_value(b);
+    c := a AND b;
+    print(c);
+    c := a OR b;
+    print(c);
+end
