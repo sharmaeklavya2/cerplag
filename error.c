@@ -1,13 +1,17 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include "error.h"
 
 FILE* error_stream = NULL;
 int error_count = 0;
 int warning_count = 0;
+bool print_error_req = true;
 
 void print_error(const char* category, int type, int err_num, int line, int col,
     const char* lexeme, const char* err_code, const char* err_msg)
 {
+    if(!print_error_req)
+        return;
     if(error_stream == NULL)
         error_stream = stderr;
 

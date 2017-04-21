@@ -3,6 +3,7 @@
 #include "ast.h"
 #include "symbol_defs.h"
 #include "error.h"
+#include "ast_gen.h"
 
 int read_children(parse_tree_node** nodes, parse_tree_node* root) {
     //for(i=0; i<n; ++i) nodes[i] = NULL;
@@ -471,31 +472,31 @@ void build_ast(parse_tree_node* p) {
     }
 }
 
-int ast_gen_main(FILE* ifp, FILE* ofp, int verbosity)
+int ast_gen_main(FILE* ifp, FILE* ofp, FILE* statsfp, int verbosity)
 {
     gsymb_t start_symb = init_parser();
 
     parse_tree_node* proot = build_parse_tree(ifp, start_symb);
     int parse_tree_size = parse_tree_node_count * (sizeof(parse_tree_node) + sizeof(Symbol));
-    if(verbosity >= 1) {
-        fprintf(stderr, "Parse tree: %d nodes = %d bytes.\n", parse_tree_node_count, parse_tree_size);
+    if(verbosity > 0 && statsfp != NULL) {
+        fprintf(statsfp, "Parse tree: %d nodes = %d bytes.\n", parse_tree_node_count, parse_tree_size);
     }
     pAstNode ast = NULL;
     int parse_errors = error_count;
     if(parse_errors == 0) {
         build_ast(proot);
         ast = proot->value->tree;
-        if(verbosity >= 1) {
-            fprintf(stderr, "AST: %d nodes = %d bytes.\n", ast_node_count, ast_mem_allocd);
-            fprintf(stderr, "Compression percent: %lf\n",
+        if(verbosity >= 1 && statsfp != NULL) {
+            fprintf(statsfp, "AST: %d nodes = %d bytes.\n", ast_node_count, ast_mem_allocd);
+            fprintf(statsfp, "Compression percent: %lf\n",
                 100 * ((float)parse_tree_size - ast_mem_allocd) / (parse_tree_size));
         }
     }
     parse_tree_destroy(proot);
     destroy_parser(false);
 
-    if(parse_errors == 0) {
-        print_ast(stdout, ast, 0);
+    if(parse_errors == 0 && ofp != NULL) {
+        print_ast(ofp, ast, 0);
     }
 
     destroy_ast(ast);

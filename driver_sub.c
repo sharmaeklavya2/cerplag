@@ -64,27 +64,28 @@ int main(int argc, char* argv[])
             parser_main(ifp, stdout, 0, print_tree);
             break;
         case 3:
-            ast_gen_main(ifp, stdout, 0);
+            ast_gen_main(ifp, stdout, NULL, 0);
             break;
         case 4:
-            ast_gen_main(ifp, stdout, 1);
+            ast_gen_main(ifp, NULL, stdout, 1);
             break;
         case 5:
-            compiler_main(ifp, stdout, 1, 0);
+            print_error_req = false;
+            compiler_main(ifp, stdout, stdout, 0, 0);
             break;
         case 6:
-            compiler_main(ifp, stdout, 1, 0);
+            error_stream = stdout;
+            compiler_main(ifp, stdout, NULL, 0, 0);
             break;
         case 7:
-            compiler_main(ifp, ofp, 3, 0);
+            compiler_main(ifp, ofp, NULL, 2, 0);
             break;
         default:
             fprintf(stderr, "Invalid choice!\n");
             break;
     }
 
-    if(error_count > 0)
-        fprintf(stderr, "%d errors\n", error_count);
+    fprintf(stderr, "%d errors\n", error_count);
     if(warning_count > 0)
         fprintf(stderr, "%d warnings\n", warning_count);
 

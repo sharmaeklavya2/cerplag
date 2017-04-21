@@ -687,11 +687,10 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
     vptr_pMN_hmap_clear(&module_node_map);
 }
 
-int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
+int compiler_main(FILE* ifp, FILE* ofp, FILE* sdfp, int level, int verbosity) {
     /*  level=0: semantic check only
-        level=1: print symbol database entries
-        level=2: allow_codegen
-        level=3: x86_code_gen
+        level=1: allow_codegen
+        level=2: x86_code_gen
     */
     gsymb_t start_symb = init_parser();
 
@@ -713,15 +712,15 @@ int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
 
     bool print_sd = false;
     bool print_entry_list = false;
-    if((level==1) > 0) {
+    if(sdfp != NULL) {
         print_entry_list = true;
     }
-    if(verbosity > 0) {
+    if(verbosity > 0 && sdfp != NULL) {
         print_sd = true;
     }
     if(parse_errors == 0) {
         SD_init(&mySD);
-        compile_program(ast, &mySD, level>=2, true);
+        compile_program(ast, &mySD, level>=1, true);
         if(print_sd) {
             SD_print(&mySD, stderr);
         }
@@ -730,7 +729,7 @@ int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
         }
         ModuleNode* node = ast->modules;
         while(node != NULL) {
-            if(error_count == 0 && level == 2) {
+            if(error_count == 0 && level == 1) {
                 fprintf(ofp, "Intermediate code for ");
                 if(node->name == NULL) {
                     fprintf(ofp, "driver:\n");
@@ -743,7 +742,7 @@ int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
             node = node->next;
         }
 
-        if(error_count == 0 && level == 3) {
+        if(error_count == 0 && level == 2) {
             compile_program_to_x86(ast, &mySD, ofp);
         }
         node = ast->modules;

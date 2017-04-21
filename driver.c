@@ -128,15 +128,15 @@ int main(int argc, char* argv[])
     else if(type == 'p')
         parser_main(ifp, ofp, verbosity, print_tree);
     else if(type == 'a')
-        ast_gen_main(ifp, ofp, verbosity);
+        ast_gen_main(ifp, ofp, stderr, verbosity);
     else if(type == 't')
-        compiler_main(ifp, ofp, 0, verbosity);
+        compiler_main(ifp, ofp, NULL, 0, verbosity);
     else if(type == 's')
-        compiler_main(ifp, ofp, 1, verbosity);
+        compiler_main(ifp, ofp, stderr, 0, verbosity);
     else if(type == 'i')
-        compiler_main(ifp, ofp, 2, verbosity);
+        compiler_main(ifp, ofp, NULL, 1, verbosity);
     else if(type == 'c')
-        compiler_main(ifp, ofp, 3, verbosity);
+        compiler_main(ifp, ofp, NULL, 2, verbosity);
 
     if(ifp != stdin)
         fclose(ifp);
