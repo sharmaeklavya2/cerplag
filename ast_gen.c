@@ -476,11 +476,20 @@ int ast_gen_main(FILE* ifp, FILE* ofp, int verbosity)
     gsymb_t start_symb = init_parser();
 
     parse_tree_node* proot = build_parse_tree(ifp, start_symb);
+    int parse_tree_size = parse_tree_node_count * (sizeof(parse_tree_node) + sizeof(Symbol));
+    if(verbosity >= 1) {
+        fprintf(stderr, "Parse tree: %d nodes = %d bytes.\n", parse_tree_node_count, parse_tree_size);
+    }
     pAstNode ast = NULL;
     int parse_errors = error_count;
     if(parse_errors == 0) {
         build_ast(proot);
         ast = proot->value->tree;
+        if(verbosity >= 1) {
+            fprintf(stderr, "AST: %d nodes = %d bytes.\n", ast_node_count, ast_mem_allocd);
+            fprintf(stderr, "Compression percent: %lf\n",
+                100 * ((float)parse_tree_size - ast_mem_allocd) / (parse_tree_size));
+        }
     }
     parse_tree_destroy(proot);
     destroy_parser(false);

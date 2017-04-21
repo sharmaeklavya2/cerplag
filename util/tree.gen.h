@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+extern int TYPED(tree_node_count);
+
 typedef struct TYPED(tree_node)
 {
     TYPE value;

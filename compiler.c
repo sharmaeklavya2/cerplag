@@ -688,7 +688,8 @@ void compile_program(ProgramNode* root, pSD psd, bool code_gen, bool destroy_mod
 }
 
 int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
-    /*  level=0 or 1: semantic check only
+    /*  level=0: semantic check only
+        level=1: print symbol database entries
         level=2: allow_codegen
         level=3: x86_code_gen
     */
@@ -712,9 +713,11 @@ int compiler_main(FILE* ifp, FILE* ofp, int level, int verbosity) {
 
     bool print_sd = false;
     bool print_entry_list = false;
+    if((level==1) > 0) {
+        print_entry_list = true;
+    }
     if(verbosity > 0) {
         print_sd = true;
-        print_entry_list = true;
     }
     if(parse_errors == 0) {
         SD_init(&mySD);

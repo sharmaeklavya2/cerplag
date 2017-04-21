@@ -9,6 +9,9 @@ char* ASTN_STRS[] = {
 #undef X
 };
 
+int ast_node_count = 0;
+int ast_mem_allocd = 0;
+
 void complain_ast_node_type(const char* funcname, astn_t node_type) {
     if(node_type >= NUM_ASTN)
         fprintf(stderr, "%s: invalid node_type %d\n", funcname, node_type);
@@ -19,12 +22,15 @@ void complain_ast_node_type(const char* funcname, astn_t node_type) {
 pAstNode get_ast_node(astn_t node_type) {
     pAstNode p = NULL;
     switch(node_type) {
-#define X(a, b) case ASTN_##a: p = malloc(sizeof(a##Node)); memset(p, 0, sizeof(a##Node)); p->base.node_type = node_type; break;
+#define X(a, b) case ASTN_##a: p = malloc(sizeof(a##Node)); \
+    memset(p, 0, sizeof(a##Node)); p->base.node_type = node_type; \
+    ast_mem_allocd += sizeof(a##Node); break;
 #include "data/ast_nodes.xmac"
 #undef X
         default:
             complain_ast_node_type(__func__, node_type);
     }
+    ast_node_count++;
     return p;
 }
 

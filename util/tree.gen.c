@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int TYPED(tree_node_count) = 0;
+
 TYPED(tree_node)* TYPED(tree_get_node)(TYPE value)
 {
     TYPED(tree_node)* new_node = malloc(sizeof(TYPED(tree_node)));
@@ -14,6 +16,7 @@ TYPED(tree_node)* TYPED(tree_get_node)(TYPE value)
         new_node->prev_sibling  = NULL;
         new_node->last_child    = NULL;
     }
+    TYPED(tree_node_count)++;
     return new_node;
 }
 

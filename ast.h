@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include "ast_defs.h"
 
+extern int ast_node_count;
+extern int ast_mem_allocd;
+
 void complain_ast_node_type(const char* funcname, astn_t node_type);
 
 pAstNode get_ast_node(astn_t node_type);
