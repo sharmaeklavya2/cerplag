@@ -1,6 +1,7 @@
 #ifndef H_ERROR
 #define H_ERROR
 
+extern FILE* error_stream;
 extern int error_count;
 extern int warning_count;
 
