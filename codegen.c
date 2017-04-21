@@ -48,7 +48,6 @@ void codegen(pAstNode p) {
                 break;
             }
             case ASTN_BOp: {
-                // TODO: implement short circuiting for boolean operators
                 BOpNode* q = (BOpNode*)p;
                 ircode_combine(&(q->base.ircode), &(q->arg1->base.ircode), &(q->arg2->base.ircode));
                 ircode_append(&(q->base.ircode), irinstr_new2(q->op, q->base.addr,
